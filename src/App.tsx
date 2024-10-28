@@ -101,10 +101,11 @@ import { Settings } from "./components/Group/Settings";
 import { MainAvatar } from "./components/MainAvatar";
 import { useRetrieveDataLocalStorage } from "./useRetrieveDataLocalStorage";
 import { useQortalGetSaveSettings } from "./useQortalGetSaveSettings";
-import { useRecoilState, useResetRecoilState } from "recoil";
+import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
 import { canSaveSettingToQdnAtom, fullScreenAtom, hasSettingsChangedAtom, oldPinnedAppsAtom, settingsLocalLastUpdatedAtom, settingsQDNLastUpdatedAtom, sortablePinnedAppsAtom } from "./atoms/global";
 import { useAppFullScreen } from "./useAppFullscreen";
 import { NotAuthenticated } from "./ExtStates/NotAuthenticated";
+import { sendMessageBackground, sendMessageState } from "./messaging/messagesToBackground";
 
 type extStates =
   | "not-authenticated"
@@ -343,6 +344,9 @@ function App() {
 
   const { toggleFullScreen } = useAppFullScreen(setFullScreen);
 
+
+
+
   useEffect(() => {
       // Attach a global event listener for double-click
       const handleDoubleClick = () => {
@@ -543,21 +547,33 @@ function App() {
 
   const getBalanceFunc = () => {
     setQortBalanceLoading(true);
-    chrome?.runtime?.sendMessage({ action: "balance" }, (response) => {
+    window.sendMessage("balance")
+    .then((response) => {
       if (!response?.error && !isNaN(+response)) {
         setBalance(response);
       }
       setQortBalanceLoading(false);
+    })
+    .catch((error) => {
+      console.error("Failed to get balance:", error);
+      setQortBalanceLoading(false);
     });
+  
   };
   const getLtcBalanceFunc = () => {
     setLtcBalanceLoading(true);
-    chrome?.runtime?.sendMessage({ action: "ltcBalance" }, (response) => {
-      if (!response?.error && !isNaN(+response)) {
-        setLtcBalance(response);
-      }
-      setLtcBalanceLoading(false);
-    });
+    window.sendMessage("ltcBalance")
+  .then((response) => {
+    if (!response?.error && !isNaN(+response)) {
+      setLtcBalance(response);
+    }
+    setLtcBalanceLoading(false);
+  })
+  .catch((error) => {
+    console.error("Failed to get LTC balance:", error);
+    setLtcBalanceLoading(false);
+  });
+
   };
   const sendCoinFunc = () => {
     setSendPaymentError("");
@@ -575,27 +591,25 @@ function App() {
       return;
     }
     setIsLoading(true);
-    chrome?.runtime?.sendMessage(
-      {
-        action: "sendCoin",
-        payload: {
-          amount: Number(paymentAmount),
-          receiver: paymentTo.trim(),
-          password: paymentPassword,
-        },
-      },
-      (response) => {
+    window.sendMessage("sendCoin", {
+      amount: Number(paymentAmount),
+      receiver: paymentTo.trim(),
+      password: paymentPassword,
+    })
+      .then((response) => {
         if (response?.error) {
           setSendPaymentError(response.error);
         } else {
           setIsOpenSendQort(false);
           setIsOpenSendQortSuccess(true);
-          // setExtstate("transfer-success-regular");
-          // setSendPaymentSuccess("Payment successfully sent");
         }
         setIsLoading(false);
-      }
-    );
+      })
+      .catch((error) => {
+        console.error("Failed to send coin:", error);
+        setIsLoading(false);
+      });
+    
   };
 
   const clearAllStates = () => {
@@ -883,11 +897,16 @@ function App() {
           }, 10000);
         });
       }
-      chrome?.runtime?.sendMessage({ action: "userInfo" }, (response) => {
+      window.sendMessage("userInfo")
+      .then((response) => {
         if (response && !response.error) {
           setUserInfo(response);
         }
+      })
+      .catch((error) => {
+        console.error("Failed to get user info:", error);
       });
+    
       getBalanceFunc();
     } catch (error) {}
   }, []);
@@ -974,37 +993,41 @@ function App() {
         crypto.kdfThreads,
         () => {}
       );
-      chrome?.runtime?.sendMessage(
-        {
-          action: "decryptWallet",
-          payload: {
-            password: walletToBeDownloadedPassword,
-            wallet,
-          },
-        },
-        (response) => {
-          if (response && !response?.error) {
+      window.sendMessage("decryptWallet", {
+        password: walletToBeDownloadedPassword,
+        wallet,
+      })
+        .then((response) => {
+          if (response && !response.error) {
             setRawWallet(wallet);
             setWalletToBeDownloaded({
               wallet,
               qortAddress: wallet.address0,
             });
-            chrome?.runtime?.sendMessage(
-              { action: "userInfo" },
-              (response2) => {
+      
+            window.sendMessage("userInfo")
+              .then((response2) => {
                 setIsLoading(false);
                 if (response2 && !response2.error) {
-                  setUserInfo(response);
+                  setUserInfo(response2);
                 }
-              }
-            );
+              })
+              .catch((error) => {
+                setIsLoading(false);
+                console.error("Failed to get user info:", error);
+              });
+      
             getBalanceFunc();
           } else if (response?.error) {
             setIsLoading(false);
             setWalletToBeDecryptedError(response.error);
           }
-        }
-      );
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          console.error("Failed to decrypt wallet:", error);
+        });
+      
     } catch (error: any) {
       setWalletToBeDownloadedError(error?.message);
       setIsLoading(false);
@@ -1082,40 +1105,49 @@ function App() {
           res();
         }, 250);
       });
-      chrome?.runtime?.sendMessage(
-        {
-          action: "decryptWallet",
-          payload: {
-            password: authenticatePassword,
-            wallet: rawWallet,
-          },
-        },
-        (response) => {
-          if (response && !response?.error) {
+      window.sendMessage("decryptWallet", {
+        password: authenticatePassword,
+        wallet: rawWallet,
+      })
+        .then((response) => {
+          if (response && !response.error) {
             setAuthenticatePassword("");
             setExtstate("authenticated");
             setWalletToBeDecryptedError("");
-            chrome?.runtime?.sendMessage({ action: "userInfo" }, (response) => {
-              setIsLoading(false);
-              if (response && !response.error) {
-                setUserInfo(response);
-              }
-            });
-            getBalanceFunc();
-            chrome?.runtime?.sendMessage(
-              { action: "getWalletInfo" },
-              (response) => {
-                if (response && response?.walletInfo) {
-                  setRawWallet(response?.walletInfo);
+      
+            window.sendMessage("userInfo")
+              .then((response) => {
+                setIsLoading(false);
+                if (response && !response.error) {
+                  setUserInfo(response);
                 }
-              }
-            );
+              })
+              .catch((error) => {
+                setIsLoading(false);
+                console.error("Failed to get user info:", error);
+              });
+      
+            getBalanceFunc();
+      
+            window.sendMessage("getWalletInfo")
+              .then((response) => {
+                if (response && response.walletInfo) {
+                  setRawWallet(response.walletInfo);
+                }
+              })
+              .catch((error) => {
+                console.error("Failed to get wallet info:", error);
+              });
           } else if (response?.error) {
             setIsLoading(false);
             setWalletToBeDecryptedError(response.error);
           }
-        }
-      );
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          console.error("Failed to decrypt wallet:", error);
+        });
+      
     } catch (error) {
       setWalletToBeDecryptedError("Unable to authenticate. Wrong password");
     }

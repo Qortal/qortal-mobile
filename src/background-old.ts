@@ -28,7 +28,6 @@ import { validateAddress } from "./utils/validateAddress";
 import { Sha256 } from "asmcrypto.js";
 import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMultipleRequest";
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
-import { balanceCase, decryptWalletCase, getWalletInfoCase, ltcBalanceCase, nameCase, sendCoinCase, userInfoCase, validApiCase, versionCase } from './background-cases';
 
 export function cleanUrl(url) {
   return url?.replace(/^(https?:\/\/)?(www\.)?/, '');
@@ -942,7 +941,7 @@ const forceCloseWebSocket = () => {
   }
 };
 
-export async function getNameInfo() {
+async function getNameInfo() {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const validApi = await getBaseApi();
@@ -994,7 +993,7 @@ async function clearAllNotifications() {
   }
 }
 
-export async function getUserInfo() {
+async function getUserInfo() {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const addressInfo = await getAddressInfo(address);
@@ -1037,7 +1036,7 @@ export async function getBalanceInfo() {
   const data = await response.json();
   return data;
 }
-export async function getLTCBalance() {
+async function getLTCBalance() {
   const wallet = await getSaveWallet();
   let _url = `${buyTradeNodeBaseUrl}/crosschain/ltc/walletbalance`;
   const keyPair = await getKeyPair();
@@ -1356,7 +1355,7 @@ async function addUserSettings({ keyValue }) {
   });
 }
 
-export async function decryptWallet({ password, wallet, walletVersion }) {
+async function decryptWallet({ password, wallet, walletVersion }) {
   try {
     const response = await decryptStoredWallet(password, wallet);
     const wallet2 = new PhraseWallet(response, walletVersion);
@@ -2825,63 +2824,1389 @@ async function getChatHeadsDirect() {
     throw new Error("No Chatheads saved");
   }
 }
-// TODO: listener
+chrome?.runtime?.onMessage.addListener((request, sender, sendResponse) => {
+  if (request) {
 
-
-function setupMessageListener() {
-  window.addEventListener("message", async (event) => {
-    const request = event.data;
-
-    // Check if the message is intended for this listener
-    if (request?.type !== "backgroundMessage") return; // Only process messages of type 'backgroundMessage'
-
-
-    console.log("REQUEST MESSAGE", request);
+    console.log('REQUEST MESSAGE', request)
 
     switch (request.action) {
       case "version":
-        versionCase(request, event);
+        // Example: respond with the version
+        sendResponse({ version: "1.0" });
         break;
-      
-      // case "storeWalletInfo":
-      //   storeWalletInfoCase(request, event);
-      //   break;
-
+      case "storeWalletInfo":
+        chrome.storage.local.set({ walletInfo: request.wallet }, () => {
+          if (chrome.runtime.lastError) {
+            sendResponse({ error: chrome.runtime.lastError.message });
+          } else {
+            sendResponse({ result: "Data saved successfully" });
+          }
+        });
+        break;
       case "getWalletInfo":
-        getWalletInfoCase(request, event);
-        break;
+        getKeyPair()
+          .then(() => {
+            chrome.storage.local.get(["walletInfo"], (result) => {
+              if (chrome.runtime.lastError) {
+                sendResponse({ error: chrome.runtime.lastError.message });
+              } else if (result.walletInfo) {
+                sendResponse({ walletInfo: result.walletInfo });
+              } else {
+                sendResponse({ error: "No wallet info found" });
+              }
+            });
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+          });
 
+        break;
       case "validApi":
-        validApiCase(request, event)
-        break;
-
+        findUsableApi()
+          .then((usableApi) => {
+            console.log("Usable API:", usableApi);
+          })
+          .catch((error) => {
+            console.error(error.message);
+          });
       case "name":
-        nameCase(request, event)
+        getNameInfo()
+          .then((name) => {
+            sendResponse(name);
+          })
+          .catch((error) => {
+            console.error(error.message);
+          });
         break;
       case "userInfo":
-        userInfoCase(request, event)
+        getUserInfo()
+          .then((name) => {
+            sendResponse(name);
+          })
+          .catch((error) => {
+            sendResponse({ error: "User not authenticated" });
+            console.error(error.message);
+          });
         break;
       case "decryptWallet":
-        decryptWalletCase(request, event)
-          break;
+        {
+          const { password, wallet } = request.payload;
+
+          decryptWallet({
+            password,
+            wallet,
+            walletVersion,
+          })
+            .then((hasDecrypted) => {
+              sendResponse(hasDecrypted);
+            })
+            .catch((error) => {
+              sendResponse({ error: error?.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
       case "balance":
-        balanceCase(request, event)
-              break;
+        getBalanceInfo()
+          .then((balance) => {
+            sendResponse(balance);
+          })
+          .catch((error) => {
+            console.error(error.message);
+          });
+        break;
       case "ltcBalance":
-        ltcBalanceCase(request, event)
-              break;
-        case "sendCoin":
-          sendCoinCase(request, event)
-              break;
+        {
+          getLTCBalance()
+            .then((balance) => {
+              sendResponse(balance);
+            })
+            .catch((error) => {
+              console.error(error.message);
+            });
+        }
+        break;
+      case "sendCoin":
+        {
+          const { receiver, password, amount } = request.payload;
+          sendCoin({ receiver, password, amount })
+            .then(({ res }) => {
+              if (!res?.success) {
+                sendResponse({ error: res?.data?.message });
+                return;
+              }
+              sendResponse(true);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
 
-      default:
-        console.error("Unknown action:", request.action);
+        break;
+      case "inviteToGroup":
+        {
+          const { groupId, qortalAddress, inviteTime } = request.payload;
+          inviteToGroup({ groupId, qortalAddress, inviteTime })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "saveTempPublish":
+        {
+          const { data, key } = request.payload;
+          saveTempPublish({ data, key })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+          return true;
+        }
+        break;
+      case "getTempPublish":
+        {
+          getTempPublish()
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+
+      case "createGroup":
+        {
+          const {
+            groupName,
+            groupDescription,
+            groupType,
+            groupApprovalThreshold,
+            minBlock,
+            maxBlock,
+          } = request.payload;
+          createGroup({
+            groupName,
+            groupDescription,
+            groupType,
+            groupApprovalThreshold,
+            minBlock,
+            maxBlock,
+          })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "cancelInvitationToGroup":
+        {
+          const { groupId, qortalAddress } = request.payload;
+          cancelInvitationToGroup({ groupId, qortalAddress })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "leaveGroup":
+        {
+          const { groupId } = request.payload;
+          leaveGroup({ groupId })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "joinGroup":
+        {
+          const { groupId } = request.payload;
+          joinGroup({ groupId })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+
+      case "kickFromGroup":
+        {
+          const { groupId, qortalAddress, rBanReason } = request.payload;
+          kickFromGroup({ groupId, qortalAddress, rBanReason })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "banFromGroup":
+        {
+          const { groupId, qortalAddress, rBanReason, rBanTime } =
+            request.payload;
+          banFromGroup({ groupId, qortalAddress, rBanReason, rBanTime })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "addDataPublishes":
+        {
+          const { data, groupId, type } = request.payload;
+          addDataPublishes(data, groupId, type)
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+        break;
+      case "getDataPublishes":
+        {
+          const { groupId, type } = request.payload;
+          getDataPublishes(groupId, type)
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+        break;
+      case "addUserSettings":
+        {
+          const { keyValue } = request.payload;
+          addUserSettings({keyValue})
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+        break;
+      case "getUserSettings":
+        {
+          const { key } = request.payload;
+          getUserSettings({key})
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+        break;
+      case "cancelBan":
+        {
+          const { groupId, qortalAddress } = request.payload;
+          cancelBan({ groupId, qortalAddress })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "registerName":
+        {
+          const { name } = request.payload;
+          registerName({ name })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "makeAdmin":
+        {
+          const { groupId, qortalAddress } = request.payload;
+          makeAdmin({ groupId, qortalAddress })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "removeAdmin":
+        {
+          const { groupId, qortalAddress } = request.payload;
+          removeAdmin({ groupId, qortalAddress })
+            .then((res) => {
+              sendResponse(res);
+            })
+            .catch((error) => {
+              sendResponse({ error: error.message });
+              console.error(error.message);
+            });
+        }
+
+        break;
+
+      case "oauth": {
+        const { nodeBaseUrl, senderAddress, senderPublicKey, timestamp } =
+          request.payload;
+
+        listenForChatMessage({
+          nodeBaseUrl,
+          senderAddress,
+          senderPublicKey,
+          timestamp,
+        })
+          .then(({ secretCode }) => {
+            sendResponse(secretCode);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+
+        break;
+      }
+      case "setChatHeads": {
+        const { data } = request.payload;
+
+        setChatHeads({
+          data,
+        })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+
+        break;
+      }
+      case "getChatHeads": {
+        getChatHeads()
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+
+        break;
+      }
+      case "notification": {
+        const notificationId = "chat_notification_" + Date.now(); // Create a unique ID
+
+        const {} = request.payload;
+        chrome.notifications.create(notificationId, {
+          type: "basic",
+          iconUrl: "qort.png", // Add an appropriate icon for chat notifications
+          title: "New Group Message!",
+          message: "You have received a new message from one of your groups",
+          priority: 2, // Use the maximum priority to ensure it's noticeable
+          // buttons: [
+          //   { title: 'Go to group' }
+          // ]
+        });
+        // Set a timeout to clear the notification after 'timeout' milliseconds
+        setTimeout(() => {
+          chrome.notifications.clear(notificationId);
+        }, 3000);
+        sendResponse(true);
+        break;
+      }
+      case "addTimestampEnterChat": {
+        const { groupId, timestamp } = request.payload;
+        addTimestampEnterChat({ groupId, timestamp })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        break;
+      }
+
+      case "setApiKey": {
+        const { payload } = request;
+
+        // Save the apiKey in chrome.storage.local for persistence
+        chrome.storage.local.set({ apiKey: payload }, () => {
+          sendResponse(true);
+        });
+        return true;
+        break;
+      }
+      case "setCustomNodes": {
+        const { nodes } = request;
+
+        // Save the customNodes in chrome.storage.local for persistence
+        chrome.storage.local.set({ customNodes: nodes }, () => {
+          sendResponse(true);
+        });
+        return true;
+        break;
+      }
+      case "getApiKey": {
+        getApiKeyFromStorage()
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        return true;
+        break;
+      }
+      case "getCustomNodesFromStorage": {
+        getCustomNodesFromStorage()
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        return true;
+        break;
+      }
+      
+      case "notifyAdminRegenerateSecretKey": {
+        const { groupName, adminAddress } = request.payload;
+        notifyAdminRegenerateSecretKey({ groupName, adminAddress })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        break;
+      }
+
+      case "addGroupNotificationTimestamp": {
+        const { groupId, timestamp } = request.payload;
+        addTimestampGroupAnnouncement({
+          groupId,
+          timestamp,
+          seenTimestamp: true,
+        })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        break;
+      }
+      case "clearAllNotifications": {
+        clearAllNotifications()
+          .then((res) => {})
+          .catch((error) => {});
+        break;
+      }
+      case "setGroupData": {
+        const { groupId, secretKeyData, secretKeyResource, admins } =
+          request.payload;
+        setGroupData({
+          groupId,
+          secretKeyData,
+          secretKeyResource,
+          admins,
+        })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        break;
+      }
+      case "getGroupDataSingle": {
+        const { groupId } = request.payload;
+        getGroupDataSingle(groupId)
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        return true;
+        break;
+      }
+      case "getTimestampEnterChat": {
+        getTimestampEnterChat()
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        break;
+      }
+      case "getGroupNotificationTimestamp": {
+        getTimestampGroupAnnouncement()
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            sendResponse({ error: error.message });
+            console.error(error.message);
+          });
+        break;
+      }
+      case "authentication":
+        {
+          getSaveWallet()
+            .then(() => {
+              sendResponse(true);
+            })
+            .catch((error) => {
+              const popupUrl = chrome.runtime.getURL(
+                "index.html?secondary=true"
+              );
+
+              chrome.windows.getAll(
+                { populate: true, windowTypes: ["popup"] },
+                (windows) => {
+                  // Attempt to find an existing popup window that has a tab with the correct URL
+                  const existingPopup = windows.find(
+                    (w) =>
+                      w.tabs &&
+                      w.tabs.some(
+                        (tab) => tab.url && tab.url.startsWith(popupUrl)
+                      )
+                  );
+                  if (existingPopup) {
+                    // If the popup exists but is minimized or not focused, focus it
+                    chrome.windows.update(existingPopup.id, {
+                      focused: true,
+                      state: "normal",
+                    });
+                  } else {
+                    // No existing popup found, create a new one
+                    chrome.system.display.getInfo((displays) => {
+                      // Assuming the primary display is the first one (adjust logic as needed)
+                      const primaryDisplay = displays[0];
+                      const screenWidth = primaryDisplay.bounds.width;
+                      const windowHeight = 500; // Your window height
+                      const windowWidth = 400; // Your window width
+
+                      // Calculate left position for the window to appear on the right of the screen
+                      const leftPosition = screenWidth - windowWidth;
+
+                      // Calculate top position for the window, adjust as desired
+                      const topPosition =
+                        (primaryDisplay.bounds.height - windowHeight) / 2;
+
+                      chrome.windows.create(
+                        {
+                          url: chrome.runtime.getURL(
+                            "index.html?secondary=true"
+                          ),
+                          type: "popup",
+                          width: windowWidth,
+                          height: windowHeight,
+                          left: leftPosition,
+                          top: 0,
+                        },
+                        () => {
+                          removeDuplicateWindow(popupUrl);
+                        }
+                      );
+                    });
+                  }
+
+                  const interactionId = Date.now().toString(); // Simple example; consider a better unique ID
+
+                  setTimeout(() => {
+                    chrome.runtime.sendMessage({
+                      action: "SET_COUNTDOWN",
+                      payload: request.timeout ? 0.75 * request.timeout : 60,
+                    });
+                    chrome.runtime.sendMessage({
+                      action: "UPDATE_STATE_REQUEST_AUTHENTICATION",
+                      payload: {
+                        hostname,
+                        interactionId,
+                      },
+                    });
+                  }, 500);
+
+                  // Store sendResponse callback with the interaction ID
+                  pendingResponses.set(interactionId, sendResponse);
+                  let intervalId = null;
+                  const startTime = Date.now();
+                  const checkInterval = 3000; // Check every 3 seconds
+                  const timeout = request.timeout
+                    ? 0.75 * (request.timeout * 1000)
+                    : 60000; // Stop after 15 seconds
+
+                  const checkFunction = () => {
+                    getSaveWallet()
+                      .then(() => {
+                        clearInterval(intervalId); // Stop checking
+                        sendResponse(true); // Perform the success action
+                        chrome.runtime.sendMessage({
+                          action: "closePopup",
+                        });
+                      })
+                      .catch((error) => {
+                        // Handle error if needed
+                      });
+
+                    if (Date.now() - startTime > timeout) {
+                      sendResponse({
+                        error: "User has not authenticated, try again.",
+                      });
+                      clearInterval(intervalId); // Stop checking due to timeout
+
+                      // Handle timeout situation if needed
+                    }
+                  };
+
+                  intervalId = setInterval(checkFunction, checkInterval);
+                }
+              );
+            });
+        }
+        break;
+      case "buyOrder":
+        {
+          const { qortalAtAddresses, hostname, useLocal } = request.payload;
+          getTradesInfo(qortalAtAddresses)
+            .then((crosschainAtInfo) => {
+              const popupUrl = chrome.runtime.getURL(
+                "index.html?secondary=true"
+              );
+
+              chrome.windows.getAll(
+                { populate: true, windowTypes: ["popup"] },
+                (windows) => {
+                  // Attempt to find an existing popup window that has a tab with the correct URL
+                  const existingPopup = windows.find(
+                    (w) =>
+                      w.tabs &&
+                      w.tabs.some(
+                        (tab) => tab.url && tab.url.startsWith(popupUrl)
+                      )
+                  );
+                  if (existingPopup) {
+                    // If the popup exists but is minimized or not focused, focus it
+                    chrome.windows.update(existingPopup.id, {
+                      focused: true,
+                      state: "normal",
+                    });
+                  } else {
+                    // No existing popup found, create a new one
+                    chrome.system.display.getInfo((displays) => {
+                      // Assuming the primary display is the first one (adjust logic as needed)
+                      const primaryDisplay = displays[0];
+                      const screenWidth = primaryDisplay.bounds.width;
+                      const windowHeight = 500; // Your window height
+                      const windowWidth = 400; // Your window width
+
+                      // Calculate left position for the window to appear on the right of the screen
+                      const leftPosition = screenWidth - windowWidth;
+
+                      // Calculate top position for the window, adjust as desired
+                      const topPosition =
+                        (primaryDisplay.bounds.height - windowHeight) / 2;
+
+                      chrome.windows.create(
+                        {
+                          url: chrome.runtime.getURL(
+                            "index.html?secondary=true"
+                          ),
+                          type: "popup",
+                          width: windowWidth,
+                          height: windowHeight,
+                          left: leftPosition,
+                          top: 0,
+                        },
+                        () => {
+                          removeDuplicateWindow(popupUrl);
+                        }
+                      );
+                    });
+                  }
+
+                  const interactionId = Date.now().toString(); // Simple example; consider a better unique ID
+
+                  setTimeout(() => {
+                    chrome.runtime.sendMessage({
+                      action: "SET_COUNTDOWN",
+                      payload: request.timeout ? 0.9 * request.timeout : 20,
+                    });
+                    chrome.runtime.sendMessage({
+                      action: "UPDATE_STATE_REQUEST_BUY_ORDER",
+                      payload: {
+                        hostname,
+                        crosschainAtInfo,
+                        interactionId,
+                        useLocal
+                      },
+                    });
+                  }, 500);
+
+                  // Store sendResponse callback with the interaction ID
+                  pendingResponses.set(interactionId, sendResponse);
+                }
+              );
+            })
+            .catch((error) => {
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "connection":
+        {
+          const { hostname } = request.payload;
+
+          connection(hostname)
+            .then((isConnected) => {
+              if (
+                Object.keys(isConnected)?.length > 0 &&
+                isConnected[hostname]
+              ) {
+                sendResponse(true);
+              } else {
+                const popupUrl = chrome.runtime.getURL(
+                  "index.html?secondary=true"
+                );
+                chrome.windows.getAll(
+                  { populate: true, windowTypes: ["popup"] },
+                  (windows) => {
+                    // Attempt to find an existing popup window that has a tab with the correct URL
+                    const existingPopup = windows.find(
+                      (w) =>
+                        w.tabs &&
+                        w.tabs.some(
+                          (tab) => tab.url && tab.url.startsWith(popupUrl)
+                        )
+                    );
+
+                    if (existingPopup) {
+                      // If the popup exists but is minimized or not focused, focus it
+                      chrome.windows.update(existingPopup.id, {
+                        focused: true,
+                        state: "normal",
+                      });
+                    } else {
+                      // No existing popup found, create a new one
+                      chrome.system.display.getInfo((displays) => {
+                        // Assuming the primary display is the first one (adjust logic as needed)
+                        const primaryDisplay = displays[0];
+                        const screenWidth = primaryDisplay.bounds.width;
+                        const windowHeight = 500; // Your window height
+                        const windowWidth = 400; // Your window width
+
+                        // Calculate left position for the window to appear on the right of the screen
+                        const leftPosition = screenWidth - windowWidth;
+
+                        // Calculate top position for the window, adjust as desired
+                        const topPosition =
+                          (primaryDisplay.bounds.height - windowHeight) / 2;
+
+                        chrome.windows.create(
+                          {
+                            url: popupUrl,
+                            type: "popup",
+                            width: windowWidth,
+                            height: windowHeight,
+                            left: leftPosition,
+                            top: 0,
+                          },
+                          () => {
+                            removeDuplicateWindow(popupUrl);
+                          }
+                        );
+                      });
+                    }
+
+                    const interactionId = Date.now().toString(); // Simple example; consider a better unique ID
+
+                    setTimeout(() => {
+                      chrome.runtime.sendMessage({
+                        action: "SET_COUNTDOWN",
+                        payload: request.timeout ? 0.9 * request.timeout : 20,
+                      });
+                      chrome.runtime.sendMessage({
+                        action: "UPDATE_STATE_REQUEST_CONNECTION",
+                        payload: {
+                          hostname,
+                          interactionId,
+                        },
+                      });
+                    }, 500);
+
+                    // Store sendResponse callback with the interaction ID
+                    pendingResponses.set(interactionId, sendResponse);
+                  }
+                );
+              }
+            })
+            .catch((error) => {
+              console.error(error.message);
+            });
+        }
+
+        break;
+      case "sendQort":
+        {
+          const { amount, hostname, address, description } = request.payload;
+          const popupUrl = chrome.runtime.getURL("index.html?secondary=true");
+
+          chrome.windows.getAll(
+            { populate: true, windowTypes: ["popup"] },
+            (windows) => {
+              // Attempt to find an existing popup window that has a tab with the correct URL
+              const existingPopup = windows.find(
+                (w) =>
+                  w.tabs &&
+                  w.tabs.some((tab) => tab.url && tab.url.startsWith(popupUrl))
+              );
+              if (existingPopup) {
+                // If the popup exists but is minimized or not focused, focus it
+                chrome.windows.update(existingPopup.id, {
+                  focused: true,
+                  state: "normal",
+                });
+              } else {
+                // No existing popup found, create a new one
+                chrome.system.display.getInfo((displays) => {
+                  // Assuming the primary display is the first one (adjust logic as needed)
+                  const primaryDisplay = displays[0];
+                  const screenWidth = primaryDisplay.bounds.width;
+                  const windowHeight = 500; // Your window height
+                  const windowWidth = 400; // Your window width
+
+                  // Calculate left position for the window to appear on the right of the screen
+                  const leftPosition = screenWidth - windowWidth;
+
+                  // Calculate top position for the window, adjust as desired
+                  const topPosition =
+                    (primaryDisplay.bounds.height - windowHeight) / 2;
+
+                  chrome.windows.create(
+                    {
+                      url: chrome.runtime.getURL("index.html?secondary=true"),
+                      type: "popup",
+                      width: windowWidth,
+                      height: windowHeight,
+                      left: leftPosition,
+                      top: 0,
+                    },
+                    () => {
+                      removeDuplicateWindow(popupUrl);
+                    }
+                  );
+                });
+              }
+
+              const interactionId = Date.now().toString(); // Simple example; consider a better unique ID
+
+              setTimeout(() => {
+                chrome.runtime.sendMessage({
+                  action: "SET_COUNTDOWN",
+                  payload: (request.timeout ? request.timeout : 60) - 6,
+                });
+                chrome.runtime.sendMessage({
+                  action: "UPDATE_STATE_CONFIRM_SEND_QORT",
+                  payload: {
+                    amount,
+                    address,
+                    hostname,
+                    description,
+                    interactionId,
+                  },
+                });
+              }, 500);
+
+              // Store sendResponse callback with the interaction ID
+              pendingResponses.set(interactionId, sendResponse);
+            }
+          );
+        }
+
+        break;
+      case "responseToConnectionRequest":
+        {
+          const { hostname, isOkay } = request.payload;
+          const interactionId3 = request.payload.interactionId;
+          if (!isOkay) {
+            const originalSendResponse = pendingResponses.get(interactionId3);
+            if (originalSendResponse) {
+              originalSendResponse(false);
+              sendResponse(false);
+            }
+          } else {
+            const originalSendResponse = pendingResponses.get(interactionId3);
+            if (originalSendResponse) {
+              // Example of setting domain permission
+              chrome.storage.local.set({ [hostname]: true });
+
+              originalSendResponse(true);
+              sendResponse(true);
+            }
+          }
+
+          pendingResponses.delete(interactionId3);
+        }
+
+        break;
+      case "sendQortConfirmation":
+        const { password, amount, receiver, isDecline } = request.payload;
+        const interactionId2 = request.payload.interactionId;
+        // Retrieve the stored sendResponse callback
+        const originalSendResponse = pendingResponses.get(interactionId2);
+
+        if (originalSendResponse) {
+          if (isDecline) {
+            originalSendResponse({ error: "User has declined" });
+            sendResponse(false);
+            pendingResponses.delete(interactionId2);
+            return;
+          }
+          sendCoin({ password, amount, receiver }, true)
+            .then((res) => {
+              sendResponse(true);
+              // Use the sendResponse callback to respond to the original message
+              originalSendResponse(res);
+              // Remove the callback from the Map as it's no longer needed
+              pendingResponses.delete(interactionId2);
+            })
+            .catch((error) => {
+              console.error(error.message);
+              sendResponse({ error: error.message });
+              originalSendResponse({ error: error.message });
+            });
+        }
+
+        break;
+      case "buyOrderConfirmation":
+        {
+          const { crosschainAtInfo, isDecline, useLocal } = request.payload;
+          const interactionId2 = request.payload.interactionId;
+          // Retrieve the stored sendResponse callback
+          const originalSendResponse = pendingResponses.get(interactionId2);
+
+          if (originalSendResponse) {
+            if (isDecline) {
+              originalSendResponse({ error: "User has declined" });
+              sendResponse(false);
+              pendingResponses.delete(interactionId2);
+              return;
+            }
+            createBuyOrderTx({ crosschainAtInfo, useLocal })
+              .then((res) => {
+                sendResponse(true);
+                originalSendResponse(res);
+                pendingResponses.delete(interactionId2);
+              })
+              .catch((error) => {
+                console.error(error.message);
+                sendResponse({ error: error.message });
+                // originalSendResponse({ error: error.message });
+              });
+          }
+        }
+
+        break;
+      case "encryptAndPublishSymmetricKeyGroupChat": {
+        const { groupId, previousData, previousNumber } = request.payload;
+
+        encryptAndPublishSymmetricKeyGroupChat({
+          groupId,
+          previousData,
+          previousNumber,
+        })
+          .then(({ data, numberOfMembers }) => {
+            sendResponse(data);
+
+            if (!previousData) {
+              // first secret key of the group
+              sendChatGroup({
+                groupId,
+                typeMessage: undefined,
+                chatReference: undefined,
+                messageText: PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY,
+              })
+                .then(() => {})
+                .catch((error) => {
+                  console.error("1", error.message);
+                });
+              return;
+            }
+            sendChatNotification(data, groupId, previousData, numberOfMembers);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "publishGroupEncryptedResource": {
+        const { encryptedData, identifier } = request.payload;
+
+        publishGroupEncryptedResource({
+          encryptedData,
+          identifier,
+        })
+          .then((data) => {
+            sendResponse(data);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+        return true;
+        break;
+      }
+      case "publishOnQDN": {
+        const { data, identifier, service, title,
+          description,
+          category,
+          tag1,
+          tag2,
+          tag3,
+          tag4,
+          tag5, uploadType } = request.payload;
+
+        publishOnQDN({
+          data,
+          identifier,
+          service,
+          title,
+          description,
+          category,
+          tag1,
+          tag2,
+          tag3,
+          tag4,
+          tag5,
+          uploadType
+        })
+          .then((data) => {
+            sendResponse(data);
+          })
+          .catch((error) => {
+            console.error(error?.message);
+            sendResponse({ error: error?.message || 'Unable to publish' });
+          });
+        return true;
+        break;
+      }
+      case "handleActiveGroupDataFromSocket": {
+        const { groups, directs } = request.payload;
+        handleActiveGroupDataFromSocket({
+          groups,
+          directs,
+        })
+          .then((data) => {
+            sendResponse(true);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "getThreadActivity": {
+        checkThreads(true)
+          .then((data) => {
+            sendResponse(data);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+
+      case "updateThreadActivity": {
+        const { threadId, qortalName, groupId, thread } = request.payload;
+
+        updateThreadActivity({ threadId, qortalName, groupId, thread })
+          .then(() => {
+            sendResponse(true);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "decryptGroupEncryption": {
+        const { data } = request.payload;
+
+        decryptGroupEncryption({ data })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "encryptSingle": {
+        const { data, secretKeyObject, typeNumber } = request.payload;
+
+        encryptSingle({ data64: data, secretKeyObject: secretKeyObject, typeNumber })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "decryptSingle": {
+        const { data, secretKeyObject, skipDecodeBase64 } = request.payload;
+
+        decryptSingleFunc({ messages: data, secretKeyObject, skipDecodeBase64 })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "pauseAllQueues": {
+        pauseAllQueues();
+        sendResponse(true);
+
+        break;
+      
+      }
+      case "resumeAllQueues": {
+        resumeAllQueues();
+        sendResponse(true);
+
+        break;
+      }
+      case "checkLocal": {
+        checkLocalFunc()
+        .then((res) => {
+          sendResponse(res);
+        })
+        .catch((error) => {
+          console.error(error.message);
+          sendResponse({ error: error.message });
+        });
+     
+
+        break;
+      }
+      case "decryptSingleForPublishes": {
+        const { data, secretKeyObject, skipDecodeBase64 } = request.payload;
+
+        decryptSingleForPublishes({
+          messages: data,
+          secretKeyObject,
+          skipDecodeBase64,
+        })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+
+      case "decryptDirect": {
+        const { data, involvingAddress } = request.payload;
+
+        decryptDirectFunc({ messages: data, involvingAddress })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+
+      case "sendChatGroup": {
+        const {
+          groupId,
+          typeMessage = undefined,
+          chatReference = undefined,
+          messageText,
+        } = request.payload;
+
+        sendChatGroup({ groupId, typeMessage, chatReference, messageText })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "sendChatDirect": {
+        const {
+          directTo,
+          typeMessage = undefined,
+          chatReference = undefined,
+          messageText,
+          publicKeyOfRecipient,
+          address,
+          otherData
+        } = request.payload;
+        
+        sendChatDirect({
+          directTo,
+          chatReference,
+          messageText,
+          typeMessage,
+          publicKeyOfRecipient,
+          address,
+          otherData
+        })
+          .then((res) => {
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(error.message);
+            sendResponse({ error: error.message });
+          });
+
+        break;
+      }
+      case "setupGroupWebsocket": {
+        checkNewMessages();
+        checkThreads();
+        sendResponse(true);
+
+        break;
+      }
+
+      case "logout":
+        {
+          try {
+            const logoutFunc = async () => {
+              forceCloseWebSocket();
+              clearAllQueues();
+              if (interval) {
+                // for announcement notification
+                clearInterval(interval);
+              }
+
+              const wallet = await getSaveWallet();
+              const address = wallet.address0;
+              const key1 = `tempPublish-${address}`;
+              const key2 = `group-data-${address}`;
+              const key3 = `${address}-publishData`;
+              chrome.storage.local.remove(
+                [
+                  "keyPair",
+                  "walletInfo",
+                  "active-groups-directs",
+                  key1,
+                  key2,
+                  key3,
+                ],
+                () => {
+                  if (chrome.runtime.lastError) {
+                    // Handle error
+                    console.error(chrome.runtime.lastError.message);
+                  } else {
+                    chrome.tabs.query({}, function (tabs) {
+                      tabs.forEach((tab) => {
+                        chrome.tabs.sendMessage(tab.id, { type: "LOGOUT" });
+                      });
+                    });
+                    // Data removed successfully
+                    sendResponse(true);
+                  }
+                }
+              );
+            };
+            logoutFunc();
+          } catch (error) {}
+        }
+
+        break;
     }
-  });
-}
-
-setupMessageListener()
-
+  }
+  return true;
+});
 
 // Function to save window position and size
 const saveWindowBounds = (windowId) => {
