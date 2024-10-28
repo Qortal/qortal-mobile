@@ -204,21 +204,15 @@ const ListOfMembers = ({
       });
       setIsLoadingRemoveAdmin(true);
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "removeAdmin",
-            payload: {
-              groupId,
-              qortalAddress: address,
-            },
-          },
-          (response) => {
-       
+        window.sendMessage("removeAdmin", {
+          groupId,
+          qortalAddress: address,
+        })
+          .then((response) => {
             if (!response?.error) {
               setInfoSnack({
                 type: "success",
-                message:
-                  "Successfully removed member as an admin. It may take a couple of minutes for the changes to propagate",
+                message: "Successfully removed member as an admin. It may take a couple of minutes for the changes to propagate",
               });
               setOpenSnack(true);
               handlePopoverClose();
@@ -231,8 +225,16 @@ const ListOfMembers = ({
             });
             setOpenSnack(true);
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
+          });
+        
       });
     } catch (error) {
     } finally {

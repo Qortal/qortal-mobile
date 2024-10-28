@@ -21,6 +21,7 @@ import {
   leaveGroup,
   makeAdmin,
   registerName,
+  removeAdmin,
   saveTempPublish,
   sendCoin,
   walletVersion,
@@ -681,6 +682,33 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "makeAdmin",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function removeAdminCase(request, event) {
+    try {
+      const { groupId, qortalAddress } = request.payload;
+      const response = await removeAdmin({groupId, qortalAddress});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "removeAdmin",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "removeAdmin",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

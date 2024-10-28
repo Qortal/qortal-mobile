@@ -49,6 +49,7 @@ import {
   makeAdminCase,
   nameCase,
   registerNameCase,
+  removeAdminCase,
   saveTempPublishCase,
   sendCoinCase,
   userInfoCase,
@@ -2189,7 +2190,7 @@ export async function makeAdmin({ groupId, qortalAddress }) {
   return res;
 }
 
-async function removeAdmin({ groupId, qortalAddress }) {
+export async function removeAdmin({ groupId, qortalAddress }) {
   const lastReference = await getLastRef();
   const resKeyPair = await getKeyPair();
   const parsedData = JSON.parse(resKeyPair);
@@ -2963,13 +2964,16 @@ function setupMessageListener() {
       case "cancelBan":
         cancelBanCase(request, event);
         break;
-        case "registerName":
-          registerNameCase(request, event);
-          break;
+      case "registerName":
+        registerNameCase(request, event);
+        break;
 
-          case "makeAdmin":
-            makeAdminCase(request, event);
-            break;
+      case "makeAdmin":
+        makeAdminCase(request, event);
+        break;
+      case "removeAdmin":
+        removeAdminCase(request, event);
+        break;
       default:
         console.error("Unknown action:", request.action);
     }
