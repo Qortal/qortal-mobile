@@ -1,8 +1,7 @@
 // @ts-nocheck
-// import { encryptAndPublishSymmetricKeyGroupChat } from "./backgroundFunctions/encryption";
 
 import './qortalRequests'
-import { constant, isArray } from "lodash";
+import {  isArray } from "lodash";
 import {
   decryptGroupEncryption,
   encryptAndPublishSymmetricKeyGroupChat,
@@ -11,7 +10,6 @@ import {
   uint8ArrayToObject,
 } from "./backgroundFunctions/encryption";
 import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from "./constants/codes";
-import { QORT_DECIMALS } from "./constants/constants";
 import Base58 from "./deps/Base58";
 import {
   base64ToUint8Array,
@@ -51,7 +49,7 @@ export const groupApiLocal = "http://127.0.0.1:12391";
 export const groupApiSocketLocal = "ws://127.0.0.1:12391";
 const timeDifferenceForNotificationChatsBackground = 600000;
 const requestQueueAnnouncements = new RequestQueueWithPromise(1);
-let isMobile = false;
+let isMobile = true;
 
 
 const isMobileDevice = () => {
@@ -131,14 +129,7 @@ const getCustomNodesFromStorage = async () => {
   });
 };
 
-// const getArbitraryEndpoint = ()=> {
-//   const apiKey = await getApiKeyFromStorage(); // Retrieve apiKey asynchronously
-//   if (apiKey) {
-//     return `/arbitrary/resources/search`;
-//   } else {
-//     return `/arbitrary/resources/searchsimple`;
-//   }
-// }
+
 const getArbitraryEndpoint = async () => {
   const apiKey = await getApiKeyFromStorage(); // Retrieve apiKey asynchronously
   if (apiKey) {
@@ -2519,17 +2510,6 @@ async function listenForChatMessageForBuyOrder({
       senderPublicKey
     );
 
-    // const resKeyPair = await getKeyPair()
-    //   const parsedData = JSON.parse(resKeyPair)
-    //   const uint8PrivateKey = Base58.decode(parsedData.privateKey);
-    //   const uint8PublicKey = Base58.decode(parsedData.publicKey);
-    //   const keyPair = {
-    //     privateKey: uint8PrivateKey,
-    //     publicKey: uint8PublicKey
-    //   };
-
-    // const decodedMessage =  decryptChatMessage(encodedMessageObj.data, keyPair.privateKey, senderPublicKey, encodedMessageObj.reference)
-    // const parsedMessage = JSON.parse(decodedMessage)
     chrome.tabs.query({}, function (tabs) {
       tabs.forEach((tab) => {
         chrome.tabs.sendMessage(tab.id, {
@@ -3852,9 +3832,6 @@ chrome?.runtime?.onMessage.addListener((request, sender, sendResponse) => {
               originalSendResponse(res);
               // Remove the callback from the Map as it's no longer needed
               pendingResponses.delete(interactionId2);
-              // chrome.runtime.sendMessage({
-              //   action: "closePopup",
-              // });
             })
             .catch((error) => {
               console.error(error.message);
@@ -4175,30 +4152,6 @@ chrome?.runtime?.onMessage.addListener((request, sender, sendResponse) => {
       case "setupGroupWebsocket": {
         checkNewMessages();
         checkThreads();
-
-        // if(socket){
-        //   if(groups){
-        //     console.log('hasgroups1')
-        //     chrome.runtime.sendMessage({
-        //       action: "SET_GROUPS",
-        //       payload: groups,
-        //     });
-        //   }
-        //   if(directs){
-        //     console.log('hasgroups1')
-        //     chrome.runtime.sendMessage({
-        //       action: "SET_DIRECTS",
-        //       payload: directs,
-        //     });
-        //   }
-        //   sendResponse(true)
-        //   return
-        // }
-        // setTimeout(() => {
-        //   // initWebsocketMessageGroup()
-        //   listenForNewGroupAnnouncements()
-        //   listenForThreadUpdates()
-        // }, 200);
         sendResponse(true);
 
         break;
@@ -4559,9 +4512,6 @@ chrome.notifications?.onClicked?.addListener((notificationId) => {
 // Reconnect when service worker wakes up
 chrome.runtime?.onStartup.addListener(() => {
   console.log("Service worker started up, reconnecting WebSocket...");
-  // initWebsocketMessageGroup();
-  // listenForNewGroupAnnouncements()
-  // listenForThreadUpdates()
 });
 
 chrome.runtime?.onInstalled.addListener((details) => {
@@ -4579,10 +4529,7 @@ chrome.runtime?.onInstalled.addListener((details) => {
     // Optional: Handle Chrome-specific updates if necessary
   }
 
-  // Initialize WebSocket and other required listeners
-  // initWebsocketMessageGroup();
-  // listenForNewGroupAnnouncements();
-  // listenForThreadUpdates();
+
 });
 
 // Check if the alarm already exists before creating it
@@ -4596,7 +4543,6 @@ chrome.alarms?.get("checkForNotifications", (existingAlarm) => {
 chrome.alarms?.onAlarm.addListener(async (alarm) => {
   try {
     if (alarm.name === "checkForNotifications") {
-      // initWebsocketMessageGroup(address);
       const wallet = await getSaveWallet();
       const address = wallet.address0;
       if (!address) return;

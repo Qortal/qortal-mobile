@@ -6,8 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+
 import "./App.css";
 import { useDropzone } from "react-dropzone";
 import {
@@ -149,7 +148,7 @@ const defaultValues: MyContextInterface = {
     message: "",
   },
 };
-export let isMobile = false;
+export let isMobile = true;
 
 const isMobileDevice = () => {
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
