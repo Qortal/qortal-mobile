@@ -48,22 +48,21 @@ export const requestQueuePublishedAccouncements = new RequestQueueWithPromise(
 
 export const saveTempPublish = async ({ data, key }: any) => {
   return new Promise((res, rej) => {
-    chrome?.runtime?.sendMessage(
-      {
-        action: "saveTempPublish",
-        payload: {
-          data,
-          key,
-        },
-      },
-      (response) => {
+    window.sendMessage("saveTempPublish", {
+      data,
+      key,
+    })
+      .then((response) => {
         if (!response?.error) {
           res(response);
           return;
         }
         rej(response.error);
-      }
-    );
+      })
+      .catch((error) => {
+        rej(error.message || "An error occurred");
+      });
+    
   });
 };
 

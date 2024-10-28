@@ -28,7 +28,7 @@ import { validateAddress } from "./utils/validateAddress";
 import { Sha256 } from "asmcrypto.js";
 import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMultipleRequest";
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
-import { balanceCase, decryptWalletCase, getWalletInfoCase, ltcBalanceCase, nameCase, sendCoinCase, userInfoCase, validApiCase, versionCase } from './background-cases';
+import { balanceCase, decryptWalletCase, getWalletInfoCase, inviteToGroupCase, ltcBalanceCase, nameCase, saveTempPublishCase, sendCoinCase, userInfoCase, validApiCase, versionCase } from './background-cases';
 
 export function cleanUrl(url) {
   return url?.replace(/^(https?:\/\/)?(www\.)?/, '');
@@ -2274,7 +2274,7 @@ async function createGroup({
     throw new Error("Transaction was not able to be processed");
   return res;
 }
-async function inviteToGroup({ groupId, qortalAddress, inviteTime }) {
+export async function inviteToGroup({ groupId, qortalAddress, inviteTime }) {
   const address = await getNameOrAddress(qortalAddress);
   if (!address) throw new Error("Cannot find user");
   const lastReference = await getLastRef();
@@ -2616,7 +2616,7 @@ async function getTempPublish() {
   }
 }
 
-async function saveTempPublish({ data, key }) {
+export async function saveTempPublish({ data, key }) {
   const existingTemp = await getTempPublish();
   const wallet = await getSaveWallet();
   const address = wallet.address0;
@@ -2870,10 +2870,15 @@ function setupMessageListener() {
       case "ltcBalance":
         ltcBalanceCase(request, event)
               break;
-        case "sendCoin":
-          sendCoinCase(request, event)
+      case "sendCoin":
+        sendCoinCase(request, event)
               break;
-
+      case "inviteToGroup":
+        inviteToGroupCase(request, event)
+              break;
+              case "saveTempPublish":
+                saveTempPublishCase(request, event)
+                      break;
       default:
         console.error("Unknown action:", request.action);
     }

@@ -6,6 +6,8 @@ import {
   getLTCBalance,
   getNameInfo,
   getUserInfo,
+  inviteToGroup,
+  saveTempPublish,
   sendCoin,
   walletVersion,
 } from "./background";
@@ -224,6 +226,60 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "sendCoin",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function inviteToGroupCase(request, event) {
+    try {
+      const { groupId, qortalAddress, inviteTime } = request.payload;
+      const response = await inviteToGroup({groupId, qortalAddress, inviteTime});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "inviteToGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "inviteToGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function saveTempPublishCase(request, event) {
+    try {
+      const { data, key } = request.payload;
+      const response = await saveTempPublish({data, key});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "saveTempPublish",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "saveTempPublish",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

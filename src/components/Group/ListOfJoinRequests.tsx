@@ -76,40 +76,54 @@ export const ListOfJoinRequests = ({ groupId, setInfoSnack, setOpenSnack, show }
       })
       setIsLoadingAccept(true)
       await new Promise((res, rej)=> {
-          chrome?.runtime?.sendMessage({ action: "inviteToGroup", payload: {
-            groupId,
-            qortalAddress: address,
-            inviteTime: 10800,
-        }}, (response) => {
-         
+        window.sendMessage("inviteToGroup", {
+          groupId,
+          qortalAddress: address,
+          inviteTime: 10800,
+        })
+          .then((response) => {
             if (!response?.error) {
-              setIsLoadingAccept(false)
+              setIsLoadingAccept(false);
               setInfoSnack({
                 type: "success",
                 message: "Successfully accepted join request. It may take a couple of minutes for the changes to propagate",
               });
               setOpenSnack(true);
               handlePopoverClose();
-              res(response)
-              setTxList((prev)=> [{
-                ...response,
-                type: 'join-request-accept',
-                label: `Accepted join request: awaiting confirmation`,
-                labelDone: `User successfully joined!`,
-                done: false,
-                groupId,
-                qortalAddress: address
-             
-              }, ...prev])
-              return
+              res(response);
+              
+              setTxList((prev) => [
+                {
+                  ...response,
+                  type: 'join-request-accept',
+                  label: `Accepted join request: awaiting confirmation`,
+                  labelDone: `User successfully joined!`,
+                  done: false,
+                  groupId,
+                  qortalAddress: address,
+                },
+                ...prev,
+              ]);
+              
+              return;
             }
+        
             setInfoSnack({
               type: "error",
               message: response?.error,
             });
             setOpenSnack(true);
-            rej(response.error)
+            rej(response.error);
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error?.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
           });
+        
         })  
     } catch (error) {
       

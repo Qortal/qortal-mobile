@@ -26,17 +26,12 @@ export const InviteMember = ({ groupId, setInfoSnack, setOpenSnack, show }) => {
       setIsLoadingInvite(true)
       if (!expiryTime || !value) return;
       new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "inviteToGroup",
-            payload: {
-              groupId,
-              qortalAddress: value,
-              inviteTime: +expiryTime,
-            },
-          },
-          (response) => {
-          
+        window.sendMessage("inviteToGroup", {
+          groupId,
+          qortalAddress: value,
+          inviteTime: +expiryTime,
+        })
+          .then((response) => {
             if (!response?.error) {
               setInfoSnack({
                 type: "success",
@@ -44,9 +39,9 @@ export const InviteMember = ({ groupId, setInfoSnack, setOpenSnack, show }) => {
               });
               setOpenSnack(true);
               res(response);
-
+        
               setValue("");
-              return
+              return;
             }
             setInfoSnack({
               type: "error",
@@ -54,8 +49,16 @@ export const InviteMember = ({ groupId, setInfoSnack, setOpenSnack, show }) => {
             });
             setOpenSnack(true);
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error?.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
+          });
+        
       });
     } catch (error) {} finally {
       setIsLoadingInvite(false)
