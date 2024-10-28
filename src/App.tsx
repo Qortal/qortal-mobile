@@ -105,7 +105,7 @@ import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
 import { canSaveSettingToQdnAtom, fullScreenAtom, hasSettingsChangedAtom, oldPinnedAppsAtom, settingsLocalLastUpdatedAtom, settingsQDNLastUpdatedAtom, sortablePinnedAppsAtom } from "./atoms/global";
 import { useAppFullScreen } from "./useAppFullscreen";
 import { NotAuthenticated } from "./ExtStates/NotAuthenticated";
-import { sendMessageBackground, sendMessageState } from "./messaging/messagesToBackground";
+
 
 type extStates =
   | "not-authenticated"

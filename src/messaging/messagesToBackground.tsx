@@ -28,27 +28,30 @@ window.addEventListener("message", (event) => {
   }
 });
 
-// Define the sendMessage function
 export const sendMessageBackground = (action, data = {}, timeout = 60000) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const requestId = generateRequestId(); // Unique ID for each request
-    callbackMap.set(requestId, { resolve }); // Store resolve callback only
+    callbackMap.set(requestId, { resolve, reject }); // Store both resolve and reject callbacks
 
     // Send the message with `backgroundMessage` type
     window.postMessage({ type: "backgroundMessage", action, requestId, payload: data }, "*");
 
-    // Set up a timeout to automatically resolve with an error if no response is received
+    // Set up a timeout to automatically reject if no response is received
     const timeoutId = setTimeout(() => {
       // Remove the callback to prevent memory leaks
       callbackMap.delete(requestId);
-      resolve({ error: "timeout", message: `Request timed out after ${timeout} ms` });
+      reject({ error: "timeout", message: `Request timed out after ${timeout} ms` });
     }, timeout);
 
-    // Adjust resolve to clear the timeout when a response arrives
+    // Adjust resolve/reject to clear the timeout when a response arrives
     callbackMap.set(requestId, {
       resolve: (response) => {
         clearTimeout(timeoutId); // Clear the timeout if the response is received in time
         resolve(response);
+      },
+      reject: (error) => {
+        clearTimeout(timeoutId); // Clear the timeout if an error occurs
+        reject(error);
       }
     });
   }).then((response) => {
@@ -61,6 +64,5 @@ export const sendMessageBackground = (action, data = {}, timeout = 60000) => {
   });
 };
 
-
-
+// Attach to window for global access
 window.sendMessage = sendMessageBackground;
