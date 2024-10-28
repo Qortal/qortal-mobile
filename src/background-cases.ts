@@ -1,15 +1,20 @@
 import {
+    addDataPublishes,
+    banFromGroup,
     cancelInvitationToGroup,
     createGroup,
   decryptWallet,
   findUsableApi,
   getBalanceInfo,
+  getDataPublishes,
   getKeyPair,
   getLTCBalance,
   getNameInfo,
   getTempPublish,
   getUserInfo,
   inviteToGroup,
+  joinGroup,
+  kickFromGroup,
   leaveGroup,
   saveTempPublish,
   sendCoin,
@@ -401,6 +406,142 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "leaveGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function joinGroupCase(request, event) {
+    try {
+      const { groupId } = request.payload;
+      const response = await joinGroup({groupId});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "joinGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "joinGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function kickFromGroupCase(request, event) {
+    try {
+      const { groupId, qortalAddress, rBanReason } = request.payload;
+      const response = await kickFromGroup({groupId, qortalAddress, rBanReason});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "kickFromGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "kickFromGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function banFromGroupCase(request, event) {
+    try {
+      const { groupId, qortalAddress, rBanReason, rBanTime } = request.payload;
+      const response = await banFromGroup({groupId, qortalAddress, rBanReason, rBanTime});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "banFromGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "banFromGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function addDataPublishesCase(request, event) {
+    try {
+      const { data, groupId, type } = request.payload;
+      const response = await addDataPublishes({data, groupId, type});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addDataPublishes",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addDataPublishes",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+
+  export async function getDataPublishesCase(request, event) {
+    try {
+      const { groupId, type } = request.payload;
+      const response = await getDataPublishes({groupId, type});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getDataPublishes",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getDataPublishes",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

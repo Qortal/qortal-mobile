@@ -108,39 +108,42 @@ export const AddGroupList = ({ setInfoSnack, setOpenSnack }) => {
           })
       setIsLoading(true);
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "joinGroup",
-            payload: {
-              groupId,
-            },
-          },
-          (response) => {
-          
+        window.sendMessage("joinGroup", {
+          groupId,
+        })
+          .then((response) => {
             if (!response?.error) {
               setInfoSnack({
                 type: "success",
                 message: "Successfully requested to join group. It may take a couple of minutes for the changes to propagate",
               });
-              if(isOpen){
-                setTxList((prev)=> [{
-                  ...response,
-                  type: 'joined-group',
-                  label: `Joined Group ${group?.groupName}: awaiting confirmation`,
-                  labelDone: `Joined Group ${group?.groupName}: success !`,
-                  done: false,
-                  groupId,
-                }, ...prev])
+        
+              if (isOpen) {
+                setTxList((prev) => [
+                  {
+                    ...response,
+                    type: 'joined-group',
+                    label: `Joined Group ${group?.groupName}: awaiting confirmation`,
+                    labelDone: `Joined Group ${group?.groupName}: success!`,
+                    done: false,
+                    groupId,
+                  },
+                  ...prev,
+                ]);
               } else {
-                setTxList((prev)=> [{
-                  ...response,
-                  type: 'joined-group-request',
-                  label: `Requested to join Group ${group?.groupName}: awaiting confirmation`,
-                  labelDone: `Requested to join Group ${group?.groupName}: success !`,
-                  done: false,
-                  groupId,
-                }, ...prev])
+                setTxList((prev) => [
+                  {
+                    ...response,
+                    type: 'joined-group-request',
+                    label: `Requested to join Group ${group?.groupName}: awaiting confirmation`,
+                    labelDone: `Requested to join Group ${group?.groupName}: success!`,
+                    done: false,
+                    groupId,
+                  },
+                  ...prev,
+                ]);
               }
+        
               setOpenSnack(true);
               handlePopoverClose();
               res(response);
@@ -153,8 +156,16 @@ export const AddGroupList = ({ setInfoSnack, setOpenSnack }) => {
               setOpenSnack(true);
               rej(response.error);
             }
-          }
-        );
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
+          });
+        
       });
       setIsLoading(false);
     } catch (error) {} finally {

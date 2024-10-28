@@ -221,22 +221,22 @@ export const decryptResource = async (data: string) => {
 export const addDataPublishesFunc = async (data: string, groupId, type) => {
   try {
     return new Promise((res, rej) => {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "addDataPublishes",
-          payload: {
-            data,
-            groupId,
-            type,
-          },
-        },
-        (response) => {
+      window.sendMessage("addDataPublishes", {
+        data,
+        groupId,
+        type,
+      })
+        .then((response) => {
           if (!response?.error) {
             res(response);
+            return;
           }
           rej(response.error);
-        }
-      );
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     });
   } catch (error) {}
 };
@@ -244,21 +244,21 @@ export const addDataPublishesFunc = async (data: string, groupId, type) => {
 export const getDataPublishesFunc = async (groupId, type) => {
   try {
     return new Promise((res, rej) => {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "getDataPublishes",
-          payload: {
-            groupId,
-            type,
-          },
-        },
-        (response) => {
+      window.sendMessage("getDataPublishes", {
+        groupId,
+        type,
+      })
+        .then((response) => {
           if (!response?.error) {
             res(response);
+            return;
           }
           rej(response.error);
-        }
-      );
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     });
   } catch (error) {}
 };

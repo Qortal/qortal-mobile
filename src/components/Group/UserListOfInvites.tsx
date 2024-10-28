@@ -85,37 +85,47 @@ export const UserListOfInvites = ({myAddress, setInfoSnack, setOpenSnack}) => {
         setIsLoading(true);
 
         await new Promise((res, rej)=> {
-            chrome?.runtime?.sendMessage({ action: "joinGroup", payload: {
-                groupId,
-          }}, (response) => {
-        
+          window.sendMessage("joinGroup", {
+            groupId,
+          })
+            .then((response) => {
               if (!response?.error) {
-                setTxList((prev)=> [{
-                  ...response,
-                  type: 'joined-group',
-                  label: `Joined Group ${groupName}: awaiting confirmation`,
-                  labelDone: `Joined Group ${groupName}: success !`,
-                  done: false,
-                  groupId,
-               
-                }, ...prev])
-                res(response)
+                setTxList((prev) => [
+                  {
+                    ...response,
+                    type: 'joined-group',
+                    label: `Joined Group ${groupName}: awaiting confirmation`,
+                    labelDone: `Joined Group ${groupName}: success!`,
+                    done: false,
+                    groupId,
+                  },
+                  ...prev,
+                ]);
+                res(response);
                 setInfoSnack({
                   type: "success",
                   message: "Successfully requested to join group. It may take a couple of minutes for the changes to propagate",
                 });
                 setOpenSnack(true);
                 handlePopoverClose();
-                return
+                return;
               }
               setInfoSnack({
                 type: "error",
                 message: response?.error,
               });
               setOpenSnack(true);
-              rej(response.error)
-
+              rej(response.error);
+            })
+            .catch((error) => {
+              setInfoSnack({
+                type: "error",
+                message: error.message || "An error occurred",
+              });
+              setOpenSnack(true);
+              rej(error);
             });
+          
           })  
 
       } catch (error) {

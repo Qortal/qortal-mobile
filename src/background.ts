@@ -29,13 +29,18 @@ import { Sha256 } from "asmcrypto.js";
 import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMultipleRequest";
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
 import {
+  addDataPublishesCase,
   balanceCase,
+  banFromGroupCase,
   cancelInvitationToGroupCase,
   createGroupCase,
   decryptWalletCase,
+  getDataPublishesCase,
   getTempPublishCase,
   getWalletInfoCase,
   inviteToGroupCase,
+  joinGroupCase,
+  kickFromGroupCase,
   leaveGroupCase,
   ltcBalanceCase,
   nameCase,
@@ -1251,7 +1256,7 @@ export async function getPublicKey(receiver) {
 
 const MAX_STORAGE_SIZE = 3 * 1024 * 1024; // 3MB in bytes
 
-async function getDataPublishes(groupId, type) {
+export async function getDataPublishes(groupId, type) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
 
@@ -1272,7 +1277,7 @@ async function getDataPublishes(groupId, type) {
   });
 }
 
-async function addDataPublishes(newData, groupId, type) {
+export async function addDataPublishes(newData, groupId, type) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const nameIdentifier = `${newData.name}-${newData.identifier}`;
@@ -2206,7 +2211,7 @@ async function removeAdmin({ groupId, qortalAddress }) {
   return res;
 }
 
-async function banFromGroup({
+export async function banFromGroup({
   groupId,
   qortalAddress,
   rBanReason = "",
@@ -2240,7 +2245,7 @@ async function banFromGroup({
   return res;
 }
 
-async function kickFromGroup({ groupId, qortalAddress, rBanReason = "" }) {
+export async function kickFromGroup({ groupId, qortalAddress, rBanReason = "" }) {
   const lastReference = await getLastRef();
   const resKeyPair = await getKeyPair();
   const parsedData = JSON.parse(resKeyPair);
@@ -2925,6 +2930,23 @@ function setupMessageListener() {
             break;
             case "leaveGroup":
               leaveGroupCase(request, event);
+            break;
+            case "joinGroup":
+              joinGroupCase(request, event);
+            break;
+            case "kickFromGroup":
+              kickFromGroupCase(request, event);
+            break;
+            case "banFromGroup":
+              banFromGroupCase(request, event);
+            break;
+
+            case "addDataPublishes":
+              addDataPublishesCase(request, event);
+            break;
+
+            case "getDataPublishes":
+              getDataPublishesCase(request, event);
             break;
       default:
         console.error("Unknown action:", request.action);

@@ -63,21 +63,15 @@ const ListOfMembers = ({
 
       setIsLoadingKick(true);
       new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "kickFromGroup",
-            payload: {
-              groupId,
-              qortalAddress: address,
-            },
-          },
-          (response) => {
-
+        window.sendMessage("kickFromGroup", {
+          groupId,
+          qortalAddress: address,
+        })
+          .then((response) => {
             if (!response?.error) {
               setInfoSnack({
                 type: "success",
-                message:
-                  "Successfully kicked member from group. It may take a couple of minutes for the changes to propagate",
+                message: "Successfully kicked member from group. It may take a couple of minutes for the changes to propagate",
               });
               setOpenSnack(true);
               handlePopoverClose();
@@ -90,8 +84,16 @@ const ListOfMembers = ({
             });
             setOpenSnack(true);
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
+          });
+        
       });
     } catch (error) {
     } finally {
@@ -107,22 +109,16 @@ const ListOfMembers = ({
       });
       setIsLoadingBan(true);
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "banFromGroup",
-            payload: {
-              groupId,
-              qortalAddress: address,
-              rBanTime: 0,
-            },
-          },
-          (response) => {
-      
+        window.sendMessage("banFromGroup", {
+          groupId,
+          qortalAddress: address,
+          rBanTime: 0,
+        })
+          .then((response) => {
             if (!response?.error) {
               setInfoSnack({
                 type: "success",
-                message:
-                  "Successfully banned member from group. It may take a couple of minutes for the changes to propagate",
+                message: "Successfully banned member from group. It may take a couple of minutes for the changes to propagate",
               });
               setOpenSnack(true);
               handlePopoverClose();
@@ -135,8 +131,16 @@ const ListOfMembers = ({
             });
             setOpenSnack(true);
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
+          });
+        
       });
     } catch (error) {
     } finally {
