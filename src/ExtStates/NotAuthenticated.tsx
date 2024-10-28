@@ -90,14 +90,16 @@ export const NotAuthenticated = ({
   }, []);
 
   useEffect(() => {
-    chrome?.runtime?.sendMessage(
-      { action: "getCustomNodesFromStorage" },
-      (response) => {
-        if (response) {
-          setCustomNodes(response || []);
-        }
+    window.sendMessage("getCustomNodesFromStorage")
+    .then((response) => {
+      if (response) {
+        setCustomNodes(response || []);
       }
-    );
+    })
+    .catch((error) => {
+      console.error("Failed to get custom nodes from storage:", error.message || "An error occurred");
+    });
+  
   }, []);
 
   useEffect(()=> {
@@ -147,19 +149,21 @@ export const NotAuthenticated = ({
       // Assuming the response is in plain text and will be 'true' or 'false'
       const data = await response.text();
       if (data === "true") {
-        chrome?.runtime?.sendMessage(
-          { action: "setApiKey", payload },
-          (response) => {
-            if (response) {
-              handleSetGlobalApikey(payload);
-              setIsValidApiKey(true);
-              setUseLocalNode(true);
-              if(!fromStartUp){
-                setApiKey(payload)
-              }
+        window.sendMessage("setApiKey", payload)
+        .then((response) => {
+          if (response) {
+            handleSetGlobalApikey(payload);
+            setIsValidApiKey(true);
+            setUseLocalNode(true);
+            if (!fromStartUp) {
+              setApiKey(payload);
             }
           }
-        );
+        })
+        .catch((error) => {
+          console.error("Failed to set API key:", error.message || "An error occurred");
+        });
+      
       } else {
         setIsValidApiKey(false);
         setUseLocalNode(false);
@@ -208,17 +212,19 @@ export const NotAuthenticated = ({
     setCustomNodes(nodes);
     setCustomNodeToSaveIndex(null);
     if (!nodes) return;
-    chrome?.runtime?.sendMessage(
-      { action: "setCustomNodes", nodes },
-      (response) => {
-        if (response) {
-          setMode("list");
-          setUrl("http://");
-          setCustomApiKey("");
-          // add alert
-        }
-      }
-    );
+    window.sendMessage("setCustomNodes", nodes)
+  .then((response) => {
+    if (response) {
+      setMode("list");
+      setUrl("http://");
+      setCustomApiKey("");
+      // add alert if needed
+    }
+  })
+  .catch((error) => {
+    console.error("Failed to set custom nodes:", error.message || "An error occurred");
+  });
+
   };
 
 
@@ -338,16 +344,17 @@ export const NotAuthenticated = ({
                             url: "http://127.0.0.1:12391",
                           })
                           setUseLocalNode(false)
-                          chrome?.runtime?.sendMessage(
-                            { action: "setApiKey", payload:null },
-                            (response) => {
-                              if (response) {
-                                setApiKey(null);
-                                handleSetGlobalApikey(null);
-                               
-                              }
-                            }
-                          );
+                          window.sendMessage("setApiKey", null)
+  .then((response) => {
+    if (response) {
+      setApiKey(null);
+      handleSetGlobalApikey(null);
+    }
+  })
+  .catch((error) => {
+    console.error("Failed to set API key:", error.message || "An error occurred");
+  });
+
                       }
                        
                     }}
@@ -462,16 +469,17 @@ export const NotAuthenticated = ({
                           setMode("list");
                           setShow(false);
                           setUseLocalNode(false);
-                             chrome?.runtime?.sendMessage(
-                              { action: "setApiKey", payload:null },
-                              (response) => {
-                                if (response) {
-                                  setApiKey(null);
-                                  handleSetGlobalApikey(null);
-                                 
-                                }
-                              }
-                            );
+                          window.sendMessage("setApiKey", null)
+                          .then((response) => {
+                            if (response) {
+                              setApiKey(null);
+                              handleSetGlobalApikey(null);
+                            }
+                          })
+                          .catch((error) => {
+                            console.error("Failed to set API key:", error.message || "An error occurred");
+                          });
+                        
                         }}
                         variant="contained"
                       >
@@ -517,16 +525,17 @@ export const NotAuthenticated = ({
                               setShow(false);
                               setIsValidApiKey(false);
                              setUseLocalNode(false);
-                             chrome?.runtime?.sendMessage(
-                              { action: "setApiKey", payload:null },
-                              (response) => {
-                                if (response) {
-                                  setApiKey(null);
-                                  handleSetGlobalApikey(null);
-                                 
-                                }
-                              }
-                            );
+                             window.sendMessage("setApiKey", null)
+                             .then((response) => {
+                               if (response) {
+                                 setApiKey(null);
+                                 handleSetGlobalApikey(null);
+                               }
+                             })
+                             .catch((error) => {
+                               console.error("Failed to set API key:", error.message || "An error occurred");
+                             });
+                           
                             }}
                             variant="contained"
                           >

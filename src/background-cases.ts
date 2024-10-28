@@ -1,5 +1,6 @@
 import {
     addDataPublishes,
+    addTimestampEnterChat,
     addUserSettings,
     banFromGroup,
     cancelBan,
@@ -7,7 +8,9 @@ import {
     createGroup,
   decryptWallet,
   findUsableApi,
+  getApiKeyFromStorage,
   getBalanceInfo,
+  getCustomNodesFromStorage,
   getDataPublishes,
   getKeyPair,
   getLTCBalance,
@@ -24,6 +27,7 @@ import {
   removeAdmin,
   saveTempPublish,
   sendCoin,
+  setChatHeads,
   walletVersion,
 } from "./background";
 
@@ -709,6 +713,185 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "removeAdmin",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function notificationCase(request, event) {
+    try {
+        const notificationId = "chat_notification_" + Date.now(); // Create a unique ID
+
+        chrome.notifications.create(notificationId, {
+          type: "basic",
+          iconUrl: "qort.png", // Add an appropriate icon for chat notifications
+          title: "New Group Message!",
+          message: "You have received a new message from one of your groups",
+          priority: 2, // Use the maximum priority to ensure it's noticeable
+          // buttons: [
+          //   { title: 'Go to group' }
+          // ]
+        });
+        // Set a timeout to clear the notification after 'timeout' milliseconds
+        setTimeout(() => {
+          chrome.notifications.clear(notificationId);
+        }, 3000);
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "notification",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "notification",
+          error: "Error displaying notifaction",
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function addTimestampEnterChatCase(request, event) {
+    try {
+      const { groupId, timestamp } = request.payload;
+      const response = await addTimestampEnterChat({groupId, timestamp});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addTimestampEnterChat",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addTimestampEnterChat",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function setApiKeyCase(request, event) {
+    try {
+      const payload = request.payload;
+      chrome.storage.local.set({ apiKey: payload }, () => {
+        // sendResponse(true);
+      });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "setApiKey",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "setApiKey",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+  export async function setCustomNodesCase(request, event) {
+    try {
+      const nodes = request.payload;
+      chrome.storage.local.set({ customNodes: nodes }, () => {
+        // sendResponse(true);
+      });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "setCustomNodes",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "setCustomNodes",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function getApiKeyCase(request, event) {
+    try {
+        const response = await getApiKeyFromStorage();
+
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getApiKey",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getApiKey",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function getCustomNodesFromStorageCase(request, event) {
+    try {
+        const response = await getCustomNodesFromStorage();
+
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getCustomNodesFromStorage",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getCustomNodesFromStorage",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

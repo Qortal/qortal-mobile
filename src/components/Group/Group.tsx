@@ -901,22 +901,22 @@ export const Group = ({
         setMemberGroups(message.payload);
 
         if (selectedGroupRef.current && groupSectionRef.current === "chat") {
-          chrome?.runtime?.sendMessage({
-            action: "addTimestampEnterChat",
-            payload: {
-              timestamp: Date.now(),
-              groupId: selectedGroupRef.current.groupId,
-            },
-          });
+          window.sendMessage("addTimestampEnterChat", {
+            timestamp: Date.now(),
+            groupId: selectedGroupRef.current.groupId,
+          }).catch((error) => {
+              console.error("Failed to add timestamp:", error.message || "An error occurred");
+            });
+          
         }
         if (selectedDirectRef.current) {
-          chrome?.runtime?.sendMessage({
-            action: "addTimestampEnterChat",
-            payload: {
-              timestamp: Date.now(),
-              groupId: selectedDirectRef.current.address,
-            },
-          });
+          window.sendMessage("addTimestampEnterChat", {
+            timestamp: Date.now(),
+            groupId: selectedDirectRef.current.address,
+          }).catch((error) => {
+              console.error("Failed to add timestamp:", error.message || "An error occurred");
+            });
+          
         }
         setTimeout(() => {
           getTimestampEnterChat();
@@ -946,18 +946,7 @@ export const Group = ({
         // Update the component state with the received 'sendqort' state
         setDirects(message.payload);
 
-        // if (selectedGroupRef.current) {
-        //   chrome?.runtime?.sendMessage({
-        //     action: "addTimestampEnterChat",
-        //     payload: {
-        //       timestamp: Date.now(),
-        //       groupId: selectedGroupRef.current.groupId,
-        //     },
-        //   });
-        // }
-        // setTimeout(() => {
-        //   getTimestampEnterChat();
-        // }, 200);
+       
       } else if (message.action === "PLAY_NOTIFICATION_SOUND") {
         audio.play();
       }
@@ -1115,13 +1104,13 @@ export const Group = ({
 
       setNewChat(false);
 
-      chrome?.runtime?.sendMessage({
-        action: "addTimestampEnterChat",
-        payload: {
-          timestamp: Date.now(),
-          groupId: findDirect.address,
-        },
-      });
+      window.sendMessage("addTimestampEnterChat", {
+        timestamp: Date.now(),
+        groupId: findDirect.address,
+      }).catch((error) => {
+          console.error("Failed to add timestamp:", error.message || "An error occurred");
+        });
+      
 
       setTimeout(() => {
         setSelectedDirect(findDirect);
@@ -1152,13 +1141,13 @@ export const Group = ({
 
       setNewChat(false);
 
-      chrome?.runtime?.sendMessage({
-        action: "addTimestampEnterChat",
-        payload: {
-          timestamp: Date.now(),
-          groupId: findDirect.address,
-        },
-      });
+      window.sendMessage("addTimestampEnterChat", {
+        timestamp: Date.now(),
+        groupId: findDirect.address,
+      }).catch((error) => {
+          console.error("Failed to add timestamp:", error.message || "An error occurred");
+        });
+      
 
       setTimeout(() => {
         setSelectedDirect(findDirect);
@@ -1201,13 +1190,13 @@ export const Group = ({
 
   const handleMarkAsRead = (e) => {
     const { groupId } = e.detail;
-    chrome?.runtime?.sendMessage({
-      action: "addTimestampEnterChat",
-      payload: {
-        timestamp: Date.now(),
-        groupId,
-      },
-    });
+    window.sendMessage("addTimestampEnterChat", {
+      timestamp: Date.now(),
+      groupId,
+    }).catch((error) => {
+        console.error("Failed to add timestamp:", error.message || "An error occurred");
+      });
+    
 
     chrome?.runtime?.sendMessage({
       action: "addGroupNotificationTimestamp",
@@ -1323,13 +1312,13 @@ export const Group = ({
       setFirstSecretKeyInCreation(false);
       setGroupSection("chat");
 
-      chrome?.runtime?.sendMessage({
-        action: "addTimestampEnterChat",
-        payload: {
-          timestamp: Date.now(),
-          groupId: findGroup.groupId,
-        },
-      });
+      window.sendMessage("addTimestampEnterChat", {
+        timestamp: Date.now(),
+        groupId: findGroup.groupId,
+      }).catch((error) => {
+          console.error("Failed to add timestamp:", error.message || "An error occurred");
+        });
+      
 
       setTimeout(() => {
         setSelectedGroup(findGroup);
@@ -1537,13 +1526,13 @@ export const Group = ({
     setNewChat(false);
     setSelectedDirect(null);
     if (selectedGroupRef.current) {
-      chrome?.runtime?.sendMessage({
-        action: "addTimestampEnterChat",
-        payload: {
-          timestamp: Date.now(),
-          groupId: selectedGroupRef.current.groupId,
-        },
-      });
+      window.sendMessage("addTimestampEnterChat", {
+        timestamp: Date.now(),
+        groupId: selectedGroupRef.current.groupId,
+      }).catch((error) => {
+          console.error("Failed to add timestamp:", error.message || "An error occurred");
+        });
+      
 
       setTimeout(() => {
         getTimestampEnterChat();
@@ -1644,13 +1633,13 @@ export const Group = ({
                   setNewChat(false);
                   // setSelectedGroup(null);
                   setIsOpenDrawer(false);
-                  chrome?.runtime?.sendMessage({
-                    action: "addTimestampEnterChat",
-                    payload: {
-                      timestamp: Date.now(),
-                      groupId: direct.address,
-                    },
-                  });
+                  window.sendMessage("addTimestampEnterChat", {
+                    timestamp: Date.now(),
+                    groupId: direct.address,
+                  }).catch((error) => {
+                      console.error("Failed to add timestamp:", error.message || "An error occurred");
+                    });
+                  
                   setTimeout(() => {
                     setSelectedDirect(direct);
 
@@ -1771,172 +1760,7 @@ export const Group = ({
           borderRadius: !isMobile && '0px 15px 15px 0px'
         }}
       >
-        {/* <div
-          style={{
-            display: "flex",
-            width: "100%",
-            justifyContent: "center",
-            gap: "20px",
-            padding: "10px",
-            flexDirection: "column",
-          }}
-        >
-          {isMobile && (
-            <Box
-              sx={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
-            >
-              <CloseIcon
-                onClick={() => {
-                  setIsOpenDrawer(false);
-                }}
-                sx={{
-                  cursor: "pointer",
-                  color: "white",
-                }}
-              />
-            </Box>
-          )}
-          <CustomButton
-            onClick={() => {
-              setChatMode((prev) =>
-                prev === "directs" ? "groups" : "directs"
-              );
-              
-            }}
-            sx={{
-              backgroundColor: chatMode === 'directs' && ( groupChatHasUnread || groupsAnnHasUnread) ? 'red' : 'revert'
-            }}
-          >
-            {chatMode === "groups" && (
-              <>
-                <MarkUnreadChatAltIcon
-                  sx={{
-                    color: directChatHasUnread ? "red" : "white",
-                  }}
-                />
-              </>
-            )}
-           
-            {chatMode === "directs" ? "Switch to groups" : "Direct msgs"}
-          </CustomButton>
-        </div> */}
-        {/* <div
-          style={{
-            display: "flex",
-            width: "100%",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            flexGrow: 1,
-            overflowY: "auto",
-            visibility: chatMode === "groups" && "hidden",
-            position: chatMode === "groups" && "fixed",
-            left: chatMode === "groups" && "-1000px",
-          }}
-        >
-          {directs.map((direct: any) => (
-            <List sx={{
-              width: '100%'
-            }} className="group-list" dense={true}>
-              <ListItem
-                //   secondaryAction={
-                //     <IconButton edge="end" aria-label="delete">
-                //       <SettingsIcon />
-                //     </IconButton>
-                //   }
-                onClick={() => {
-                  setSelectedDirect(null);
-                  setNewChat(false);
-                  // setSelectedGroup(null);
-                  setIsOpenDrawer(false);
-                  chrome?.runtime?.sendMessage({
-                    action: "addTimestampEnterChat",
-                    payload: {
-                      timestamp: Date.now(),
-                      groupId: direct.address,
-                    },
-                  });
-                  setTimeout(() => {
-                    setSelectedDirect(direct);
-
-                    getTimestampEnterChat();
-                  }, 200);
-                }}
-                sx={{
-                  display: "flex",
-                  width: "100%",
-                  flexDirection: "column",
-                  cursor: "pointer",
-                  border: "1px #232428 solid",
-                  padding: "2px",
-                  borderRadius: "2px",
-                  background:
-                    direct?.address === selectedDirect?.address && "white",
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    width: "100%",
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Avatar
-                      sx={{
-                        background: "#232428",
-                        color: "white",
-                      }}
-                      alt={direct?.name || direct?.address}
-                      //  src={`${getBaseApiReact()}/arbitrary/THUMBNAIL/${groupOwner?.name}/qortal_group_avatar_${group.groupId}?async=true`}
-                    >
-                      {(direct?.name || direct?.address)?.charAt(0)}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={direct?.name || direct?.address}
-                    primaryTypographyProps={{
-                      style: {
-                        color:
-                          direct?.address === selectedDirect?.address &&
-                          "black",
-                        textWrap: "wrap",
-                        overflow: "hidden",
-                      },
-                    }} // Change the color of the primary text
-                    secondaryTypographyProps={{
-                      style: {
-                        color:
-                          direct?.address === selectedDirect?.address &&
-                          "black",
-                      },
-                    }}
-                    sx={{
-                      width: "150px",
-                      fontFamily: "Inter",
-                      fontSize: "16px",
-                    }}
-                  />
-                  {direct?.sender !== myAddress &&
-                    direct?.timestamp &&
-                    ((!timestampEnterData[direct?.address] &&
-                      Date.now() - direct?.timestamp <
-                        timeDifferenceForNotificationChats) ||
-                      timestampEnterData[direct?.address] <
-                        direct?.timestamp) && (
-                      <MarkChatUnreadIcon
-                        sx={{
-                          color: "red",
-                        }}
-                      />
-                    )}
-                </Box>
-              </ListItem>
-            </List>
-          ))}
-        </div> */}
+        
         <div
           style={{
             display: "flex",
@@ -1994,13 +1818,13 @@ export const Group = ({
                     // getTimestampEnterChat();
                   }, 200);
 
-                  chrome?.runtime?.sendMessage({
-                    action: "addTimestampEnterChat",
-                    payload: {
-                      timestamp: Date.now(),
-                      groupId: group.groupId,
-                    },
-                  });
+                  window.sendMessage("addTimestampEnterChat", {
+                    timestamp: Date.now(),
+                    groupId: group.groupId,
+                  }).catch((error) => {
+                      console.error("Failed to add timestamp:", error.message || "An error occurred");
+                    });
+                  
 
                   setTimeout(() => {
                     getTimestampEnterChat();

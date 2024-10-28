@@ -30,6 +30,7 @@ import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMu
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
 import {
   addDataPublishesCase,
+  addTimestampEnterChatCase,
   addUserSettingsCase,
   balanceCase,
   banFromGroupCase,
@@ -37,6 +38,8 @@ import {
   cancelInvitationToGroupCase,
   createGroupCase,
   decryptWalletCase,
+  getApiKeyCase,
+  getCustomNodesFromStorageCase,
   getDataPublishesCase,
   getTempPublishCase,
   getUserSettingsCase,
@@ -48,10 +51,14 @@ import {
   ltcBalanceCase,
   makeAdminCase,
   nameCase,
+  notificationCase,
   registerNameCase,
   removeAdminCase,
   saveTempPublishCase,
   sendCoinCase,
+  setApiKeyCase,
+  setChatHeadsCase,
+  setCustomNodesCase,
   userInfoCase,
   validApiCase,
   versionCase,
@@ -134,7 +141,7 @@ const checkDifference = (createdTimestamp) => {
     Date.now() - createdTimestamp < timeDifferenceForNotificationChatsBackground
   );
 };
-const getApiKeyFromStorage = async () => {
+export const getApiKeyFromStorage = async () => {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get("apiKey", (result) => {
       if (chrome.runtime.lastError) {
@@ -145,7 +152,7 @@ const getApiKeyFromStorage = async () => {
   });
 };
 
-const getCustomNodesFromStorage = async () => {
+export const getCustomNodesFromStorage = async () => {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get("customNodes", (result) => {
       if (chrome.runtime.lastError) {
@@ -396,16 +403,20 @@ const handleNotificationDirect = async (directs) => {
     }
   } catch (error) {
     if (!isFocused) {
-      chrome.runtime.sendMessage(
-        {
-          action: "notification",
-          payload: {},
-        },
-        (response) => {
+      window
+        .sendMessage("notification", {})
+        .then((response) => {
           if (!response?.error) {
+            // Handle success if needed
           }
-        }
-      );
+        })
+        .catch((error) => {
+          console.error(
+            "Failed to send notification:",
+            error.message || "An error occurred"
+          );
+        });
+
       const notificationId = "chat_notification_" + Date.now();
       chrome.notifications.create(notificationId, {
         type: "basic",
@@ -639,16 +650,20 @@ const handleNotification = async (groups) => {
     }
   } catch (error) {
     if (!isFocused) {
-      chrome.runtime.sendMessage(
-        {
-          action: "notification",
-          payload: {},
-        },
-        (response) => {
+      window
+        .sendMessage("notification", {})
+        .then((response) => {
           if (!response?.error) {
+            // Handle success if needed
           }
-        }
-      );
+        })
+        .catch((error) => {
+          console.error(
+            "Failed to send notification:",
+            error.message || "An error occurred"
+          );
+        });
+
       const notificationId = "chat_notification_" + Date.now();
       chrome.notifications.create(notificationId, {
         type: "basic",
@@ -2614,7 +2629,7 @@ export function removeDuplicateWindow(popupUrl) {
   );
 }
 
-async function setChatHeads(data) {
+export async function setChatHeads(data) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const dataString = JSON.stringify(data);
@@ -2818,7 +2833,7 @@ async function setGroupData({
   });
 }
 
-async function addTimestampEnterChat({ groupId, timestamp }) {
+export async function addTimestampEnterChat({ groupId, timestamp }) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const data = await getTimestampEnterChat();
@@ -2974,6 +2989,24 @@ function setupMessageListener() {
       case "removeAdmin":
         removeAdminCase(request, event);
         break;
+      case "notification":
+        notificationCase(request, event);
+        break;
+
+      case "addTimestampEnterChat":
+        addTimestampEnterChatCase(request, event);
+        break;
+      case "setApiKey":
+        setApiKeyCase(request, event);
+        break;
+      case "setCustomNodes":
+        setCustomNodesCase(request, event);
+      case "getApiKey":
+        getApiKeyCase(request, event);
+        break;
+        case "getCustomNodesFromStorage":
+          getCustomNodesFromStorageCase(request, event);
+          break;
       default:
         console.error("Unknown action:", request.action);
     }

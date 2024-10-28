@@ -404,13 +404,17 @@ function App() {
     globalApiKey = key;
   }
   useEffect(() => {
-    chrome?.runtime?.sendMessage({ action: "getApiKey" }, (response) => {
+    window.sendMessage("getApiKey")
+    .then((response) => {
       if (response) {
-        handleSetGlobalApikey(response)
+        handleSetGlobalApikey(response);
         setApiKey(response);
-
       }
+    })
+    .catch((error) => {
+      console.error("Failed to get API key:", error?.message || "An error occurred");
     });
+  
   }, []);
   useEffect(() => {
     if (extState) {

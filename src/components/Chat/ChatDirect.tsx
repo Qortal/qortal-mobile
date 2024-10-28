@@ -267,13 +267,13 @@ const sendChatDirect = async ({ chatReference = undefined, messageText, otherDat
               "senderName": myName
           })
           setNewChat(null)
-          chrome?.runtime?.sendMessage({
-            action: "addTimestampEnterChat",
-            payload: {
-              timestamp: Date.now(),
-              groupId: response.recipient,
-            },
-          });
+          window.sendMessage("addTimestampEnterChat", {
+            timestamp: Date.now(),
+            groupId: response.recipient,
+          }).catch((error) => {
+              console.error("Failed to add timestamp:", error.message || "An error occurred");
+            });
+          
           setTimeout(() => {
             getTimestampEnterChat()
           }, 400);
