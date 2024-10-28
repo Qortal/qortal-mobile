@@ -75,11 +75,11 @@ export const ListOfInvites = ({ groupId, setInfoSnack, setOpenSnack, show }) => 
       })
       setIsLoadingCancelInvite(true)
       await new Promise((res, rej)=> {
-          chrome?.runtime?.sendMessage({ action: "cancelInvitationToGroup", payload: {
-              groupId,
-              qortalAddress: address,
-        }}, (response) => {
-      
+        window.sendMessage("cancelInvitationToGroup", {
+          groupId,
+          qortalAddress: address,
+        })
+          .then((response) => {
             if (!response?.error) {
               setInfoSnack({
                 type: "success",
@@ -87,17 +87,26 @@ export const ListOfInvites = ({ groupId, setInfoSnack, setOpenSnack, show }) => 
               });
               setOpenSnack(true);
               handlePopoverClose();
-              setIsLoadingCancelInvite(true)
-              res(response)
-              return
+              setIsLoadingCancelInvite(true);
+              res(response);
+              return;
             }
             setInfoSnack({
               type: "error",
               message: response?.error,
             });
             setOpenSnack(true);
-            rej(response.error)
+            rej(response.error);
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
           });
+        
         })  
     } catch (error) {
       

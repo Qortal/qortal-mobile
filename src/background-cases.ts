@@ -1,12 +1,16 @@
 import {
+    cancelInvitationToGroup,
+    createGroup,
   decryptWallet,
   findUsableApi,
   getBalanceInfo,
   getKeyPair,
   getLTCBalance,
   getNameInfo,
+  getTempPublish,
   getUserInfo,
   inviteToGroup,
+  leaveGroup,
   saveTempPublish,
   sendCoin,
   walletVersion,
@@ -280,6 +284,123 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "saveTempPublish",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function getTempPublishCase(request, event) {
+    try {
+      const response = await getTempPublish();
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getTempPublish",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getTempPublish",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function createGroupCase(request, event) {
+    try {
+      const { groupName,
+            groupDescription,
+            groupType,
+            groupApprovalThreshold,
+            minBlock,
+            maxBlock } = request.payload;
+      const response = await createGroup({groupName,
+            groupDescription,
+            groupType,
+            groupApprovalThreshold,
+            minBlock,
+            maxBlock});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "createGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "createGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function cancelInvitationToGroupCase(request, event) {
+    try {
+      const { groupId, qortalAddress } = request.payload;
+      const response = await cancelInvitationToGroup({groupId, qortalAddress});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "cancelInvitationToGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "cancelInvitationToGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function leaveGroupCase(request, event) {
+    try {
+      const { groupId, qortalAddress } = request.payload;
+      const response = await leaveGroup({groupId, qortalAddress});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "leaveGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "leaveGroup",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

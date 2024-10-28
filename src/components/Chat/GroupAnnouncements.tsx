@@ -68,19 +68,18 @@ export const saveTempPublish = async ({ data, key }: any) => {
 
 export const getTempPublish = async () => {
   return new Promise((res, rej) => {
-    chrome?.runtime?.sendMessage(
-      {
-        action: "getTempPublish",
-        payload: {},
-      },
-      (response) => {
-        if (!response?.error) {
-          res(response);
-          return;
-        }
-        rej(response.error);
-      }
-    );
+    window.sendMessage("getTempPublish", {})
+  .then((response) => {
+    if (!response?.error) {
+      res(response);
+      return;
+    }
+    rej(response.error);
+  })
+  .catch((error) => {
+    rej(error.message || "An error occurred");
+  });
+
   });
 };
 

@@ -1,7 +1,7 @@
 // @ts-nocheck
 
-import './qortalRequests'
-import {  isArray } from "lodash";
+import "./qortalRequests";
+import { isArray } from "lodash";
 import {
   decryptGroupEncryption,
   encryptAndPublishSymmetricKeyGroupChat,
@@ -28,18 +28,34 @@ import { validateAddress } from "./utils/validateAddress";
 import { Sha256 } from "asmcrypto.js";
 import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMultipleRequest";
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
-import { balanceCase, decryptWalletCase, getWalletInfoCase, inviteToGroupCase, ltcBalanceCase, nameCase, saveTempPublishCase, sendCoinCase, userInfoCase, validApiCase, versionCase } from './background-cases';
+import {
+  balanceCase,
+  cancelInvitationToGroupCase,
+  createGroupCase,
+  decryptWalletCase,
+  getTempPublishCase,
+  getWalletInfoCase,
+  inviteToGroupCase,
+  leaveGroupCase,
+  ltcBalanceCase,
+  nameCase,
+  saveTempPublishCase,
+  sendCoinCase,
+  userInfoCase,
+  validApiCase,
+  versionCase,
+} from "./background-cases";
 
 export function cleanUrl(url) {
-  return url?.replace(/^(https?:\/\/)?(www\.)?/, '');
+  return url?.replace(/^(https?:\/\/)?(www\.)?/, "");
 }
 export function getProtocol(url) {
-  if (url?.startsWith('https://')) {
-    return 'https';
-  } else if (url?.startsWith('http://')) {
-    return 'http';
+  if (url?.startsWith("https://")) {
+    return "https";
+  } else if (url?.startsWith("http://")) {
+    return "http";
   } else {
-    return 'unknown'; // If neither protocol is present
+    return "unknown"; // If neither protocol is present
   }
 }
 
@@ -51,7 +67,6 @@ export const groupApiSocketLocal = "ws://127.0.0.1:12391";
 const timeDifferenceForNotificationChatsBackground = 600000;
 const requestQueueAnnouncements = new RequestQueueWithPromise(1);
 let isMobile = true;
-
 
 const isMobileDevice = () => {
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -130,7 +145,6 @@ const getCustomNodesFromStorage = async () => {
   });
 };
 
-
 const getArbitraryEndpoint = async () => {
   const apiKey = await getApiKeyFromStorage(); // Retrieve apiKey asynchronously
   if (apiKey) {
@@ -153,16 +167,13 @@ export const getBaseApi = async (customApi?: string) => {
   }
 };
 export const isUsingLocal = async () => {
-
   const apiKey = await getApiKeyFromStorage(); // Retrieve apiKey asynchronously
   if (apiKey) {
-    return true
+    return true;
   } else {
     return false;
   }
 };
-
-
 
 export const createEndpoint = async (endpoint, customApi?: string) => {
   if (customApi) {
@@ -257,7 +268,7 @@ export function isUpdateMsg(data) {
     const numberKey = parseInt(keyStr, 10);
     if (isNaN(numberKey)) {
       isUpdateMessage = false;
-    } else if(numberKey !== RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS){
+    } else if (numberKey !== RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS) {
       isUpdateMessage = false;
     }
   } catch (error) {
@@ -295,10 +306,11 @@ const handleNotificationDirect = async (directs) => {
   let isFocused;
   const wallet = await getSaveWallet();
   const address = wallet.address0;
-  let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
+  let isDisableNotifications =
+    (await getUserSettings({ key: "disable-push-notifications" })) || false;
   const dataDirects = directs.filter((direct) => direct?.sender !== address);
   try {
-    if(isDisableNotifications) return
+    if (isDisableNotifications) return;
     if (!dataDirects || dataDirects?.length === 0) return;
     isFocused = await checkWebviewFocus();
 
@@ -514,17 +526,25 @@ async function updateThreadActivity({ threadId, qortalName, groupId, thread }) {
 const handleNotification = async (groups) => {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
-  let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
+  let isDisableNotifications =
+    (await getUserSettings({ key: "disable-push-notifications" })) || false;
 
-  let mutedGroups = await getUserSettings({key: 'mutedGroups'}) || []
-  if(!isArray(mutedGroups)) mutedGroups = []
+  let mutedGroups = (await getUserSettings({ key: "mutedGroups" })) || [];
+  if (!isArray(mutedGroups)) mutedGroups = [];
 
   let isFocused;
-  const data = groups.filter((group) => group?.sender !== address && !mutedGroups.includes(group.groupId) && !isUpdateMsg(group?.data));
-  const dataWithUpdates = groups.filter((group) => group?.sender !== address && !mutedGroups.includes(group.groupId));
+  const data = groups.filter(
+    (group) =>
+      group?.sender !== address &&
+      !mutedGroups.includes(group.groupId) &&
+      !isUpdateMsg(group?.data)
+  );
+  const dataWithUpdates = groups.filter(
+    (group) => group?.sender !== address && !mutedGroups.includes(group.groupId)
+  );
 
   try {
-    if(isDisableNotifications) return
+    if (isDisableNotifications) return;
     if (!data || data?.length === 0) return;
     isFocused = await checkWebviewFocus();
 
@@ -765,8 +785,9 @@ const checkThreads = async (bringBack) => {
         Date.now() +
         "_type=thread-post" +
         `_data=${JSON.stringify(newAnnouncements[0])}`;
-        let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
-      if(!isDisableNotifications){
+      let isDisableNotifications =
+        (await getUserSettings({ key: "disable-push-notifications" })) || false;
+      if (!isDisableNotifications) {
         chrome.notifications.create(notificationId, {
           type: "basic",
           iconUrl: "qort.png", // Add an appropriate icon for chat notifications
@@ -784,7 +805,6 @@ const checkThreads = async (bringBack) => {
         }
         playNotificationSound();
       }
-      
     }
     const savedtimestampAfter = await getTimestampGroupAnnouncement();
     chrome.runtime.sendMessage({
@@ -797,8 +817,8 @@ const checkThreads = async (bringBack) => {
 };
 const checkNewMessages = async () => {
   try {
-    let mutedGroups = await getUserSettings({key: 'mutedGroups'}) || []
-    if(!isArray(mutedGroups)) mutedGroups = []
+    let mutedGroups = (await getUserSettings({ key: "mutedGroups" })) || [];
+    if (!isArray(mutedGroups)) mutedGroups = [];
     let myName = "";
     const userData = await getUserInfo();
     if (userData?.name) {
@@ -857,9 +877,14 @@ const checkNewMessages = async () => {
         }
       })
     );
-    let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
+    let isDisableNotifications =
+      (await getUserSettings({ key: "disable-push-notifications" })) || false;
 
-    if (newAnnouncements.length > 0 && !mutedGroups.includes(newAnnouncements[0]?.groupId) && !isDisableNotifications) {
+    if (
+      newAnnouncements.length > 0 &&
+      !mutedGroups.includes(newAnnouncements[0]?.groupId) &&
+      !isDisableNotifications
+    ) {
       const notificationId =
         "chat_notification_" +
         Date.now() +
@@ -1387,7 +1412,7 @@ export async function decryptWallet({ password, wallet, walletVersion }) {
 
       rvnAddress: wallet2._addresses[0].rvnWallet.address,
       rvnPublicKey: wallet2._addresses[0].rvnWallet.derivedMasterPublicKey,
-      rvnPrivateKey: wallet2._addresses[0].rvnWallet.derivedMasterPrivateKey
+      rvnPrivateKey: wallet2._addresses[0].rvnWallet.derivedMasterPrivateKey,
     };
     const dataString = JSON.stringify(toSave);
     await new Promise((resolve, reject) => {
@@ -1420,7 +1445,12 @@ export async function decryptWallet({ password, wallet, walletVersion }) {
   }
 }
 
-export async function signChatFunc(chatBytesArray, chatNonce, customApi, keyPair) {
+export async function signChatFunc(
+  chatBytesArray,
+  chatNonce,
+  customApi,
+  keyPair
+) {
   let response;
   try {
     const signedChatBytes = signChat(chatBytesArray, chatNonce, keyPair);
@@ -1603,7 +1633,6 @@ async function sendChatGroup({
   chatReference,
   messageText,
 }) {
-  
   let _reference = new Uint8Array(64);
   self.crypto.getRandomValues(_reference);
 
@@ -1630,10 +1659,10 @@ async function sendChatGroup({
     proofOfWorkNonce: 0,
     isEncrypted: 0, // Set default to not encrypted for groups
     isText: 1,
-  }
+  };
 
-  if(chatReference){
-    txBody['chatReference'] = chatReference
+  if (chatReference) {
+    txBody["chatReference"] = chatReference;
   }
 
   const tx = await createTransaction(181, keyPair, txBody);
@@ -1662,7 +1691,7 @@ async function sendChatDirect({
   chatReference,
   messageText,
   publicKeyOfRecipient,
-  otherData
+  otherData,
 }) {
   let recipientPublicKey;
   let recipientAddress = address;
@@ -1698,10 +1727,10 @@ async function sendChatDirect({
   const finalJson = {
     message: messageText,
     version: 2,
-    ...(otherData || {})
+    ...(otherData || {}),
   };
   const messageStringified = JSON.stringify(finalJson);
-  
+
   const txBody = {
     timestamp: Date.now(),
     recipient: recipientAddress,
@@ -1712,9 +1741,9 @@ async function sendChatDirect({
     proofOfWorkNonce: 0,
     isEncrypted: 1,
     isText: 1,
-  }
-  if(chatReference){
-    txBody['chatReference'] = chatReference
+  };
+  if (chatReference) {
+    txBody["chatReference"] = chatReference;
   }
   const tx = await createTransaction(18, keyPair, txBody);
 
@@ -1810,7 +1839,7 @@ async function decryptDirectFunc({ messages, involvingAddress }) {
 
 async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
   try {
-    if(useLocal){
+    if (useLocal) {
       const wallet = await getSaveWallet();
 
       const address = wallet.address0;
@@ -1818,48 +1847,54 @@ async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
       const resKeyPair = await getKeyPair();
       const parsedData = JSON.parse(resKeyPair);
       const message = {
-        addresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+        addresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
         foreignKey: parsedData.ltcPrivateKey,
         receivingAddress: address,
       };
-      let responseVar 
-      const txn = new TradeBotRespondMultipleRequest().createTransaction(message)
+      let responseVar;
+      const txn = new TradeBotRespondMultipleRequest().createTransaction(
+        message
+      );
       const apiKey = await getApiKeyFromStorage();
-      const responseFetch = await fetch(`${apiKey?.url}/crosschain/tradebot/respondmultiple?apiKey=${apiKey?.apikey}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(txn),
-  });
+      const responseFetch = await fetch(
+        `${apiKey?.url}/crosschain/tradebot/respondmultiple?apiKey=${apiKey?.apikey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(txn),
+        }
+      );
 
-  const res = await responseFetch.json();
+      const res = await responseFetch.json();
 
-      if(res === false){
-        responseVar = { response: "Unable to execute buy order", success: false };
+      if (res === false) {
+        responseVar = {
+          response: "Unable to execute buy order",
+          success: false,
+        };
       } else {
         responseVar = { response: res, success: true };
       }
-      const { response, success } = responseVar
+      const { response, success } = responseVar;
       let responseMessage;
       if (success) {
-          responseMessage = {
-              callResponse: response,
-              extra: {
-                  message: 'Transaction processed successfully!',
-                  atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
-                  
-              }
-          };
+        responseMessage = {
+          callResponse: response,
+          extra: {
+            message: "Transaction processed successfully!",
+            atAddresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
+          },
+        };
       } else {
-          responseMessage = {
-              callResponse: 'ERROR',
-              extra: {
-                  message: response,
-                  atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
-               
-              }
-          };
+        responseMessage = {
+          callResponse: "ERROR",
+          extra: {
+            message: response,
+            atAddresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
+          },
+        };
       }
 
       setTimeout(() => {
@@ -1873,7 +1908,7 @@ async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
         });
       }, 5000);
 
-      return
+      return;
     }
     const wallet = await getSaveWallet();
     const address = wallet.address0;
@@ -1881,7 +1916,7 @@ async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
     const resKeyPair = await getKeyPair();
     const parsedData = JSON.parse(resKeyPair);
     const message = {
-      addresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+      addresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
       foreignKey: parsedData.ltcPrivateKey,
       receivingAddress: address,
     };
@@ -1899,7 +1934,7 @@ async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
       });
       if (res?.encryptedMessageToBase58) {
         return {
-          atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+          atAddresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
           encryptedMessageToBase58: res?.encryptedMessageToBase58,
           node: buyTradeNodeBaseUrl,
           qortAddress: address,
@@ -1910,7 +1945,7 @@ async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
         };
       }
       return {
-        atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+        atAddresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
         chatSignature: res?.signature,
         node: buyTradeNodeBaseUrl,
         qortAddress: address,
@@ -1980,7 +2015,7 @@ export const getFee = async (txType) => {
   };
 };
 
-async function leaveGroup({ groupId }) {
+export async function leaveGroup({ groupId }) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const lastReference = await getLastRef();
@@ -2038,7 +2073,7 @@ export async function joinGroup({ groupId }) {
   return res;
 }
 
-async function cancelInvitationToGroup({ groupId, qortalAddress }) {
+export async function cancelInvitationToGroup({ groupId, qortalAddress }) {
   const lastReference = await getLastRef();
   const resKeyPair = await getKeyPair();
   const parsedData = JSON.parse(resKeyPair);
@@ -2233,7 +2268,7 @@ async function kickFromGroup({ groupId, qortalAddress, rBanReason = "" }) {
   return res;
 }
 
-async function createGroup({
+export async function createGroup({
   groupName,
   groupDescription,
   groupType,
@@ -2304,7 +2339,10 @@ export async function inviteToGroup({ groupId, qortalAddress, inviteTime }) {
   return res;
 }
 
-export async function sendCoin({ password, amount, receiver }, skipConfirmPassword) {
+export async function sendCoin(
+  { password, amount, receiver },
+  skipConfirmPassword
+) {
   try {
     const confirmReceiver = await getNameOrAddress(receiver);
     if (confirmReceiver.error)
@@ -2410,7 +2448,7 @@ async function fetchMessagesForBuyOrders(apiCall, signature, senderPublicKey) {
             privateKey: uint8PrivateKey,
             publicKey: uint8PublicKey,
           };
-          
+
           const decodedMessage = decryptChatMessage(
             encodedMessageObj.data,
             keyPair.privateKey,
@@ -2576,13 +2614,12 @@ async function setChatHeads(data) {
   });
 }
 
-async function checkLocalFunc(){
-  const apiKey = await getApiKeyFromStorage()
-  return !!apiKey
-
+async function checkLocalFunc() {
+  const apiKey = await getApiKeyFromStorage();
+  return !!apiKey;
 }
 
-async function getTempPublish() {
+export async function getTempPublish() {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const key = `tempPublish-${address}`;
@@ -2827,7 +2864,6 @@ async function getChatHeadsDirect() {
 }
 // TODO: listener
 
-
 function setupMessageListener() {
   window.addEventListener("message", async (event) => {
     const request = event.data;
@@ -2835,14 +2871,13 @@ function setupMessageListener() {
     // Check if the message is intended for this listener
     if (request?.type !== "backgroundMessage") return; // Only process messages of type 'backgroundMessage'
 
-
     console.log("REQUEST MESSAGE", request);
 
     switch (request.action) {
       case "version":
         versionCase(request, event);
         break;
-      
+
       // case "storeWalletInfo":
       //   storeWalletInfoCase(request, event);
       //   break;
@@ -2852,41 +2887,52 @@ function setupMessageListener() {
         break;
 
       case "validApi":
-        validApiCase(request, event)
+        validApiCase(request, event);
         break;
 
       case "name":
-        nameCase(request, event)
+        nameCase(request, event);
         break;
       case "userInfo":
-        userInfoCase(request, event)
+        userInfoCase(request, event);
         break;
       case "decryptWallet":
-        decryptWalletCase(request, event)
-          break;
+        decryptWalletCase(request, event);
+        break;
       case "balance":
-        balanceCase(request, event)
-              break;
+        balanceCase(request, event);
+        break;
       case "ltcBalance":
-        ltcBalanceCase(request, event)
-              break;
+        ltcBalanceCase(request, event);
+        break;
       case "sendCoin":
-        sendCoinCase(request, event)
-              break;
+        sendCoinCase(request, event);
+        break;
       case "inviteToGroup":
-        inviteToGroupCase(request, event)
-              break;
-              case "saveTempPublish":
-                saveTempPublishCase(request, event)
-                      break;
+        inviteToGroupCase(request, event);
+        break;
+      case "saveTempPublish":
+        saveTempPublishCase(request, event);
+        break;
+      case "getTempPublish":
+        getTempPublishCase(request, event);
+        break;
+        case "createGroup":
+          createGroupCase(request, event);
+          break;
+          case "cancelInvitationToGroup":
+            cancelInvitationToGroupCase(request, event);
+            break;
+            case "leaveGroup":
+              leaveGroupCase(request, event);
+            break;
       default:
         console.error("Unknown action:", request.action);
     }
   });
 }
 
-setupMessageListener()
-
+setupMessageListener();
 
 // Function to save window position and size
 const saveWindowBounds = (windowId) => {
@@ -3208,8 +3254,6 @@ chrome.runtime?.onInstalled.addListener((details) => {
     console.log("Chrome updated");
     // Optional: Handle Chrome-specific updates if necessary
   }
-
-
 });
 
 // Check if the alarm already exists before creating it

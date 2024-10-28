@@ -103,40 +103,40 @@ export const AddGroup = ({ address, open, setOpen }) => {
       })
 
      await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "createGroup",
-            payload: {
-              groupName: name,
-              groupDescription: description,
-              groupType: +groupType,
-              groupApprovalThreshold: +approvalThreshold,
-              minBlock: +minBlock,
-              maxBlock: +maxBlock,
-            },
-          },
-          (response) => {
-    
-            if (!response?.error) {
-              setInfoSnack({
-                type: "success",
-                message: "Successfully created group. It may take a couple of minutes for the changes to propagate",
-              });
-              setOpenSnack(true);
-              setTxList((prev)=> [{
+      window.sendMessage("createGroup", {
+        groupName: name,
+        groupDescription: description,
+        groupType: +groupType,
+        groupApprovalThreshold: +approvalThreshold,
+        minBlock: +minBlock,
+        maxBlock: +maxBlock,
+      })
+        .then((response) => {
+          if (!response?.error) {
+            setInfoSnack({
+              type: "success",
+              message: "Successfully created group. It may take a couple of minutes for the changes to propagate",
+            });
+            setOpenSnack(true);
+            setTxList((prev) => [
+              {
                 ...response,
                 type: 'created-group',
                 label: `Created group ${name}: awaiting confirmation`,
-                labelDone: `Created group ${name}: success !`,
-                done: false
-              }, ...prev])
-              res(response);
-              return
-            }
-            rej({message: response.error});
-            
+                labelDone: `Created group ${name}: success!`,
+                done: false,
+              },
+              ...prev,
+            ]);
+            res(response);
+            return;
           }
-        );
+          rej({ message: response.error });
+        })
+        .catch((error) => {
+          rej({ message: error.message || "An error occurred" });
+        });
+      
       });
     } catch (error) {
       setInfoSnack({

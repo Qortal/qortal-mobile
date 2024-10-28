@@ -77,36 +77,36 @@ export const ManageMembers = ({
       })
 
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "leaveGroup",
-            payload: {
-              groupId: selectedGroup?.groupId,
-            },
-          },
-          (response) => {
-          
+        window.sendMessage("leaveGroup", {
+          groupId: selectedGroup?.groupId,
+        })
+          .then((response) => {
             if (!response?.error) {
-              setTxList((prev)=> [{
-                ...response,
-                type: 'leave-group',
-                label: `Left Group ${selectedGroup?.groupName}: awaiting confirmation`,
-                labelDone: `Left Group ${selectedGroup?.groupName}: success !`,
-                done: false,
-                groupId: selectedGroup?.groupId,
-            
-              }, ...prev])
+              setTxList((prev) => [
+                {
+                  ...response,
+                  type: 'leave-group',
+                  label: `Left Group ${selectedGroup?.groupName}: awaiting confirmation`,
+                  labelDone: `Left Group ${selectedGroup?.groupName}: success!`,
+                  done: false,
+                  groupId: selectedGroup?.groupId,
+                },
+                ...prev,
+              ]);
               res(response);
               setInfoSnack({
                 type: "success",
                 message: "Successfully requested to leave group. It may take a couple of minutes for the changes to propagate",
               });
               setOpenSnack(true);
-              return
+              return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
     } catch (error) {} finally {
       setIsLoadingLeave(false)
