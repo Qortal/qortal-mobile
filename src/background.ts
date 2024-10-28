@@ -30,20 +30,25 @@ import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMu
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
 import {
   addDataPublishesCase,
+  addUserSettingsCase,
   balanceCase,
   banFromGroupCase,
+  cancelBanCase,
   cancelInvitationToGroupCase,
   createGroupCase,
   decryptWalletCase,
   getDataPublishesCase,
   getTempPublishCase,
+  getUserSettingsCase,
   getWalletInfoCase,
   inviteToGroupCase,
   joinGroupCase,
   kickFromGroupCase,
   leaveGroupCase,
   ltcBalanceCase,
+  makeAdminCase,
   nameCase,
+  registerNameCase,
   saveTempPublishCase,
   sendCoinCase,
   userInfoCase,
@@ -1341,7 +1346,7 @@ export async function addDataPublishes(newData, groupId, type) {
 }
 
 // Fetch user settings based on the key
-async function getUserSettings({ key }) {
+export async function getUserSettings({ key }) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
 
@@ -1362,7 +1367,7 @@ async function getUserSettings({ key }) {
 }
 
 // Add or update user settings
-async function addUserSettings({ keyValue }) {
+export async function addUserSettings({ keyValue }) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const { key, value } = keyValue;
@@ -2105,7 +2110,7 @@ export async function cancelInvitationToGroup({ groupId, qortalAddress }) {
   return res;
 }
 
-async function cancelBan({ groupId, qortalAddress }) {
+export async function cancelBan({ groupId, qortalAddress }) {
   const lastReference = await getLastRef();
   const resKeyPair = await getKeyPair();
   const parsedData = JSON.parse(resKeyPair);
@@ -2131,7 +2136,7 @@ async function cancelBan({ groupId, qortalAddress }) {
     throw new Error("Transaction was not able to be processed");
   return res;
 }
-async function registerName({ name }) {
+export async function registerName({ name }) {
   const lastReference = await getLastRef();
   const resKeyPair = await getKeyPair();
   const parsedData = JSON.parse(resKeyPair);
@@ -2157,7 +2162,7 @@ async function registerName({ name }) {
     throw new Error("Transaction was not able to be processed");
   return res;
 }
-async function makeAdmin({ groupId, qortalAddress }) {
+export async function makeAdmin({ groupId, qortalAddress }) {
   const lastReference = await getLastRef();
   const resKeyPair = await getKeyPair();
   const parsedData = JSON.parse(resKeyPair);
@@ -2245,7 +2250,11 @@ export async function banFromGroup({
   return res;
 }
 
-export async function kickFromGroup({ groupId, qortalAddress, rBanReason = "" }) {
+export async function kickFromGroup({
+  groupId,
+  qortalAddress,
+  rBanReason = "",
+}) {
   const lastReference = await getLastRef();
   const resKeyPair = await getKeyPair();
   const parsedData = JSON.parse(resKeyPair);
@@ -2922,31 +2931,44 @@ function setupMessageListener() {
       case "getTempPublish":
         getTempPublishCase(request, event);
         break;
-        case "createGroup":
-          createGroupCase(request, event);
+      case "createGroup":
+        createGroupCase(request, event);
+        break;
+      case "cancelInvitationToGroup":
+        cancelInvitationToGroupCase(request, event);
+        break;
+      case "leaveGroup":
+        leaveGroupCase(request, event);
+        break;
+      case "joinGroup":
+        joinGroupCase(request, event);
+        break;
+      case "kickFromGroup":
+        kickFromGroupCase(request, event);
+        break;
+      case "banFromGroup":
+        banFromGroupCase(request, event);
+        break;
+
+      case "addDataPublishes":
+        addDataPublishesCase(request, event);
+        break;
+
+      case "getDataPublishes":
+        getDataPublishesCase(request, event);
+        break;
+      case "addUserSettings":
+        addUserSettingsCase(request, event);
+        break;
+      case "cancelBan":
+        cancelBanCase(request, event);
+        break;
+        case "registerName":
+          registerNameCase(request, event);
           break;
-          case "cancelInvitationToGroup":
-            cancelInvitationToGroupCase(request, event);
-            break;
-            case "leaveGroup":
-              leaveGroupCase(request, event);
-            break;
-            case "joinGroup":
-              joinGroupCase(request, event);
-            break;
-            case "kickFromGroup":
-              kickFromGroupCase(request, event);
-            break;
-            case "banFromGroup":
-              banFromGroupCase(request, event);
-            break;
 
-            case "addDataPublishes":
-              addDataPublishesCase(request, event);
-            break;
-
-            case "getDataPublishes":
-              getDataPublishesCase(request, event);
+          case "makeAdmin":
+            makeAdminCase(request, event);
             break;
       default:
         console.error("Unknown action:", request.action);

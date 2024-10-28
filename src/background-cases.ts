@@ -1,6 +1,8 @@
 import {
     addDataPublishes,
+    addUserSettings,
     banFromGroup,
+    cancelBan,
     cancelInvitationToGroup,
     createGroup,
   decryptWallet,
@@ -12,10 +14,13 @@ import {
   getNameInfo,
   getTempPublish,
   getUserInfo,
+  getUserSettings,
   inviteToGroup,
   joinGroup,
   kickFromGroup,
   leaveGroup,
+  makeAdmin,
+  registerName,
   saveTempPublish,
   sendCoin,
   walletVersion,
@@ -542,6 +547,140 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "getDataPublishes",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+  export async function addUserSettingsCase(request, event) {
+    try {
+      const { keyValue } = request.payload;
+      const response = await addUserSettings({keyValue});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addUserSettings",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addUserSettings",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function getUserSettingsCase(request, event) {
+    try {
+      const { key } = request.payload;
+      const response = await getUserSettings({key});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getUserSettings",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getUserSettings",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function cancelBanCase(request, event) {
+    try {
+      const { groupId, qortalAddress } = request.payload;
+      const response = await cancelBan({groupId, qortalAddress});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "cancelBan",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "cancelBan",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function registerNameCase(request, event) {
+    try {
+      const { name } = request.payload;
+      const response = await registerName({name});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "registerName",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "registerName",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function makeAdminCase(request, event) {
+    try {
+      const { groupId, qortalAddress } = request.payload;
+      const response = await makeAdmin({groupId, qortalAddress});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "makeAdmin",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "makeAdmin",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

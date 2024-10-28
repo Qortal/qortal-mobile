@@ -84,17 +84,23 @@ export const Settings = ({
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);
-    chrome?.runtime?.sendMessage(
-      {
-        action: "addUserSettings",
-        payload: {
-          keyValue: {
-              key: 'disable-push-notifications',
-              value: event.target.checked
-          },
-        },
-      }
-    );
+    window.sendMessage("addUserSettings", {
+      keyValue: {
+        key: 'disable-push-notifications',
+        value: event.target.checked,
+      },
+    })
+      .then((response) => {
+        if (response?.error) {
+          console.error("Error adding user settings:", response.error);
+        } else {
+          console.log("User settings added successfully");
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to add user settings:", error.message || "An error occurred");
+      });
+    
   };
 
   const handleClose = () => {
@@ -104,22 +110,21 @@ export const Settings = ({
   const getUserSettings = async () => {
     try {
       return new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "getUserSettings",
-            payload: {
-              key: "disable-push-notifications",
-            },
-          },
-          (response) => {
+        window.sendMessage("getUserSettings", {
+          key: "disable-push-notifications",
+        })
+          .then((response) => {
             if (!response?.error) {
               setChecked(response || false);
               res(response);
               return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
     } catch (error) {
       console.log("error", error);

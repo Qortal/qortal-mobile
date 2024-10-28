@@ -74,29 +74,38 @@ export const ListOfBans = ({ groupId, setInfoSnack, setOpenSnack, show }) => {
       })
       setIsLoadingUnban(true)
       new Promise((res, rej)=> {
-          chrome?.runtime?.sendMessage({ action: "cancelBan", payload: {
-              groupId,
-              qortalAddress: address,
-        }}, (response) => {
-    
+        window.sendMessage("cancelBan", {
+          groupId,
+          qortalAddress: address,
+        })
+          .then((response) => {
             if (!response?.error) {
-              res(response)
-              setIsLoadingUnban(false)
+              res(response);
+              setIsLoadingUnban(false);
               setInfoSnack({
                 type: "success",
                 message: "Successfully unbanned user. It may take a couple of minutes for the changes to propagate",
               });
               handlePopoverClose();
               setOpenSnack(true);
-              return
+              return;
             }
             setInfoSnack({
               type: "error",
               message: response?.error,
             });
             setOpenSnack(true);
-            rej(response.error)
+            rej(response.error);
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
           });
+        
         })  
     } catch (error) {
       

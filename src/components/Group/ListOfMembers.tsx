@@ -157,21 +157,15 @@ const ListOfMembers = ({
       });
       setIsLoadingMakeAdmin(true);
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "makeAdmin",
-            payload: {
-              groupId,
-              qortalAddress: address,
-            },
-          },
-          (response) => {
-        
+        window.sendMessage("makeAdmin", {
+          groupId,
+          qortalAddress: address,
+        })
+          .then((response) => {
             if (!response?.error) {
               setInfoSnack({
                 type: "success",
-                message:
-                  "Successfully made member an admin. It may take a couple of minutes for the changes to propagate",
+                message: "Successfully made member an admin. It may take a couple of minutes for the changes to propagate",
               });
               setOpenSnack(true);
               handlePopoverClose();
@@ -184,8 +178,16 @@ const ListOfMembers = ({
             });
             setOpenSnack(true);
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
+          });
+        
       });
     } catch (error) {
     } finally {

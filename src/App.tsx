@@ -1264,21 +1264,16 @@ function App() {
       });
       setIsLoadingRegisterName(true);
       new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "registerName",
-            payload: {
-              name: registerNameValue,
-            },
-          },
-          (response) => {
+        window.sendMessage("registerName", {
+          name: registerNameValue,
+        })
+          .then((response) => {
             if (!response?.error) {
               res(response);
               setIsLoadingRegisterName(false);
               setInfoSnack({
                 type: "success",
-                message:
-                  "Successfully registered. It may take a couple of minutes for the changes to propagate",
+                message: "Successfully registered. It may take a couple of minutes for the changes to propagate",
               });
               setOpenRegisterName(false);
               setRegisterNameValue("");
@@ -1301,8 +1296,16 @@ function App() {
             });
             setOpenSnack(true);
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            setInfoSnack({
+              type: "error",
+              message: error.message || "An error occurred",
+            });
+            setOpenSnack(true);
+            rej(error);
+          });
+        
       });
     } catch (error) {
       if (error?.message) {

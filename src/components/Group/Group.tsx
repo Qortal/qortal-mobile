@@ -475,22 +475,21 @@ export const Group = ({
   const getUserSettings = async () => {
     try {
       return new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "getUserSettings",
-            payload: {
-              key: "mutedGroups",
-            },
-          },
-          (response) => {
+        window.sendMessage("getUserSettings", {
+          key: "mutedGroups",
+        })
+          .then((response) => {
             if (!response?.error) {
               setMutedGroups(response || []);
               res(response);
               return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
     } catch (error) {
       console.log("error", error);

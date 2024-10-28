@@ -77,17 +77,23 @@ export const ContextMenu = ({ children, groupId, getUserSettings, mutedGroups })
         } else {
             value.push(groupId)
         }
-        chrome?.runtime?.sendMessage(
-            {
-              action: "addUserSettings",
-              payload: {
-                keyValue: {
-                    key: 'mutedGroups',
-                    value
-                },
-              },
+        window.sendMessage("addUserSettings", {
+          keyValue: {
+            key: 'mutedGroups',
+            value,
+          },
+        })
+          .then((response) => {
+            if (response?.error) {
+              console.error("Error adding user settings:", response.error);
+            } else {
+              console.log("User settings added successfully");
             }
-          );
+          })
+          .catch((error) => {
+            console.error("Failed to add user settings:", error.message || "An error occurred");
+          });
+        
         setTimeout(() => {
             getUserSettings()
         }, 400);
