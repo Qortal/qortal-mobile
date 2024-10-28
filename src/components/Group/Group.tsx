@@ -521,21 +521,20 @@ export const Group = ({
   const getGroupDataSingle = async (groupId) => {
     try {
       return new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "getGroupDataSingle",
-            payload: {
-              groupId,
-            },
-          },
-          (response) => {
+        window.sendMessage("getGroupDataSingle", {
+          groupId,
+        })
+          .then((response) => {
             if (!response?.error) {
               res(response);
               return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
     } catch (error) {
       return {};
@@ -797,15 +796,15 @@ export const Group = ({
       setSecretKey(decryptedKeyToObject);
       lastFetchedSecretKey.current = Date.now();
       setMemberCountFromSecretKeyData(decryptedKey.count);
-      chrome?.runtime?.sendMessage({
-        action: "setGroupData",
-        payload: {
-          groupId: selectedGroup?.groupId,
-          secretKeyData: data,
-          secretKeyResource: publish,
-          admins: { names, addresses, both },
-        },
-      });
+      window.sendMessage("setGroupData", {
+        groupId: selectedGroup?.groupId,
+        secretKeyData: data,
+        secretKeyResource: publish,
+        admins: { names, addresses, both },
+      }).catch((error) => {
+          console.error("Failed to set group data:", error.message || "An error occurred");
+        });
+      
       if (decryptedKeyToObject) {
         setTriedToFetchSecretKey(true);
         setFirstSecretKeyInCreation(false);
@@ -930,13 +929,13 @@ export const Group = ({
           selectedGroupRef.current &&
           groupSectionRef.current === "announcement"
         ) {
-          chrome?.runtime?.sendMessage({
-            action: "addGroupNotificationTimestamp",
-            payload: {
-              timestamp: Date.now(),
-              groupId: selectedGroupRef.current.groupId,
-            },
-          });
+          window.sendMessage("addGroupNotificationTimestamp", {
+            timestamp: Date.now(),
+            groupId: selectedGroupRef.current.groupId,
+          }).catch((error) => {
+              console.error("Failed to add group notification timestamp:", error.message || "An error occurred");
+            });
+          
           setTimeout(() => {
             getGroupAnnouncements();
           }, 200);
@@ -1026,21 +1025,21 @@ export const Group = ({
     try {
       setIsLoadingNotifyAdmin(true);
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "notifyAdminRegenerateSecretKey",
-            payload: {
-              adminAddress: admin.address,
-              groupName: selectedGroup?.groupName,
-            },
-          },
-          (response) => {
+        window.sendMessage("notifyAdminRegenerateSecretKey", {
+          adminAddress: admin.address,
+          groupName: selectedGroup?.groupName,
+        })
+          .then((response) => {
             if (!response?.error) {
               res(response);
+              return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
       setInfoSnack({
         type: "success",
@@ -1198,13 +1197,13 @@ export const Group = ({
       });
     
 
-    chrome?.runtime?.sendMessage({
-      action: "addGroupNotificationTimestamp",
-      payload: {
+      window.sendMessage("addGroupNotificationTimestamp", {
         timestamp: Date.now(),
         groupId,
-      },
-    });
+      }).catch((error) => {
+          console.error("Failed to add group notification timestamp:", error.message || "An error occurred");
+        });
+      
     setTimeout(() => {
       getGroupAnnouncements();
       getTimestampEnterChat();
@@ -1362,13 +1361,13 @@ export const Group = ({
       setTriedToFetchSecretKey(false);
       setFirstSecretKeyInCreation(false);
       setGroupSection("announcement");
-      chrome?.runtime?.sendMessage({
-        action: "addGroupNotificationTimestamp",
-        payload: {
-          timestamp: Date.now(),
-          groupId: findGroup.groupId,
-        },
-      });
+      window.sendMessage("addGroupNotificationTimestamp", {
+        timestamp: Date.now(),
+        groupId: findGroup.groupId,
+      }).catch((error) => {
+          console.error("Failed to add group notification timestamp:", error.message || "An error occurred");
+        });
+      
       setTimeout(() => {
         setSelectedGroup(findGroup);
         setMobileViewMode("group");
@@ -1492,13 +1491,13 @@ export const Group = ({
     setSelectedDirect(null);
     setNewChat(false);
     setGroupSection("announcement");
-    chrome?.runtime?.sendMessage({
-      action: "addGroupNotificationTimestamp",
-      payload: {
-        timestamp: Date.now(),
-        groupId: selectedGroupRef.current.groupId,
-      },
-    });
+    window.sendMessage("addGroupNotificationTimestamp", {
+      timestamp: Date.now(),
+      groupId: selectedGroupRef.current.groupId,
+    }).catch((error) => {
+        console.error("Failed to add group notification timestamp:", error.message || "An error occurred");
+      });
+    
     setTimeout(() => {
       getGroupAnnouncements();
     }, 200);
@@ -1830,19 +1829,7 @@ export const Group = ({
                     getTimestampEnterChat();
                   }, 200);
 
-                  // if (groupSectionRef.current === "announcement") {
-                  //   chrome?.runtime?.sendMessage({
-                  //     action: "addGroupNotificationTimestamp",
-                  //     payload: {
-                  //       timestamp: Date.now(),
-                  //       groupId: group.groupId,
-                  //     },
-                  //   });
-                  // }
-
-                  // setTimeout(() => {
-                  //   getGroupAnnouncements();
-                  // }, 600);
+                  
                 }}
                 sx={{
                   display: "flex",

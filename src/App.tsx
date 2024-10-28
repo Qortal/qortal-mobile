@@ -1201,10 +1201,11 @@ function App() {
     const handleFocus = () => {
       setIsFocused(true);
       if (isMobile) {
-        chrome?.runtime?.sendMessage({
-          action: "clearAllNotifications",
-          payload: {},
+        window.sendMessage("clearAllNotifications", {})
+        .catch((error) => {
+          console.error("Failed to clear notifications:", error.message || "An error occurred");
         });
+      
       }
 
     };
@@ -1223,10 +1224,11 @@ function App() {
       if (document.visibilityState === "visible") {
         setIsFocused(true);
         if (isMobile) {
-          chrome?.runtime?.sendMessage({
-            action: "clearAllNotifications",
-            payload: {},
+          window.sendMessage("clearAllNotifications", {})
+          .catch((error) => {
+            console.error("Failed to clear notifications:", error.message || "An error occurred");
           });
+        
         }
       } else {
         setIsFocused(false);

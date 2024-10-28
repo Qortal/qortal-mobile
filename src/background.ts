@@ -30,17 +30,20 @@ import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMu
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
 import {
   addDataPublishesCase,
+  addGroupNotificationTimestampCase,
   addTimestampEnterChatCase,
   addUserSettingsCase,
   balanceCase,
   banFromGroupCase,
   cancelBanCase,
   cancelInvitationToGroupCase,
+  clearAllNotificationsCase,
   createGroupCase,
   decryptWalletCase,
   getApiKeyCase,
   getCustomNodesFromStorageCase,
   getDataPublishesCase,
+  getGroupDataSingleCase,
   getTempPublishCase,
   getUserSettingsCase,
   getWalletInfoCase,
@@ -52,6 +55,7 @@ import {
   makeAdminCase,
   nameCase,
   notificationCase,
+  notifyAdminRegenerateSecretKeyCase,
   registerNameCase,
   removeAdminCase,
   saveTempPublishCase,
@@ -59,6 +63,7 @@ import {
   setApiKeyCase,
   setChatHeadsCase,
   setCustomNodesCase,
+  setGroupDataCase,
   userInfoCase,
   validApiCase,
   versionCase,
@@ -1038,7 +1043,7 @@ export async function getSaveWallet() {
   }
 }
 
-async function clearAllNotifications() {
+export async function clearAllNotifications() {
   const notifications = await chrome.notifications.getAll();
   for (const notificationId of Object.keys(notifications)) {
     await chrome.notifications.clear(notificationId);
@@ -2754,7 +2759,7 @@ async function getTimestampGroupAnnouncement() {
   }
 }
 
-async function addTimestampGroupAnnouncement({
+export async function addTimestampGroupAnnouncement({
   groupId,
   timestamp,
   seenTimestamp,
@@ -2793,7 +2798,7 @@ async function getGroupData() {
     return {};
   }
 }
-async function getGroupDataSingle(groupId) {
+export async function getGroupDataSingle(groupId) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const key = `group-data-${address}`;
@@ -2806,7 +2811,7 @@ async function getGroupDataSingle(groupId) {
   }
 }
 
-async function setGroupData({
+export async function setGroupData({
   groupId,
   secretKeyData,
   secretKeyResource,
@@ -2853,7 +2858,10 @@ export async function addTimestampEnterChat({ groupId, timestamp }) {
   });
 }
 
-async function notifyAdminRegenerateSecretKey({ groupName, adminAddress }) {
+export async function notifyAdminRegenerateSecretKey({
+  groupName,
+  adminAddress,
+}) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const name = await getNameInfo(address);
@@ -3004,9 +3012,24 @@ function setupMessageListener() {
       case "getApiKey":
         getApiKeyCase(request, event);
         break;
-        case "getCustomNodesFromStorage":
-          getCustomNodesFromStorageCase(request, event);
-          break;
+      case "getCustomNodesFromStorage":
+        getCustomNodesFromStorageCase(request, event);
+        break;
+      case "notifyAdminRegenerateSecretKey":
+        notifyAdminRegenerateSecretKeyCase(request, event);
+        break;
+      case "addGroupNotificationTimestamp":
+        addGroupNotificationTimestampCase(request, event);
+        break;
+      case "clearAllNotifications":
+        clearAllNotificationsCase(request, event);
+        break;
+      case "setGroupData":
+        setGroupDataCase(request, event);
+        break;
+      case "getGroupDataSingle":
+        getGroupDataSingleCase(request, event);
+        break;
       default:
         console.error("Unknown action:", request.action);
     }

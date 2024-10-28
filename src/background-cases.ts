@@ -1,10 +1,12 @@
 import {
     addDataPublishes,
     addTimestampEnterChat,
+    addTimestampGroupAnnouncement,
     addUserSettings,
     banFromGroup,
     cancelBan,
     cancelInvitationToGroup,
+    clearAllNotifications,
     createGroup,
   decryptWallet,
   findUsableApi,
@@ -12,6 +14,7 @@ import {
   getBalanceInfo,
   getCustomNodesFromStorage,
   getDataPublishes,
+  getGroupDataSingle,
   getKeyPair,
   getLTCBalance,
   getNameInfo,
@@ -23,11 +26,13 @@ import {
   kickFromGroup,
   leaveGroup,
   makeAdmin,
+  notifyAdminRegenerateSecretKey,
   registerName,
   removeAdmin,
   saveTempPublish,
   sendCoin,
   setChatHeads,
+  setGroupData,
   walletVersion,
 } from "./background";
 
@@ -892,6 +897,140 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "getCustomNodesFromStorage",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function notifyAdminRegenerateSecretKeyCase(request, event) {
+    try {
+        const { groupName, adminAddress } = request.payload;
+        const response = await notifyAdminRegenerateSecretKey({groupName, adminAddress});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "notifyAdminRegenerateSecretKey",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "notifyAdminRegenerateSecretKey",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function addGroupNotificationTimestampCase(request, event) {
+    try {
+        const { groupId, timestamp } = request.payload;
+        const response = await addTimestampGroupAnnouncement({groupId, timestamp});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addGroupNotificationTimestamp",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "addGroupNotificationTimestamp",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function clearAllNotificationsCase(request, event) {
+    try {
+        await clearAllNotifications();
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "clearAllNotifications",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "clearAllNotifications",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function setGroupDataCase(request, event) {
+    try {
+        const { groupId, secretKeyData, secretKeyResource, admins } = request.payload;
+        const response = await setGroupData({groupId, secretKeyData, secretKeyResource, admins});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "setGroupData",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "setGroupData",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function getGroupDataSingleCase(request, event) {
+    try {
+        const { groupId } = request.payload;
+        const response = await getGroupDataSingle({groupId});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getGroupDataSingle",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getGroupDataSingle",
           error: error?.message,
           type: "backgroundMessageResponse",
         },
