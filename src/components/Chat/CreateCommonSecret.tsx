@@ -107,28 +107,36 @@ export const CreateCommonSecret = ({groupId, secretKey, isOwner,  myAddress, sec
           const secretKeyToSend = !secretKey2 ? null : secretKey2
        
  
-            chrome?.runtime?.sendMessage({ action: "encryptAndPublishSymmetricKeyGroupChat", payload: {
-                groupId: groupId,
-                previousData: secretKeyToSend
-            } }, (response) => {
-                if (!response?.error) {
-                  setInfoSnack({
-                    type: "success",
-                    message: "Successfully re-encrypted secret key. It may take a couple of minutes for the changes to propagate. Refresh the group in 5mins",
-                  });
-                  setOpenSnack(true);
-                  setTxList((prev)=> [{
+          window.sendMessage("encryptAndPublishSymmetricKeyGroupChat", {
+            groupId: groupId,
+            previousData: secretKeyToSend,
+          })
+            .then((response) => {
+              if (!response?.error) {
+                setInfoSnack({
+                  type: "success",
+                  message: "Successfully re-encrypted secret key. It may take a couple of minutes for the changes to propagate. Refresh the group in 5 mins.",
+                });
+                setOpenSnack(true);
+                setTxList((prev) => [
+                  {
                     ...response,
                     type: 'created-common-secret',
                     label: `Published secret key for group ${groupId}: awaiting confirmation`,
                     labelDone: `Published secret key for group ${groupId}: success!`,
                     done: false,
                     groupId,
-                    
-                  }, ...prev])
-                }
-                setIsLoading(false)
-              });
+                  },
+                  ...prev,
+                ]);
+              }
+              setIsLoading(false);
+            })
+            .catch((error) => {
+              console.error("Failed to encrypt and publish symmetric key for group chat:", error.message || "An error occurred");
+              setIsLoading(false);
+            });
+          
         } catch (error) {
             
         }

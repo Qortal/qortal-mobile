@@ -40,6 +40,7 @@ import {
   clearAllNotificationsCase,
   createGroupCase,
   decryptWalletCase,
+  encryptAndPublishSymmetricKeyGroupChatCase,
   getApiKeyCase,
   getCustomNodesFromStorageCase,
   getDataPublishesCase,
@@ -1660,7 +1661,7 @@ async function sendChat({ qortAddress, recipientPublicKey, message }) {
   return _response;
 }
 
-async function sendChatGroup({
+export async function sendChatGroup({
   groupId,
   typeMessage,
   chatReference,
@@ -1991,7 +1992,7 @@ async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
   }
 }
 
-async function sendChatNotification(
+export async function sendChatNotification(
   res,
   groupId,
   secretKeyObject,
@@ -3032,11 +3033,14 @@ function setupMessageListener() {
       case "getGroupDataSingle":
         getGroupDataSingleCase(request, event);
         break;
-        case "getTimestampEnterChat":
-          getTimestampEnterChatCase(request, event);
-          break;
-          case "getGroupNotificationTimestamp":
-          getGroupNotificationTimestampCase(request, event);
+      case "getTimestampEnterChat":
+        getTimestampEnterChatCase(request, event);
+        break;
+      case "getGroupNotificationTimestamp":
+        getGroupNotificationTimestampCase(request, event);
+        break;
+        case "encryptAndPublishSymmetricKeyGroupChat":
+          encryptAndPublishSymmetricKeyGroupChatCase(request, event);
           break;
       default:
         console.error("Unknown action:", request.action);
