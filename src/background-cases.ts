@@ -19,6 +19,8 @@ import {
   getLTCBalance,
   getNameInfo,
   getTempPublish,
+  getTimestampEnterChat,
+  getTimestampGroupAnnouncement,
   getUserInfo,
   getUserSettings,
   inviteToGroup,
@@ -1031,6 +1033,59 @@ export async function balanceCase(request, event) {
         {
           requestId: request.requestId,
           action: "getGroupDataSingle",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function getTimestampEnterChatCase(request, event) {
+    try {
+       const response = await getTimestampEnterChat();
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getTimestampEnterChat",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getTimestampEnterChat",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+
+  export async function getGroupNotificationTimestampCase(request, event) {
+    try {
+       const response = await getTimestampGroupAnnouncement();
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getGroupNotificationTimestamp",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getGroupNotificationTimestamp",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

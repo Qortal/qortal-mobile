@@ -503,18 +503,19 @@ export const Group = ({
   const getTimestampEnterChat = async () => {
     try {
       return new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "getTimestampEnterChat",
-          },
-          (response) => {
-            if (!response?.error) {
-              setTimestampEnterData(response);
-              res(response);
-            }
-            rej(response.error);
-          }
-        );
+        window.sendMessage("getTimestampEnterChat")
+  .then((response) => {
+    if (!response?.error) {
+      setTimestampEnterData(response);
+      res(response);
+      return;
+    }
+    rej(response.error);
+  })
+  .catch((error) => {
+    rej(error.message || "An error occurred");
+  });
+
       });
     } catch (error) {}
   };
@@ -550,18 +551,19 @@ export const Group = ({
   const getGroupAnnouncements = async () => {
     try {
       return new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "getGroupNotificationTimestamp",
-          },
-          (response) => {
-            if (!response?.error) {
-              setGroupAnnouncements(response);
-              res(response);
-            }
-            rej(response.error);
+        window.sendMessage("getGroupNotificationTimestamp")
+        .then((response) => {
+          if (!response?.error) {
+            setGroupAnnouncements(response);
+            res(response);
+            return;
           }
-        );
+          rej(response.error);
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
       });
     } catch (error) {}
   };

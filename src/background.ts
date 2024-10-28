@@ -44,7 +44,9 @@ import {
   getCustomNodesFromStorageCase,
   getDataPublishesCase,
   getGroupDataSingleCase,
+  getGroupNotificationTimestampCase,
   getTempPublishCase,
+  getTimestampEnterChatCase,
   getUserSettingsCase,
   getWalletInfoCase,
   inviteToGroupCase,
@@ -2734,7 +2736,7 @@ async function setChatHeadsDirect(data) {
   });
 }
 
-async function getTimestampEnterChat() {
+export async function getTimestampEnterChat() {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const key = `enter-chat-timestamp-${address}`;
@@ -2746,7 +2748,7 @@ async function getTimestampEnterChat() {
     return {};
   }
 }
-async function getTimestampGroupAnnouncement() {
+export async function getTimestampGroupAnnouncement() {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const key = `group-announcement-${address}`;
@@ -3030,6 +3032,12 @@ function setupMessageListener() {
       case "getGroupDataSingle":
         getGroupDataSingleCase(request, event);
         break;
+        case "getTimestampEnterChat":
+          getTimestampEnterChatCase(request, event);
+          break;
+          case "getGroupNotificationTimestamp":
+          getGroupNotificationTimestampCase(request, event);
+          break;
       default:
         console.error("Unknown action:", request.action);
     }
