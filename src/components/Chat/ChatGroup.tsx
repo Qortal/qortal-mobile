@@ -125,184 +125,165 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
           return
         }
         return new Promise((res, rej)=> {
-          chrome?.runtime?.sendMessage({ action: "decryptSingle", payload: {
+          window.sendMessage("decryptSingle", {
             data: encryptedMessages,
-            secretKeyObject: secretKey
-        }}, (response) => {
-            if (!response?.error) {
-              const filterUImessages = encryptedMessages.filter((item)=> !isExtMsg(item.data))
-              const decodedUIMessages = decodeBase64ForUIChatMessages(filterUImessages)
-
-              const combineUIAndExtensionMsgs = [...decodedUIMessages, ...response]
-              processWithNewMessages(combineUIAndExtensionMsgs?.map((item)=> {
-                return {
-                  ...item,
-                  ...(item?.decryptedData || {})
+            secretKeyObject: secretKey,
+          })
+            .then((response) => {
+              if (!response?.error) {
+                const filterUIMessages = encryptedMessages.filter((item) => !isExtMsg(item.data));
+                const decodedUIMessages = decodeBase64ForUIChatMessages(filterUIMessages);
+          
+                const combineUIAndExtensionMsgs = [...decodedUIMessages, ...response];
+                processWithNewMessages(
+                  combineUIAndExtensionMsgs.map((item) => ({
+                    ...item,
+                    ...(item?.decryptedData || {}),
+                  })),
+                  selectedGroup
+                );
+                res(combineUIAndExtensionMsgs);
+          
+                if (isInitiated) {
+                  const formatted = combineUIAndExtensionMsgs
+                    .filter((rawItem) => !rawItem?.chatReference)
+                    .map((item) => ({
+                      ...item,
+                      id: item.signature,
+                      text: item?.decryptedData?.message || "",
+                      repliedTo: item?.repliedTo || item?.decryptedData?.repliedTo,
+                      unread: item?.sender === myAddress ? false : !!item?.chatReference ? false : true,
+                      isNotEncrypted: !!item?.messageText,
+                    }));
+                  setMessages((prev) => [...prev, ...formatted]);
+          
+                  setChatReferences((prev) => {
+                    const organizedChatReferences = { ...prev };
+          
+                    combineUIAndExtensionMsgs
+                      .filter((rawItem) => rawItem && rawItem.chatReference && rawItem.decryptedData?.type === "reaction")
+                      .forEach((item) => {
+                        try {
+                          const content = item.decryptedData?.content;
+                          const sender = item.sender;
+                          const newTimestamp = item.timestamp;
+                          const contentState = item.decryptedData?.contentState;
+          
+                          if (!content || typeof content !== "string" || !sender || typeof sender !== "string" || !newTimestamp) {
+                            console.warn("Invalid content, sender, or timestamp in reaction data", item);
+                            return;
+                          }
+          
+                          organizedChatReferences[item.chatReference] = {
+                            ...(organizedChatReferences[item.chatReference] || {}),
+                            reactions: organizedChatReferences[item.chatReference]?.reactions || {},
+                          };
+          
+                          organizedChatReferences[item.chatReference].reactions[content] =
+                            organizedChatReferences[item.chatReference].reactions[content] || [];
+          
+                          let latestTimestampForSender = null;
+          
+                          organizedChatReferences[item.chatReference].reactions[content] = 
+                            organizedChatReferences[item.chatReference].reactions[content].filter((reaction) => {
+                              if (reaction.sender === sender) {
+                                latestTimestampForSender = Math.max(latestTimestampForSender || 0, reaction.timestamp);
+                              }
+                              return reaction.sender !== sender;
+                            });
+          
+                          if (latestTimestampForSender && newTimestamp < latestTimestampForSender) {
+                            return;
+                          }
+          
+                          if (contentState !== false) {
+                            organizedChatReferences[item.chatReference].reactions[content].push(item);
+                          }
+          
+                          if (organizedChatReferences[item.chatReference].reactions[content].length === 0) {
+                            delete organizedChatReferences[item.chatReference].reactions[content];
+                          }
+                        } catch (error) {
+                          console.error("Error processing reaction item:", error, item);
+                        }
+                      });
+          
+                    return organizedChatReferences;
+                  });
+                } else {
+                  const formatted = combineUIAndExtensionMsgs
+                    .filter((rawItem) => !rawItem?.chatReference)
+                    .map((item) => ({
+                      ...item,
+                      id: item.signature,
+                      text: item?.decryptedData?.message || "",
+                      repliedTo: item?.repliedTo || item?.decryptedData?.repliedTo,
+                      isNotEncrypted: !!item?.messageText,
+                      unread: false,
+                    }));
+                  setMessages(formatted);
+          
+                  setChatReferences((prev) => {
+                    const organizedChatReferences = { ...prev };
+          
+                    combineUIAndExtensionMsgs
+                      .filter((rawItem) => rawItem && rawItem.chatReference && rawItem.decryptedData?.type === "reaction")
+                      .forEach((item) => {
+                        try {
+                          const content = item.decryptedData?.content;
+                          const sender = item.sender;
+                          const newTimestamp = item.timestamp;
+                          const contentState = item.decryptedData?.contentState;
+          
+                          if (!content || typeof content !== "string" || !sender || typeof sender !== "string" || !newTimestamp) {
+                            console.warn("Invalid content, sender, or timestamp in reaction data", item);
+                            return;
+                          }
+          
+                          organizedChatReferences[item.chatReference] = {
+                            ...(organizedChatReferences[item.chatReference] || {}),
+                            reactions: organizedChatReferences[item.chatReference]?.reactions || {},
+                          };
+          
+                          organizedChatReferences[item.chatReference].reactions[content] =
+                            organizedChatReferences[item.chatReference].reactions[content] || [];
+          
+                          let latestTimestampForSender = null;
+          
+                          organizedChatReferences[item.chatReference].reactions[content] = 
+                            organizedChatReferences[item.chatReference].reactions[content].filter((reaction) => {
+                              if (reaction.sender === sender) {
+                                latestTimestampForSender = Math.max(latestTimestampForSender || 0, reaction.timestamp);
+                              }
+                              return reaction.sender !== sender;
+                            });
+          
+                          if (latestTimestampForSender && newTimestamp < latestTimestampForSender) {
+                            return;
+                          }
+          
+                          if (contentState !== false) {
+                            organizedChatReferences[item.chatReference].reactions[content].push(item);
+                          }
+          
+                          if (organizedChatReferences[item.chatReference].reactions[content].length === 0) {
+                            delete organizedChatReferences[item.chatReference].reactions[content];
+                          }
+                        } catch (error) {
+                          console.error("Error processing reaction item:", error, item);
+                        }
+                      });
+          
+                    return organizedChatReferences;
+                  });
                 }
-              }), selectedGroup)
-              res(combineUIAndExtensionMsgs)
-              if(isInitiated){
-               
-                const formatted = combineUIAndExtensionMsgs.filter((rawItem)=> !rawItem?.chatReference).map((item: any)=> {
-                  return {
-                    ...item,
-                    id: item.signature,
-                    text: item?.decryptedData?.message || "",
-                    repliedTo: item?.repliedTo || item?.decryptedData?.repliedTo,
-                    unread: item?.sender === myAddress ? false : !!item?.chatReference ? false : true,
-                    isNotEncrypted: !!item?.messageText
-                  }
-                } )
-                setMessages((prev)=> [...prev, ...formatted])
-
-               
-                setChatReferences((prev) => {
-                  let organizedChatReferences = { ...prev };
-                
-                  combineUIAndExtensionMsgs
-                    .filter((rawItem) => rawItem && rawItem.chatReference && rawItem.decryptedData?.type === 'reaction')
-                    .forEach((item) => {
-                      try {
-                        const content = item.decryptedData?.content;
-                        const sender = item.sender;
-                        const newTimestamp = item.timestamp;
-                        const contentState = item.decryptedData?.contentState;
-                
-                        if (!content || typeof content !== 'string' || !sender || typeof sender !== 'string' || !newTimestamp) {
-                          console.warn("Invalid content, sender, or timestamp in reaction data", item);
-                          return;
-                        }
-                
-                        // Initialize chat reference and reactions if not present
-                        organizedChatReferences[item.chatReference] = {
-                          ...(organizedChatReferences[item.chatReference] || {}),
-                          reactions: organizedChatReferences[item.chatReference]?.reactions || {}
-                        };
-                
-                        organizedChatReferences[item.chatReference].reactions[content] =
-                          organizedChatReferences[item.chatReference].reactions[content] || [];
-                
-                        // Remove any existing reactions from the same sender before adding the new one
-                        let latestTimestampForSender = null;
-                
-                        // Track the latest reaction timestamp for the same content and sender
-                        organizedChatReferences[item.chatReference].reactions[content] =
-                          organizedChatReferences[item.chatReference].reactions[content].filter((reaction) => {
-                            if (reaction.sender === sender) {
-                              // Track the latest timestamp for this sender
-                              latestTimestampForSender = Math.max(latestTimestampForSender || 0, reaction.timestamp);
-                            }
-                            return reaction.sender !== sender;
-                          });
-                
-                        // Compare with the latest tracked timestamp for this sender
-                        if (latestTimestampForSender && newTimestamp < latestTimestampForSender) {
-                          // Ignore this item if it's older than the latest known reaction
-                          return;
-                        }
-                
-                        // Add the new reaction only if contentState is true
-                        if (contentState !== false) {
-                          organizedChatReferences[item.chatReference].reactions[content].push(item);
-                        }
-                
-                        // If the reactions for a specific content are empty, clean up the object
-                        if (organizedChatReferences[item.chatReference].reactions[content].length === 0) {
-                          delete organizedChatReferences[item.chatReference].reactions[content];
-                        }
-                      } catch (error) {
-                        console.error("Error processing reaction item:", error, item);
-                      }
-                    });
-                
-                  return organizedChatReferences;
-                });
-                
-                
-                
-              } else {
-                const formatted = combineUIAndExtensionMsgs.filter((rawItem)=> !rawItem?.chatReference).map((item: any)=> {
-                  return {
-                    ...item,
-                    id: item.signature,
-                    text: item?.decryptedData?.message || "",
-                    repliedTo: item?.repliedTo || item?.decryptedData?.repliedTo,
-                    isNotEncrypted: !!item?.messageText,
-                    unread:  false
-                  }
-                } )
-                setMessages(formatted)
-              
-                setChatReferences((prev) => {
-                  let organizedChatReferences = { ...prev };
-                
-                  combineUIAndExtensionMsgs
-                    .filter((rawItem) => rawItem && rawItem.chatReference && rawItem.decryptedData?.type === 'reaction')
-                    .forEach((item) => {
-                      try {
-                        const content = item.decryptedData?.content;
-                        const sender = item.sender;
-                        const newTimestamp = item.timestamp;
-                        const contentState = item.decryptedData?.contentState;
-                
-                        if (!content || typeof content !== 'string' || !sender || typeof sender !== 'string' || !newTimestamp) {
-                          console.warn("Invalid content, sender, or timestamp in reaction data", item);
-                          return;
-                        }
-                
-                        // Initialize chat reference and reactions if not present
-                        organizedChatReferences[item.chatReference] = {
-                          ...(organizedChatReferences[item.chatReference] || {}),
-                          reactions: organizedChatReferences[item.chatReference]?.reactions || {}
-                        };
-                
-                        organizedChatReferences[item.chatReference].reactions[content] =
-                          organizedChatReferences[item.chatReference].reactions[content] || [];
-                
-                        // Remove any existing reactions from the same sender before adding the new one
-                        let latestTimestampForSender = null;
-                
-                        // Track the latest reaction timestamp for the same content and sender
-                        organizedChatReferences[item.chatReference].reactions[content] =
-                          organizedChatReferences[item.chatReference].reactions[content].filter((reaction) => {
-                            if (reaction.sender === sender) {
-                              // Track the latest timestamp for this sender
-                              latestTimestampForSender = Math.max(latestTimestampForSender || 0, reaction.timestamp);
-                            }
-                            return reaction.sender !== sender;
-                          });
-                
-                        // Compare with the latest tracked timestamp for this sender
-                        if (latestTimestampForSender && newTimestamp < latestTimestampForSender) {
-                          // Ignore this item if it's older than the latest known reaction
-                          return;
-                        }
-                
-                        // Add the new reaction only if contentState is true
-                        if (contentState !== false) {
-                          organizedChatReferences[item.chatReference].reactions[content].push(item);
-                        }
-                
-                        // If the reactions for a specific content are empty, clean up the object
-                        if (organizedChatReferences[item.chatReference].reactions[content].length === 0) {
-                          delete organizedChatReferences[item.chatReference].reactions[content];
-                        }
-                      } catch (error) {
-                        console.error("Error processing reaction item:", error, item);
-                      }
-                    });
-                
-                  return organizedChatReferences;
-                });
-                
-                
-                
-                
-                
               }
-            }
-            rej(response.error)
-          });
+              rej(response.error);
+            })
+            .catch((error) => {
+              rej(error.message || "An error occurred");
+            });
+          
         })  
       } catch (error) {
           
@@ -418,17 +399,22 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
   const encryptChatMessage = async (data: string, secretKeyObject: any, reactiontypeNumber?: number)=> {
     try {
       return new Promise((res, rej)=> {
-        chrome?.runtime?.sendMessage({ action: "encryptSingle", payload: {
+        window.sendMessage("encryptSingle", {
           data,
           secretKeyObject,
-          typeNumber: reactiontypeNumber
-      }}, (response) => {
-     
-          if (!response?.error) {
-            res(response)
-          }
-          rej(response.error)
-        });
+          typeNumber: reactiontypeNumber,
+        })
+          .then((response) => {
+            if (!response?.error) {
+              res(response);
+              return;
+            }
+            rej(response.error);
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       })  
     } catch (error) {
         

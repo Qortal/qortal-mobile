@@ -199,21 +199,20 @@ export const getGroupMembers = async (groupNumber: number) => {
 export const decryptResource = async (data: string) => {
   try {
     return new Promise((res, rej) => {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "decryptGroupEncryption",
-          payload: {
-            data,
-          },
-        },
-        (response) => {
+      window.sendMessage("decryptGroupEncryption", {
+        data,
+      })
+        .then((response) => {
           if (!response?.error) {
             res(response);
             return;
           }
           rej(response.error);
-        }
-      );
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     });
   } catch (error) {}
 };

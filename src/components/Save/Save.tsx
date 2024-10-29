@@ -87,24 +87,22 @@ export const Save = ({isDesktop}) => {
             publishFee: fee.fee + ' QORT'
           })
          const response =  await new Promise((res, rej) => {
-            chrome?.runtime?.sendMessage(
-              {
-                action: "publishOnQDN",
-                payload: {
-                  data: encryptData,
-                  identifier: "ext_saved_settings",
-                  service: 'DOCUMENT_PRIVATE'
-                },
-              },
-              (response) => {
-             
-                if (!response?.error) {
-                  res(response);
-                  return
-                }
-                rej(response.error);
+          window.sendMessage("publishOnQDN", {
+            data: encryptData,
+            identifier: "ext_saved_settings",
+            service: "DOCUMENT_PRIVATE",
+          })
+            .then((response) => {
+              if (!response?.error) {
+                res(response);
+                return;
               }
-            );
+              rej(response.error);
+            })
+            .catch((error) => {
+              rej(error.message || "An error occurred");
+            });
+          
           });
           if(response?.identifier){
             setOldPinnedApps(pinnedApps)

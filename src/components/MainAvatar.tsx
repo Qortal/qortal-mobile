@@ -63,24 +63,22 @@ const [isLoading, setIsLoading] = useState(false)
             setIsLoading(true);
             const avatarBase64 = await fileToBase64(avatarFile)
             await new Promise((res, rej) => {
-                chrome?.runtime?.sendMessage(
-                  {
-                    action: "publishOnQDN",
-                    payload: {
-                      data: avatarBase64,
-                      identifier: "qortal_avatar",
-                      service: 'THUMBNAIL'
-                    },
-                  },
-                  (response) => {
-                 
-                    if (!response?.error) {
-                      res(response);
-                      return
-                    }
-                    rej(response.error);
+              window.sendMessage("publishOnQDN", {
+                data: avatarBase64,
+                identifier: "qortal_avatar",
+                service: "THUMBNAIL",
+              })
+                .then((response) => {
+                  if (!response?.error) {
+                    res(response);
+                    return;
                   }
-                );
+                  rej(response.error);
+                })
+                .catch((error) => {
+                  rej(error.message || "An error occurred");
+                });
+              
               });
         setAvatarFile(null);
         setTempAvatar(`data:image/webp;base64,${avatarBase64}`)

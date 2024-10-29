@@ -75,23 +75,21 @@ export const AnnouncementDiscussion = ({
       if (!selectedAnnouncement) return;
     
       return new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "publishGroupEncryptedResource",
-            payload: {
-              encryptedData,
-              identifier,
-            },
-          },
-          (response) => {
-         
+        window.sendMessage("publishGroupEncryptedResource", {
+          encryptedData,
+          identifier,
+        })
+          .then((response) => {
             if (!response?.error) {
               res(response);
-              return
+              return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
     } catch (error) {}
   };

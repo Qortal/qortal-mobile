@@ -39,17 +39,22 @@ import {
   cancelInvitationToGroupCase,
   clearAllNotificationsCase,
   createGroupCase,
+  decryptGroupEncryptionCase,
+  decryptSingleCase,
   decryptWalletCase,
   encryptAndPublishSymmetricKeyGroupChatCase,
+  encryptSingleCase,
   getApiKeyCase,
   getCustomNodesFromStorageCase,
   getDataPublishesCase,
   getGroupDataSingleCase,
   getGroupNotificationTimestampCase,
   getTempPublishCase,
+  getThreadActivityCase,
   getTimestampEnterChatCase,
   getUserSettingsCase,
   getWalletInfoCase,
+  handleActiveGroupDataFromSocketCase,
   inviteToGroupCase,
   joinGroupCase,
   kickFromGroupCase,
@@ -59,6 +64,8 @@ import {
   nameCase,
   notificationCase,
   notifyAdminRegenerateSecretKeyCase,
+  publishGroupEncryptedResourceCase,
+  publishOnQDNCase,
   registerNameCase,
   removeAdminCase,
   saveTempPublishCase,
@@ -67,6 +74,7 @@ import {
   setChatHeadsCase,
   setCustomNodesCase,
   setGroupDataCase,
+  updateThreadActivityCase,
   userInfoCase,
   validApiCase,
   versionCase,
@@ -470,7 +478,12 @@ async function getThreadActivity() {
   }
 }
 
-async function updateThreadActivity({ threadId, qortalName, groupId, thread }) {
+export async function updateThreadActivity({
+  threadId,
+  qortalName,
+  groupId,
+  thread,
+}) {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000; // One week in milliseconds
@@ -707,7 +720,7 @@ const handleNotification = async (groups) => {
   }
 };
 
-const checkThreads = async (bringBack) => {
+export const checkThreads = async (bringBack) => {
   try {
     let myName = "";
     const userData = await getUserInfo();
@@ -1567,7 +1580,7 @@ const getStoredData = async (key) => {
   });
 };
 
-async function handleActiveGroupDataFromSocket({ groups, directs }) {
+export async function handleActiveGroupDataFromSocket({ groups, directs }) {
   try {
     chrome.runtime.sendMessage({
       action: "SET_GROUPS",
@@ -1799,7 +1812,7 @@ async function sendChatDirect({
   return _response;
 }
 
-async function decryptSingleFunc({
+export async function decryptSingleFunc({
   messages,
   secretKeyObject,
   skipDecodeBase64,
@@ -3039,11 +3052,35 @@ function setupMessageListener() {
       case "getGroupNotificationTimestamp":
         getGroupNotificationTimestampCase(request, event);
         break;
-        case "encryptAndPublishSymmetricKeyGroupChat":
-          encryptAndPublishSymmetricKeyGroupChatCase(request, event);
+      case "encryptAndPublishSymmetricKeyGroupChat":
+        encryptAndPublishSymmetricKeyGroupChatCase(request, event);
+        break;
+      case "publishGroupEncryptedResource":
+        publishGroupEncryptedResourceCase(request, event);
+        break;
+      case "publishOnQDN":
+        publishOnQDNCase(request, event);
+        break;
+      case "handleActiveGroupDataFromSocket":
+        handleActiveGroupDataFromSocketCase(request, event);
+        break;
+      case "getThreadActivity":
+        getThreadActivityCase(request, event);
+        break;
+      case "updateThreadActivity":
+        updateThreadActivityCase(request, event);
+      case "decryptGroupEncryption":
+        decryptGroupEncryptionCase(request, event);
+        break;
+      case "encryptSingle":
+        encryptSingleCase(request, event);
+        break;
+        case "decryptSingle":
+          decryptSingleCase(request, event);
           break;
       default:
         console.error("Unknown action:", request.action);
+        break
     }
   });
 }

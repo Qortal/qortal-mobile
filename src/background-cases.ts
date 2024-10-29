@@ -6,8 +6,10 @@ import {
   banFromGroup,
   cancelBan,
   cancelInvitationToGroup,
+  checkThreads,
   clearAllNotifications,
   createGroup,
+  decryptSingleFunc,
   decryptWallet,
   findUsableApi,
   getApiKeyFromStorage,
@@ -23,6 +25,7 @@ import {
   getTimestampGroupAnnouncement,
   getUserInfo,
   getUserSettings,
+  handleActiveGroupDataFromSocket,
   inviteToGroup,
   joinGroup,
   kickFromGroup,
@@ -37,10 +40,12 @@ import {
   sendCoin,
   setChatHeads,
   setGroupData,
+  updateThreadActivity,
   walletVersion,
 } from "./background";
-import { encryptAndPublishSymmetricKeyGroupChat } from "./backgroundFunctions/encryption";
+import { decryptGroupEncryption, encryptAndPublishSymmetricKeyGroupChat, publishGroupEncryptedResource, publishOnQDN } from "./backgroundFunctions/encryption";
 import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from "./constants/codes";
+import { encryptSingle } from "./qdn/encryption/group-encryption";
 
 export function versionCase(request, event) {
   event.source.postMessage(
@@ -1182,3 +1187,232 @@ export async function encryptAndPublishSymmetricKeyGroupChatCase(
     );
   }
 }
+
+export async function publishGroupEncryptedResourceCase(request, event) {
+    try {
+      const {encryptedData, identifier} = request.payload;
+      const response = await publishGroupEncryptedResource({encryptedData, identifier});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "publishGroupEncryptedResource",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "publishGroupEncryptedResource",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function publishOnQDNCase(request, event) {
+    try {
+      const {data, identifier, service, title,
+          description,
+          category,
+          tag1,
+          tag2,
+          tag3,
+          tag4,
+          tag5, uploadType} = request.payload;
+      const response = await publishOnQDN({data, identifier, service, title,
+          description,
+          category,
+          tag1,
+          tag2,
+          tag3,
+          tag4,
+          tag5, uploadType});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "publishOnQDN",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "publishOnQDN",
+          error: error?.message || 'Unable to publish',
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function handleActiveGroupDataFromSocketCase(request, event) {
+    try {
+      const {groups, directs} = request.payload;
+      const response = await handleActiveGroupDataFromSocket({groups, directs});
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "handleActiveGroupDataFromSocket",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "handleActiveGroupDataFromSocket",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function getThreadActivityCase(request, event) {
+    try {
+      const response = await checkThreads(true)
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getThreadActivity",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getThreadActivity",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function updateThreadActivityCase(request, event) {
+    try {
+      const { threadId, qortalName, groupId, thread} = request.payload;
+      const response = await updateThreadActivity({ threadId, qortalName, groupId, thread });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "updateThreadActivity",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "updateThreadActivity",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function decryptGroupEncryptionCase(request, event) {
+    try {
+      const { data} = request.payload;
+      const response = await decryptGroupEncryption({ data });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptGroupEncryption",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptGroupEncryption",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function encryptSingleCase(request, event) {
+    try {
+      const { data, secretKeyObject, typeNumber} = request.payload;
+      const response = await encryptSingle({ data, secretKeyObject, typeNumber });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "encryptSingle",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "encryptSingle",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function decryptSingleCase(request, event) {
+    try {
+      const { data, secretKeyObject, skipDecodeBase64} = request.payload;
+      const response = await decryptSingleFunc({ data, secretKeyObject, skipDecodeBase64 });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptSingle",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptSingle",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }

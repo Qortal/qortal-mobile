@@ -145,22 +145,23 @@ export const GroupMail = ({
   const updateThreadActivity = async ({threadId, qortalName, groupId, thread}) => {
     try {
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "updateThreadActivity",
-            payload: {
-              threadId, qortalName, groupId, thread
-            },
-          },
-          (response) => {
-        
+        window.sendMessage("updateThreadActivity", {
+          threadId,
+          qortalName,
+          groupId,
+          thread,
+        })
+          .then((response) => {
             if (!response?.error) {
               res(response);
-              return
+              return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
       
     } catch (error) {

@@ -201,31 +201,30 @@ export const AppPublish = ({ names, categories }) => {
       setIsLoading("Publishing... Please wait.");
       const fileBase64 = await fileToBase64(file);
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "publishOnQDN",
-            payload: {
-              data: fileBase64,
-              service: appType,
-              title,
-              description,
-              category,
-              tag1,
-              tag2,
-              tag3,
-              tag4,
-              tag5,
-              uploadType: 'zip'
-            },
-          },
-          (response) => {
+        window.sendMessage("publishOnQDN", {
+          data: fileBase64,
+          service: appType,
+          title,
+          description,
+          category,
+          tag1,
+          tag2,
+          tag3,
+          tag4,
+          tag5,
+          uploadType: "zip",
+        })
+          .then((response) => {
             if (!response?.error) {
               res(response);
               return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
       setInfoSnack({
         type: "success",

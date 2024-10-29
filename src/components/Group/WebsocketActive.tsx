@@ -74,13 +74,13 @@ export const WebSocketActive = ({ myAddress, setIsLoadingGroups }) => {
               ).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
            
-              chrome?.runtime?.sendMessage({
-                action: 'handleActiveGroupDataFromSocket',
-                payload: {
-                  groups: sortedGroups,
-                  directs: sortedDirects,
-                },
-              });
+              window.sendMessage("handleActiveGroupDataFromSocket", {
+                groups: sortedGroups,
+                directs: sortedDirects,
+              }).catch((error) => {
+                  console.error("Failed to handle active group data from socket:", error.message || "An error occurred");
+                });
+              
             }
           } catch (error) {
             console.error('Error parsing onmessage data:', error);

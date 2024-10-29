@@ -94,46 +94,42 @@ export const publishGroupEncryptedResource = async ({
   identifier,
 }) => {
   return new Promise((res, rej) => {
-    chrome?.runtime?.sendMessage(
-      {
-        action: "publishGroupEncryptedResource",
-        payload: {
-          encryptedData,
-          identifier,
-        },
-      },
-      (response) => {
-    
+    window.sendMessage("publishGroupEncryptedResource", {
+      encryptedData,
+      identifier,
+    })
+      .then((response) => {
         if (!response?.error) {
           res(response);
-          return
+          return;
         }
         rej(response.error);
-      }
-    );
+      })
+      .catch((error) => {
+        rej(error.message || "An error occurred");
+      });
+    
   });
 };
 
 export const encryptSingleFunc = async (data: string, secretKeyObject: any) => {
   try {
     return new Promise((res, rej) => {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "encryptSingle",
-          payload: {
-            data,
-            secretKeyObject,
-          },
-        },
-        (response) => {
-        
+      window.sendMessage("encryptSingle", {
+        data,
+        secretKeyObject,
+      })
+        .then((response) => {
           if (!response?.error) {
             res(response);
             return;
           }
           rej(response.error);
-        }
-      );
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     });
   } catch (error) {}
 };

@@ -208,43 +208,42 @@ export const GroupAnnouncements = ({
   const encryptChatMessage = async (data: string, secretKeyObject: any) => {
     try {
       return new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "encryptSingle",
-            payload: {
-              data,
-              secretKeyObject,
-            },
-          },
-          (response) => {
+        window.sendMessage("encryptSingle", {
+          data,
+          secretKeyObject,
+        })
+          .then((response) => {
             if (!response?.error) {
               res(response);
               return;
             }
             rej(response.error);
-          }
-        );
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+        
       });
     } catch (error) {}
   };
 
   const publishAnc = async ({ encryptedData, identifier }: any) => {
     return new Promise((res, rej) => {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "publishGroupEncryptedResource",
-          payload: {
-            encryptedData,
-            identifier,
-          },
-        },
-        (response) => {
+      window.sendMessage("publishGroupEncryptedResource", {
+        encryptedData,
+        identifier,
+      })
+        .then((response) => {
           if (!response?.error) {
             res(response);
+            return;
           }
           rej(response.error);
-        }
-      );
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     });
   };
   const clearEditorContent = () => {

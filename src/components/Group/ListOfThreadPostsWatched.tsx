@@ -24,34 +24,33 @@ export const ListOfThreadPostsWatched = () => {
   const getPosts = async () => {
     try {
       await new Promise((res, rej) => {
-        chrome?.runtime?.sendMessage(
-          {
-            action: "getThreadActivity",
-            payload: {},
-          },
-          (response) => {
-            if (!response?.error) {
-              if (!response) {
-                res(null);
-                return;
-              }
-              const uniquePosts = response.reduce((acc, current) => {
-                const x = acc.find(
-                  (item) => item?.thread?.threadId === current?.thread?.threadId
-                );
-                if (!x) {
-                  return acc.concat([current]);
-                } else {
-                  return acc;
-                }
-              }, []);
-              setPosts(uniquePosts);
-              res(uniquePosts);
+        window.sendMessage("getThreadActivity", {})
+        .then((response) => {
+          if (!response?.error) {
+            if (!response) {
+              res(null);
               return;
             }
-            rej(response.error);
+            const uniquePosts = response.reduce((acc, current) => {
+              const x = acc.find(
+                (item) => item?.thread?.threadId === current?.thread?.threadId
+              );
+              if (!x) {
+                return acc.concat([current]);
+              } else {
+                return acc;
+              }
+            }, []);
+            setPosts(uniquePosts);
+            res(uniquePosts);
+            return;
           }
-        );
+          rej(response.error);
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
       });
     } catch (error) {
     } finally {
