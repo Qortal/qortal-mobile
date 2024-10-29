@@ -1044,12 +1044,17 @@ function App() {
       if(hasSettingsChanged){
         await showUnsavedChanges({message: 'Your settings have changed. If you logout you will lose your changes. Click on the save button in the header to keep your changed settings.'})
       }
-      chrome?.runtime?.sendMessage({ action: "logout" }, (response) => {
+      window.sendMessage("logout", {})
+      .then((response) => {
         if (response) {
           resetAllStates();
           executeEvent("logout-event", {});
         }
+      })
+      .catch((error) => {
+        console.error("Failed to log out:", error.message || "An error occurred");
       });
+    
     } catch (error) {}
   };
 
