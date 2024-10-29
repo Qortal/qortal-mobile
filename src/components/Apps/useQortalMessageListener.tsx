@@ -426,15 +426,13 @@ isDOMContentLoaded: false
           setHistory((prev)=> {
             const copyPrev = {...prev}
             if((copyPrev?.customQDNHistoryPaths || []).at(-1) === (event?.data?.payload?.customQDNHistoryPaths || []).at(-1)) {
-              console.log('customQDNHistoryPaths.length', prev?.customQDNHistoryPaths.length)
               return {
                 ...prev,
                 currentIndex: prev.customQDNHistoryPaths.length - 1 === -1 ? 0 : prev.customQDNHistoryPaths.length - 1
               }
             }
             const copyHistory = {...prev}
-            const paths = [...(copyHistory?.customQDNHistoryPaths || []), ...(event?.data?.payload?.customQDNHistoryPaths || [])]
-            console.log('paths', paths)
+            const paths = [...(copyHistory?.customQDNHistoryPaths.slice(0, copyHistory.currentIndex + 1) || []), ...(event?.data?.payload?.customQDNHistoryPaths || [])]
             return {
               ...prev,
               customQDNHistoryPaths: paths,
@@ -445,7 +443,7 @@ isDOMContentLoaded: false
           setHistory(event?.data?.payload)
 
         }
-      } else  if(event?.data?.action === 'SET_TAB'){
+      }  else  if(event?.data?.action === 'SET_TAB'){
         executeEvent("addTab", {
           data: event?.data?.payload
         })

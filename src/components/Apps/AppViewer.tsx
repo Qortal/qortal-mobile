@@ -53,7 +53,7 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
 
     // Signal non-manual navigation
     iframeRef.current.contentWindow.postMessage(
-      { action: 'PERFORMING_NON_MANUAL' }, '*'
+      { action: 'PERFORMING_NON_MANUAL', currentIndex: previousPageIndex }, '*'
     );
       console.log('previousPageIndex', previousPageIndex)
     // Update the current index locally
@@ -88,10 +88,8 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
       await navigationPromise;
       console.log('Navigation succeeded within 200ms.');
     } catch (error) {
-      iframeRef.current.contentWindow.postMessage(
-        { action: 'PERFORMING_NON_MANUAL' }, '*'
-      );
-      setUrl(`${getBaseApiReact()}/render/${app?.service}/${app?.name}${app?.previousPath != null ? previousPath : ''}?theme=dark&identifier=${(app?.identifier != null && app?.identifier != 'null') ? app?.identifier : ''}&time=${new Date().getMilliseconds()}&isManualNavigation=false`)
+     
+      setUrl(`${getBaseApiReact()}/render/${app?.service}/${app?.name}${previousPath != null ? previousPath : ''}?theme=dark&identifier=${(app?.identifier != null && app?.identifier != 'null') ? app?.identifier : ''}&time=${new Date().getMilliseconds()}&isManualNavigation=false`)
       // iframeRef.current.contentWindow.location.href = previousPath; // Fallback URL update
     }
   } else {
