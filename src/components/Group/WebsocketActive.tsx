@@ -18,7 +18,7 @@ export const WebSocketActive = ({ myAddress, setIsLoadingGroups }) => {
 
   useEffect(() => {
     if (!myAddress) return; // Only proceed if myAddress is set
-    if (!window?.location?.href?.includes("?main=true")) return;
+
 
     const pingHeads = () => {
       try {

@@ -20,21 +20,17 @@ window.addEventListener("message", (event) => {
     const { resolve, reject } = callbackMap.get(requestId);
     callbackMap.delete(requestId); // Remove callback after use
 
-    if (error) {
-      reject({ error, message });
-    } else {
-      resolve({ payload });
-    }
+    resolve(event.data)
   }
 });
 
-export const sendMessageBackground = (action, data = {}, timeout = 60000) => {
+export const sendMessageBackground = (action, data = {}, timeout = 60000, isFromExtension) => {
   return new Promise((resolve, reject) => {
     const requestId = generateRequestId(); // Unique ID for each request
     callbackMap.set(requestId, { resolve, reject }); // Store both resolve and reject callbacks
 
     // Send the message with `backgroundMessage` type
-    window.postMessage({ type: "backgroundMessage", action, requestId, payload: data }, "*");
+    window.postMessage({ type: "backgroundMessage", action, requestId, payload: data, isFromExtension }, "*");
 
     // Set up a timeout to automatically reject if no response is received
     const timeoutId = setTimeout(() => {

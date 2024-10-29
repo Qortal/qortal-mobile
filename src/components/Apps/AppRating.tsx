@@ -118,32 +118,32 @@ export const AppRating = ({ app, myName, ratingCountPosition = "right" }) => {
         const pollName = `app-library-${app.service}-rating-${app.name}`;
         const pollOptions = [`1, 2, 3, 4, 5, initialValue-${newValue}`];
         await new Promise((res, rej) => {
-          chrome?.runtime?.sendMessage(
-            {
-              action: "CREATE_POLL",
-              type: "qortalRequest",
-              payload: {
-                pollName: pollName,
-                pollDescription: `Rating for ${app.service} ${app.name}`,
-                pollOptions: pollOptions,
-                pollOwnerAddress: myName,
-              },
+          window.sendMessage("CREATE_POLL", {
+            payload: {
+              pollName: pollName,
+              pollDescription: `Rating for ${app.service} ${app.name}`,
+              pollOptions: pollOptions,
+              pollOwnerAddress: myName,
             },
-            (response) => {
-              if (response.error) {
-                rej(response?.message);
-                return;
-              } else {
-                res(response);
-                setInfoSnack({
-                  type: "success",
-                  message:
-                    "Successfully rated. Please wait a couple minutes for the network to propogate the changes.",
-                });
-                setOpenSnack(true);
-              }
+          }, 60000)
+          .then((response) => {
+            if (response.error) {
+              rej(response?.message);
+              return;
+            } else {
+              res(response);
+              setInfoSnack({
+                type: "success",
+                message:
+                  "Successfully rated. Please wait a couple minutes for the network to propogate the changes.",
+              });
+              setOpenSnack(true);
             }
-          );
+          })
+          .catch((error) => {
+            console.error("Failed qortalRequest", error);
+          });
+          
         });
       } else {
         const pollName = `app-library-${app.service}-rating-${app.name}`;
@@ -153,30 +153,30 @@ export const AppRating = ({ app, myName, ratingCountPosition = "right" }) => {
         if (isNaN(optionIndex) || optionIndex === -1)
           throw new Error("Cannot find rating option");
         await new Promise((res, rej) => {
-          chrome?.runtime?.sendMessage(
-            {
-              action: "VOTE_ON_POLL",
-              type: "qortalRequest",
-              payload: {
-                pollName: pollName,
-                optionIndex,
-              },
+          window.sendMessage("VOTE_ON_POLL", {
+            payload: {
+              pollName: pollName,
+              optionIndex,
             },
-            (response) => {
-              if (response.error) {
-                rej(response?.message);
-                return;
-              } else {
-                res(response);
-                setInfoSnack({
-                  type: "success",
-                  message:
-                    "Successfully rated. Please wait a couple minutes for the network to propogate the changes.",
-                });
-                setOpenSnack(true);
-              }
+          }, 60000)
+          .then((response) => {
+            if (response.error) {
+              rej(response?.message);
+              return;
+            } else {
+              res(response);
+              setInfoSnack({
+                type: "success",
+                message:
+                  "Successfully rated. Please wait a couple minutes for the network to propogate the changes.",
+              });
+              setOpenSnack(true);
             }
-          );
+          })
+          .catch((error) => {
+            console.error("Failed qortalRequest", error);
+          });
+         
         });
       }
     } catch (error) {

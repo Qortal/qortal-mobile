@@ -260,7 +260,7 @@ export const getBaseApiReactSocket = (customApi?: string) => {
     return groupApiSocket;
   }
 };
-export const isMainWindow = window?.location?.href?.includes("?main=true");
+export const isMainWindow = true
 function App() {
   const [extState, setExtstate] = useState<extStates>("not-authenticated");
   const [desktopViewMode, setDesktopViewMode] = useState('home')
@@ -287,7 +287,7 @@ function App() {
   const [walletToBeDownloadedPassword, setWalletToBeDownloadedPassword] =
     useState<string>("");
   const [isMain, setIsMain] = useState<boolean>(
-    window?.location?.href?.includes("?main=true")
+    true
   );
   const isMainRef = useRef(false);
   const [authenticatePassword, setAuthenticatePassword] = useState<string>("");
@@ -495,7 +495,6 @@ function App() {
         for (const field of requiredFields) {
           if (!(field in pf)) throw new Error(field + " not found in JSON");
         }
-        // storeWalletInfo(pf);
         setRawWallet(pf);
         // setExtstate("authenticated");
         setExtstate("wallet-dropped");
@@ -529,26 +528,7 @@ function App() {
     };
   };
 
-  const storeWalletInfo = (wallet: any) => {
-    chrome?.runtime?.sendMessage(
-      { action: "storeWalletInfo", wallet },
-      (response) => {
-        if (response) {
-        }
-      }
-    );
-
-    chrome.tabs.query(
-      { active: true, currentWindow: true },
-      function (tabs: any[]) {
-        chrome.tabs.sendMessage(
-          tabs[0].id,
-          { from: "popup", subject: "anySubject" },
-          function (response) {}
-        );
-      }
-    );
-  };
+ 
 
   const getBalanceFunc = () => {
     setQortBalanceLoading(true);
@@ -755,126 +735,29 @@ function App() {
 
   //param = isDecline
   const confirmPayment = (isDecline: boolean) => {
-    if (isDecline) {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "sendQortConfirmation",
-          payload: {
-            amount: sendqortState?.amount,
-            receiver: sendqortState?.address,
-            password: paymentPassword,
-            interactionId: sendqortState?.interactionId,
-            isDecline: true,
-          },
-        },
-        (response) => {
-          if (response) {
-            setSendPaymentSuccess("Payment successfully sent");
-          } else {
-            window.close();
-          }
-        }
-      );
-      return;
-    }
-
-    setIsLoading(true);
-    chrome?.runtime?.sendMessage(
-      {
-        action: "sendQortConfirmation",
-        payload: {
-          amount: sendqortState.amount,
-          receiver: sendqortState.address,
-          password: paymentPassword,
-          interactionId: sendqortState.interactionId,
-          isDecline: false,
-        },
-      },
-      (response) => {
-        if (response === true) {
-          setExtstate("transfer-success-request");
-          setCountdown(null);
-        } else {
-          setSendPaymentError(
-            response?.error || "Unable to perform payment. Please try again."
-          );
-        }
-        setIsLoading(false);
-      }
-    );
+    // REMOVED FOR MOBILE APP
   };
 
   const confirmBuyOrder = (isDecline: boolean) => {
-    if (isDecline) {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "buyOrderConfirmation",
-          payload: {
-            crosschainAtInfo: requestBuyOrder?.crosschainAtInfo,
-            interactionId: requestBuyOrder?.interactionId,
-            isDecline: true,
-            useLocal: requestBuyOrder?.useLocal,
-          },
-        },
-        (response) => {
-          window.close();
-        }
-      );
-      return;
-    }
+        // REMOVED FOR MOBILE APP
 
-    setIsLoading(true);
-    chrome?.runtime?.sendMessage(
-      {
-        action: "buyOrderConfirmation",
-        payload: {
-          crosschainAtInfo: requestBuyOrder?.crosschainAtInfo,
-          interactionId: requestBuyOrder?.interactionId,
-          isDecline: false,
-          useLocal: requestBuyOrder?.useLocal,
-        },
-      },
-      (response) => {
-        if (response === true) {
-          setExtstate("buy-order-submitted");
-          setCountdown(null);
-        } else {
-          setSendPaymentError(
-            response?.error || "Unable to perform payment. Please try again."
-          );
-        }
-        setIsLoading(false);
-      }
-    );
   };
   const responseToConnectionRequest = (
     isOkay: boolean,
     hostname: string,
     interactionId: string
   ) => {
-    chrome?.runtime?.sendMessage(
-      {
-        action: "responseToConnectionRequest",
-        payload: { isOkay, hostname, interactionId },
-      },
-      (response) => {
-        if (response === false || response === true) {
-          window.close();
-        }
-      }
-    );
+        // REMOVED FOR MOBILE APP
   };
 
-  // const rawWalletRef = useRef(null)
-
-  // useEffect(()=> {
-  //   rawWalletRef.current = rawWallet
-  // }, [rawWallet])
 
   useEffect(() => {
     try {
       setIsLoading(true);
-      chrome?.runtime?.sendMessage({ action: "getWalletInfo" }, (response) => {
+     
+      window.sendMessage("getWalletInfo")
+      .then((response) => {
+        console.log('getwalll', response)
         if (response && response?.walletInfo) {
           setRawWallet(response?.walletInfo);
           if (
@@ -886,6 +769,9 @@ function App() {
 
           setExtstate("authenticated");
         }
+      })
+      .catch((error) => {
+        console.error("Failed to get wallet info:", error);
       });
     } catch (error) {
     } finally {
@@ -1120,6 +1006,7 @@ function App() {
         wallet: rawWallet,
       })
         .then((response) => {
+          console.log('response2', response)
           if (response && !response.error) {
             setAuthenticatePassword("");
             setExtstate("authenticated");

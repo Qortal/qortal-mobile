@@ -22,7 +22,9 @@ import { CustomizedSnackbars } from "../components/Snackbar/Snackbar";
 import { set } from "lodash";
 import { cleanUrl, isUsingLocal } from "../background";
 
-const manifestData = chrome?.runtime?.getManifest();
+const manifestData = {
+  version: '2.2.0'
+}
 
 export const NotAuthenticated = ({
   getRootProps,
@@ -68,6 +70,7 @@ export const NotAuthenticated = ({
       reader.readAsText(file); // Read the file as text
     }
   };
+
 
   const checkIfUserHasLocalNode = useCallback(async () => {
     try {

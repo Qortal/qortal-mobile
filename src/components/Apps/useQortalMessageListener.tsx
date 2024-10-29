@@ -368,7 +368,8 @@ isDOMContentLoaded: false
       if (event?.data?.requestedHandler !== 'UI') return;
 
       const sendMessageToRuntime = (message, eventPort) => {
-        chrome?.runtime?.sendMessage(message, (response) => {
+        window.sendMessage(message.action, message, 60000, message.isFromExtension)
+        .then((response) => {
           if (response.error) {
             eventPort.postMessage({
               result: null,
@@ -380,7 +381,11 @@ isDOMContentLoaded: false
               error: null,
             });
           }
+        })
+        .catch((error) => {
+          console.error("Failed qortalRequest", error);
         });
+        
       };
 
       // Check if action is included in the predefined list of UI requests

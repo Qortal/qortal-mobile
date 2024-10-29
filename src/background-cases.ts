@@ -53,6 +53,7 @@ import {
 import { decryptGroupEncryption, encryptAndPublishSymmetricKeyGroupChat, publishGroupEncryptedResource, publishOnQDN } from "./backgroundFunctions/encryption";
 import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from "./constants/codes";
 import { encryptSingle } from "./qdn/encryption/group-encryption";
+import { getData, storeData } from "./utils/chromeStorage";
 
 export function versionCase(request, event) {
   event.source.postMessage(
@@ -70,15 +71,42 @@ export async function getWalletInfoCase(request, event) {
   try {
     const response = await getKeyPair();
 
-    event.source.postMessage(
-      {
-        requestId: request.requestId,
-        action: "getWalletInfo",
-        payload: { walletInfo: response },
-        type: "backgroundMessageResponse",
-      },
-      event.origin
-    );
+    try {
+      const walletInfo = await getData('walletInfo').catch((error)=> null)
+      if(walletInfo){
+        event.source.postMessage(
+          {
+            requestId: request.requestId,
+            action: "getWalletInfo",
+            payload: { walletInfo },
+            type: "backgroundMessageResponse",
+          },
+          event.origin
+        );
+      } else {
+        event.source.postMessage(
+          {
+            requestId: request.requestId,
+            action: "getWalletInfo",
+            error: "No wallet info found",
+            type: "backgroundMessageResponse",
+          },
+          event.origin
+        );
+      }
+   
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getWalletInfo",
+          error: "No wallet info found",
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+   
   } catch (error) {
     event.source.postMessage(
       {
@@ -171,10 +199,12 @@ export async function userInfoCase(request, event) {
 }
 
 export async function decryptWalletCase(request, event) {
-  try {
+  try { 
+    console.log('request', request)
     const { password, wallet } = request.payload;
-    const response = await decryptWallet(password, wallet, walletVersion);
-
+    console.log({password, wallet})
+    const response = await decryptWallet({password, wallet, walletVersion});
+    console.log('response', response)
     event.source.postMessage(
       {
         requestId: request.requestId,
@@ -841,10 +871,7 @@ export async function addTimestampEnterChatCase(request, event) {
 export async function setApiKeyCase(request, event) {
   try {
     const payload = request.payload;
-    chrome.storage.local.set({ apiKey: payload }, () => {
-      // sendResponse(true);
-    });
-
+    storeData('apiKey', payload)
     event.source.postMessage(
       {
         requestId: request.requestId,
@@ -869,9 +896,7 @@ export async function setApiKeyCase(request, event) {
 export async function setCustomNodesCase(request, event) {
   try {
     const nodes = request.payload;
-    chrome.storage.local.set({ customNodes: nodes }, () => {
-      // sendResponse(true);
-    });
+    storeData('customNodes', nodes)
 
     event.source.postMessage(
       {
@@ -1346,8 +1371,9 @@ export async function publishGroupEncryptedResourceCase(request, event) {
   export async function decryptGroupEncryptionCase(request, event) {
     try {
       const { data} = request.payload;
+      console.log('data', data)
       const response = await decryptGroupEncryption({ data });
-  
+      console.log('dataresponse', response)
       event.source.postMessage(
         {
           requestId: request.requestId,

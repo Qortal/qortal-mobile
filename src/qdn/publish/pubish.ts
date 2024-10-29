@@ -5,6 +5,7 @@ import Base58 from "../../deps/Base58"
 import nacl from "../../deps/nacl-fast"
 import utils from "../../utils/utils"
 import {  createEndpoint, getBaseApi } from "../../background";
+import { getData } from "../../utils/chromeStorage";
 
 export async function reusableGet(endpoint){
 	const validApi = await getBaseApi();
@@ -34,9 +35,9 @@ export async function reusableGet(endpoint){
   }
 
 async function getKeyPair() {
-	const res = await chrome.storage.local.get(["keyPair"]);
-	if (res?.keyPair) {
-	  return res.keyPair;
+	const res = await getData<any>("keyPair").catch(() => null);
+	if (res) {
+	  return res
 	} else {
 	  throw new Error("Wallet not authenticated");
 	}
@@ -118,7 +119,7 @@ export const publishData = async ({
 
 
         const resKeyPair = await getKeyPair()
-        const parsedData = JSON.parse(resKeyPair)
+        const parsedData = resKeyPair
         const uint8PrivateKey = Base58.decode(parsedData.privateKey);
         const uint8PublicKey = Base58.decode(parsedData.publicKey);
         const keyPair = {

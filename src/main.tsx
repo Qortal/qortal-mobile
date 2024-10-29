@@ -46,7 +46,7 @@ export default theme;
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  <>
       <ThemeProvider theme={theme}>
       <CssBaseline />
   <MessageQueueProvider>
@@ -55,5 +55,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </RecoilRoot>
     </MessageQueueProvider>
     </ThemeProvider>
-  </React.StrictMode>,
+  </>,
 )

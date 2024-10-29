@@ -1,6 +1,7 @@
 import { getBaseApi } from "../background";
 import { createSymmetricKeyAndNonce, decryptGroupData, encryptDataGroup, objectToBase64 } from "../qdn/encryption/group-encryption";
 import { publishData } from "../qdn/publish/pubish";
+import { getData } from "../utils/chromeStorage";
 
 const apiEndpoints = [
     "https://api.qortal.org",
@@ -36,9 +37,10 @@ async function findUsableApi() {
 
 
 async function getSaveWallet() {
-    const res = await chrome.storage.local.get(["walletInfo"]);
-    if (res?.walletInfo) {
-      return res.walletInfo;
+  const res = await getData<any>("walletInfo").catch(() => null);
+
+    if (res) {
+      return res
     } else {
       throw new Error("No wallet saved");
     }
@@ -56,9 +58,9 @@ export async function getNameInfo() {
     }
   }
 async function getKeyPair() {
-    const res = await chrome.storage.local.get(["keyPair"]);
-    if (res?.keyPair) {
-      return res.keyPair;
+  const res = await getData<any>("keyPair").catch(() => null);
+  if (res) {
+      return res
     } else {
       throw new Error("Wallet not authenticated");
     }
@@ -98,7 +100,7 @@ export const encryptAndPublishSymmetricKeyGroupChat = async ({groupId, previousD
         }
        
         const resKeyPair = await getKeyPair()
-        const parsedData = JSON.parse(resKeyPair)
+        const parsedData = resKeyPair
         const privateKey = parsedData.privateKey
         const userPublicKey = parsedData.publicKey
         const groupmemberPublicKeys = await getPublicKeys(groupId)
@@ -219,7 +221,7 @@ export const decryptGroupEncryption = async ({data}: {
 }) => {
     try {
         const resKeyPair = await getKeyPair()
-        const parsedData = JSON.parse(resKeyPair)
+        const parsedData = resKeyPair
         const privateKey = parsedData.privateKey
         const encryptedData =  decryptGroupData(
             data,

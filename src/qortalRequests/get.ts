@@ -54,7 +54,7 @@ const _createPoll = async ({pollName, pollDescription, options}, isFromExtension
     const wallet = await getSaveWallet();
     const address = wallet.address0;
     const resKeyPair = await getKeyPair();
-    const parsedData = JSON.parse(resKeyPair);
+    const parsedData = resKeyPair;
     const uint8PrivateKey = Base58.decode(parsedData.privateKey);
     const uint8PublicKey = Base58.decode(parsedData.publicKey);
     const keyPair = {
@@ -106,7 +106,7 @@ const _deployAt = async (
     const address = wallet.address0;
     const lastReference = await getLastRef();
     const resKeyPair = await getKeyPair();
-    const parsedData = JSON.parse(resKeyPair);
+    const parsedData = resKeyPair;
     const uint8PrivateKey = Base58.decode(parsedData.privateKey);
     const uint8PublicKey = Base58.decode(parsedData.publicKey);
     const keyPair = {
@@ -154,7 +154,7 @@ const _voteOnPoll = async ({pollName, optionIndex, optionName}, isFromExtension)
     const wallet = await getSaveWallet();
     const address = wallet.address0;
     const resKeyPair = await getKeyPair();
-    const parsedData = JSON.parse(resKeyPair);
+    const parsedData = resKeyPair;
     const uint8PrivateKey = Base58.decode(parsedData.privateKey);
     const uint8PublicKey = Base58.decode(parsedData.publicKey);
     const keyPair = {
@@ -373,7 +373,7 @@ export const encryptData = async (data, sender) => {
   }
 
   const resKeyPair = await getKeyPair();
-  const parsedData = JSON.parse(resKeyPair);
+  const parsedData = resKeyPair;
   const privateKey = parsedData.privateKey;
   const userPublicKey = parsedData.publicKey;
 
@@ -396,7 +396,7 @@ export const decryptData = async (data) => {
     throw new Error(`Missing fields: encryptedData`);
   }
   const resKeyPair = await getKeyPair();
-  const parsedData = JSON.parse(resKeyPair);
+  const parsedData = resKeyPair;
   const uint8PrivateKey = Base58.decode(parsedData.privateKey);
   const uint8Array = base64ToUint8Array(encryptedData);
   const startsWithQortalEncryptedData = uint8ArrayStartsWith(
@@ -638,7 +638,7 @@ export const publishQDNResource = async (data: any, sender, isFromExtension) => 
   if (data.encrypt) {
     try {
         const resKeyPair = await getKeyPair()
-        const parsedData = JSON.parse(resKeyPair)
+        const parsedData = resKeyPair
         const privateKey = parsedData.privateKey
         const userPublicKey = parsedData.publicKey
       const encryptDataResponse = encryptDataGroup({
@@ -858,7 +858,7 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
       if (data.encrypt) {
         try {
             const resKeyPair = await getKeyPair()
-        const parsedData = JSON.parse(resKeyPair)
+        const parsedData = resKeyPair
         const privateKey = parsedData.privateKey
         const userPublicKey = parsedData.publicKey
           const encryptDataResponse = encryptDataGroup({
@@ -1088,7 +1088,7 @@ export const sendChatMessage = async (data, isFromExtension) => {
 
       let reference = Base58.encode(_reference);
       const resKeyPair = await getKeyPair();
-      const parsedData = JSON.parse(resKeyPair);
+      const parsedData = resKeyPair;
       const uint8PrivateKey = Base58.decode(parsedData.privateKey);
       const uint8PublicKey = Base58.decode(parsedData.publicKey);
       const keyPair = {
@@ -1127,7 +1127,7 @@ export const sendChatMessage = async (data, isFromExtension) => {
 
       let reference = Base58.encode(_reference);
       const resKeyPair = await getKeyPair();
-      const parsedData = JSON.parse(resKeyPair);
+      const parsedData = resKeyPair;
       const uint8PrivateKey = Base58.decode(parsedData.privateKey);
       const uint8PublicKey = Base58.decode(parsedData.publicKey);
       const keyPair = {
@@ -1355,7 +1355,7 @@ export const getUserWallet = async (data, isFromExtension) => {
     const wallet = await getSaveWallet();
     const address = wallet.address0;
     const resKeyPair = await getKeyPair();
-    const parsedData = JSON.parse(resKeyPair);
+    const parsedData = resKeyPair;
     const arrrSeed58 = parsedData.arrrSeed58;
     if (coin === "ARRR") {
       const bodyToString = arrrSeed58;
@@ -1448,7 +1448,7 @@ export const getWalletBalance = async (data, bypassPermission?: boolean, isFromE
     const wallet = await getSaveWallet();
     const address = wallet.address0;
     const resKeyPair = await getKeyPair();
-    const parsedData = JSON.parse(resKeyPair);
+    const parsedData = resKeyPair;
     if (coin === "QORT") {
       let qortAddress = address;
       try {
@@ -1535,7 +1535,7 @@ const getUserWalletFunc = async (coin) => {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   const resKeyPair = await getKeyPair();
-  const parsedData = JSON.parse(resKeyPair);
+  const parsedData = resKeyPair;
   switch (coin) {
     case "QORT":
       userWallet["address"] = address;
@@ -2068,7 +2068,7 @@ export const sendCoin = async (data, isFromExtension) => {
     const wallet = await getSaveWallet();
     const address = wallet.address0;
     const resKeyPair = await getKeyPair();
-    const parsedData = JSON.parse(resKeyPair);
+    const parsedData = resKeyPair;
     const localNodeAvailable = await isUsingLocal()
     if(checkCoin !== 'QORT' && !localNodeAvailable) throw new Error('Cannot send a non-QORT coin through the gateway. Please use your local node.')
     if (checkCoin === "QORT") {

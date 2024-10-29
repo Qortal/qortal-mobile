@@ -1,30 +1,22 @@
 import { addForeignServer, addListItems, createPoll, decryptData, deleteListItems, deployAt, encryptData, getCrossChainServerInfo, getDaySummary, getForeignFee, getListItems, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getWalletBalance, joinGroup, publishMultipleQDNResources, publishQDNResource, removeForeignServer, saveFile, sendChatMessage, sendCoin, setCurrentForeignServer, updateForeignFee, voteOnPoll } from "./qortalRequests/get";
+import { storeData } from "./utils/chromeStorage";
 
 
 
-// Promisify chrome.storage.local.get
 function getLocalStorage(key) {
-    return new Promise((resolve, reject) => {
-      chrome.storage.local.get([key], function (result) {
-        if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
-        }
-        resolve(result[key]);
-      });
-    });
-  }
-  
-  // Promisify chrome.storage.local.set
-  function setLocalStorage(data) {
-    return new Promise((resolve, reject) => {
-      chrome.storage.local.set(data, function () {
-        if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
-        }
-        resolve();
-      });
-    });
-  }
+  return getData(key).catch((error) => {
+    console.error("Error retrieving data:", error);
+    throw error;
+  });
+}
+
+// Promisify setting data in localStorage
+function setLocalStorage(key, data) {
+  return storeData(key, data).catch((error) => {
+    console.error("Error saving data:", error);
+    throw error;
+  });
+}
 
   
   export async function setPermission(key, value) {
@@ -60,369 +52,565 @@ function getLocalStorage(key) {
 
   // TODO: GET_FRIENDS_LIST
   // NOT SURE IF TO IMPLEMENT: LINK_TO_QDN_RESOURCE, QDN_RESOURCE_DISPLAYED, SET_TAB_NOTIFICATIONS
+
+  function setupMessageListener() {
+    window.addEventListener("message", async (event) => {
+      const request = event.data;
+      
+      // Ensure the message is from a trusted source
+      const isFromExtension = request?.isExtension;
+      if (request?.type !== "backgroundMessage") return; // Only process messages of type 'backgroundMessage'
   
-chrome?.runtime?.onMessage.addListener((request, sender, sendResponse) => {
-  if (request) {
-    const isFromExtension = request?.isExtension
-    switch (request.action) {
-      case "GET_USER_ACCOUNT": {
-        getUserAccount()
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: "Unable to get user account" });
-          });
-
-        break;
+      console.log("REQUEST MESSAGE QORTALREQUEST", request);
+  
+      // Handle actions based on the `request.action` value
+      switch (request.action) {
+        case "GET_USER_ACCOUNT": {
+          try {
+            const res = await getUserAccount();
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: "Unable to get user account",
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "ENCRYPT_DATA": {
+          try {
+            const res = await encryptData(request.payload, event.source);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "DECRYPT_DATA": {
+          try {
+            const res = await decryptData(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_LIST_ITEMS": {
+          try {
+            const res = await getListItems(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "ADD_LIST_ITEMS": {
+          try {
+            const res = await addListItems(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "DELETE_LIST_ITEM": {
+          try {
+            const res = await deleteListItems(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "PUBLISH_QDN_RESOURCE": {
+          try {
+            const res = await publishQDNResource(request.payload, event.source, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "PUBLISH_MULTIPLE_QDN_RESOURCES": {
+          try {
+            const res = await publishMultipleQDNResources(request.payload, event.source, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "VOTE_ON_POLL": {
+          try {
+            const res = await voteOnPoll(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "CREATE_POLL": {
+          try {
+            const res = await createPoll(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "SEND_CHAT_MESSAGE": {
+          try {
+            const res = await sendChatMessage(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "JOIN_GROUP": {
+          try {
+            const res = await joinGroup(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "SAVE_FILE": {
+          try {
+            const res = await saveFile(request.payload, event.source, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "DEPLOY_AT": {
+          try {
+            const res = await deployAt(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_USER_WALLET": {
+          try {
+            const res = await getUserWallet(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_WALLET_BALANCE": {
+          try {
+            const res = await getWalletBalance(request.payload, false, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_USER_WALLET_INFO": {
+          try {
+            const res = await getUserWalletInfo(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_CROSSCHAIN_SERVER_INFO": {
+          try {
+            const res = await getCrossChainServerInfo(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_TX_ACTIVITY_SUMMARY": {
+          try {
+            const res = await getTxActivitySummary(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_FOREIGN_FEE": {
+          try {
+            const res = await getForeignFee(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "UPDATE_FOREIGN_FEE": {
+          try {
+            const res = await updateForeignFee(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_SERVER_CONNECTION_HISTORY": {
+          try {
+            const res = await getServerConnectionHistory(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "SET_CURRENT_FOREIGN_SERVER": {
+          try {
+            const res = await setCurrentForeignServer(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "ADD_FOREIGN_SERVER": {
+          try {
+            const res = await addForeignServer(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "REMOVE_FOREIGN_SERVER": {
+          try {
+            const res = await removeForeignServer(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "GET_DAY_SUMMARY": {
+          try {
+            const res = await getDaySummary(request.payload);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        case "SEND_COIN": {
+          try {
+            const res = await sendCoin(request.payload, isFromExtension);
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+  
+        default:
+          break;
       }
-      case "ENCRYPT_DATA": {
-        const data = request.payload;
-        
-        encryptData(data, sender)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "DECRYPT_DATA": {
-        const data = request.payload;
-        
-        decryptData(data)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "GET_LIST_ITEMS": {
-        const data = request.payload;
-        
-        getListItems(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "ADD_LIST_ITEMS": {
-        const data = request.payload;
-        
-        addListItems(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "DELETE_LIST_ITEM": {
-        const data = request.payload;
-        
-        deleteListItems(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "PUBLISH_QDN_RESOURCE": {
-        const data = request.payload;
-        
-        publishQDNResource(data, sender, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "PUBLISH_MULTIPLE_QDN_RESOURCES": {
-        const data = request.payload;
-        
-        publishMultipleQDNResources(data, sender, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "VOTE_ON_POLL": {
-        const data = request.payload;
-        
-        voteOnPoll(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "CREATE_POLL": {
-        const data = request.payload;
-        
-        createPoll(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "SEND_CHAT_MESSAGE": {
-        const data = request.payload;
-        sendChatMessage(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "JOIN_GROUP": {
-        const data = request.payload;
-      
-        joinGroup(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "SAVE_FILE": {
-        const data = request.payload;
-      
-        saveFile(data, sender, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "DEPLOY_AT": {
-        const data = request.payload;
-      
-        deployAt(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "GET_USER_WALLET": {
-        const data = request.payload;
-      
-        getUserWallet(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "GET_WALLET_BALANCE": {
-        const data = request.payload;
-      
-        getWalletBalance(data, false, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-
-      case "GET_USER_WALLET_INFO": {
-        const data = request.payload;
-      
-        getUserWalletInfo(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "GET_CROSSCHAIN_SERVER_INFO": {
-        const data = request.payload;
-      
-        getCrossChainServerInfo(data)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-      case "GET_TX_ACTIVITY_SUMMARY": {
-        const data = request.payload;
-    
-        getTxActivitySummary(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-    case "GET_FOREIGN_FEE": {
-        const data = request.payload;
-    
-        getForeignFee(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-    case "UPDATE_FOREIGN_FEE": {
-        const data = request.payload;
-    
-        updateForeignFee(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-    case "GET_SERVER_CONNECTION_HISTORY": {
-        const data = request.payload;
-    
-        getServerConnectionHistory(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-    case "SET_CURRENT_FOREIGN_SERVER": {
-        const data = request.payload;
-    
-        setCurrentForeignServer(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-    case "ADD_FOREIGN_SERVER": {
-        const data = request.payload;
-    
-        addForeignServer(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-    case "REMOVE_FOREIGN_SERVER": {
-        const data = request.payload;
-    
-        removeForeignServer(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-    case "GET_DAY_SUMMARY": {
-        const data = request.payload;
-    
-        getDaySummary(data)
-            .then((res) => {
-                sendResponse(res);
-            })
-            .catch((error) => {
-                sendResponse({ error: error.message });
-            });
-    
-        break;
-    }
-    
-      case "SEND_COIN": {
-        const data = request.payload;
-      
-        sendCoin(data, isFromExtension)
-          .then((res) => {
-            sendResponse(res);
-          })
-          .catch((error) => {
-            sendResponse({ error: error.message });
-          });
-
-        break;
-      }
-    }
+    });
   }
-  return true;
-});
+  
+  // Initialize the message listener
+  setupMessageListener();
+  

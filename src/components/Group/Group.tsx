@@ -126,7 +126,7 @@ const timeDifferenceForNotificationChats = 900000;
 export const requestQueueMemberNames = new RequestQueueWithPromise(5);
 export const requestQueueAdminMemberNames = new RequestQueueWithPromise(5);
 
-const audio = new Audio(chrome.runtime?.getURL("msg-not1.wav"));
+// const audio = new Audio(chrome.runtime?.getURL("msg-not1.wav"));
 
 export const getGroupAdminsAddress = async (groupNumber: number) => {
   // const validApi = await findUsableApi();
@@ -203,6 +203,7 @@ export const decryptResource = async (data: string) => {
         data,
       })
         .then((response) => {
+          console.log('decryptseroucs', response)
           if (!response?.error) {
             res(response);
             return;
@@ -892,78 +893,89 @@ export const Group = ({
  
 
   useEffect(() => {
-    // Listen for messages from the background script
-    chrome?.runtime?.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.action === "SET_GROUPS") {
+    // Handler function for incoming messages
+    const messageHandler = (event) => {
+      const message = event.data;
+  
+      if (message?.action === "SET_GROUPS") {
         // Update the component state with the received 'sendqort' state
         setGroups(message.payload);
-        getLatestRegularChat(message.payload)
+        getLatestRegularChat(message.payload);
         setMemberGroups(message.payload);
-
+  
         if (selectedGroupRef.current && groupSectionRef.current === "chat") {
           window.sendMessage("addTimestampEnterChat", {
             timestamp: Date.now(),
             groupId: selectedGroupRef.current.groupId,
           }).catch((error) => {
-              console.error("Failed to add timestamp:", error.message || "An error occurred");
-            });
-          
+            console.error("Failed to add timestamp:", error.message || "An error occurred");
+          });
         }
+  
         if (selectedDirectRef.current) {
           window.sendMessage("addTimestampEnterChat", {
             timestamp: Date.now(),
             groupId: selectedDirectRef.current.address,
           }).catch((error) => {
-              console.error("Failed to add timestamp:", error.message || "An error occurred");
-            });
-          
+            console.error("Failed to add timestamp:", error.message || "An error occurred");
+          });
         }
+  
         setTimeout(() => {
           getTimestampEnterChat();
         }, 200);
       }
-      if (message.action === "SET_GROUP_ANNOUNCEMENTS") {
+  
+      if (message?.action === "SET_GROUP_ANNOUNCEMENTS") {
         // Update the component state with the received 'sendqort' state
         setGroupAnnouncements(message.payload);
-
-        if (
-          selectedGroupRef.current &&
-          groupSectionRef.current === "announcement"
-        ) {
+  
+        if (selectedGroupRef.current && groupSectionRef.current === "announcement") {
           window.sendMessage("addGroupNotificationTimestamp", {
             timestamp: Date.now(),
             groupId: selectedGroupRef.current.groupId,
           }).catch((error) => {
-              console.error("Failed to add group notification timestamp:", error.message || "An error occurred");
-            });
-          
+            console.error("Failed to add group notification timestamp:", error.message || "An error occurred");
+          });
+  
           setTimeout(() => {
             getGroupAnnouncements();
           }, 200);
         }
       }
-      if (message.action === "SET_DIRECTS") {
+  
+      if (message?.action === "SET_DIRECTS") {
         // Update the component state with the received 'sendqort' state
         setDirects(message.payload);
-
-       
-      } else if (message.action === "PLAY_NOTIFICATION_SOUND") {
-        audio.play();
+      } else if (message?.action === "PLAY_NOTIFICATION_SOUND") {
+        // audio.play();
       }
-    });
+    };
+  
+    // Attach the event listener
+    window.addEventListener("message", messageHandler);
+  
+    // Clean up the event listener on component unmount
+    return () => {
+      window.removeEventListener("message", messageHandler);
+    };
   }, []);
+  
 
   useEffect(() => {
     if (
       !myAddress ||
       hasInitializedWebsocket.current ||
-      !window?.location?.href?.includes("?main=true") ||
       !groups ||
       groups?.length === 0
     )
       return;
 
-    chrome?.runtime?.sendMessage({ action: "setupGroupWebsocket" });
+      window.sendMessage("setupGroupWebsocket", {})
+      .catch((error) => {
+        console.error("Failed to setup group websocket:", error.message || "An error occurred");
+      });
+    
 
     hasInitializedWebsocket.current = true;
   }, [myAddress, groups]);
