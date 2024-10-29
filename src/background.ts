@@ -1,6 +1,6 @@
 // @ts-nocheck
-
-import "./qortalRequests";
+// TODO
+// import "./qortalRequests";
 import { isArray } from "lodash";
 import {
   decryptGroupEncryption,
@@ -311,23 +311,26 @@ export function isUpdateMsg(data) {
 
 async function checkWebviewFocus() {
   return new Promise((resolve) => {
-    // Set a timeout for 1 second
     const timeout = setTimeout(() => {
       resolve(false); // No response within 1 second, assume not focused
     }, 1000);
 
-    // Send message to the content script to check focus
-    chrome.runtime.sendMessage({ action: "CHECK_FOCUS" }, (response) => {
-      clearTimeout(timeout); // Clear the timeout if we get a response
+    // Send a message to check focus
+    window.postMessage({ action: "CHECK_FOCUS" }, "*");
 
-      if (chrome.runtime.lastError) {
-        resolve(false); // Error occurred, assume not focused
-      } else {
-        resolve(response); // Resolve based on the response
+    // Listen for the response
+    const handleMessage = (event) => {
+      if (event.data?.action === "CHECK_FOCUS_RESPONSE") {
+        clearTimeout(timeout);
+        window.removeEventListener("message", handleMessage); // Clean up listener
+        resolve(event.data.isFocused); // Resolve with the response
       }
-    });
+    };
+
+    window.addEventListener("message", handleMessage);
   });
 }
+
 
 function playNotificationSound() {
   // chrome.runtime.sendMessage({ action: "PLAY_NOTIFICATION_SOUND" });
@@ -395,11 +398,11 @@ const handleNotificationDirect = async (directs) => {
       //   message: "You have received a new direct message",
       //   priority: 2, // Use the maximum priority to ensure it's noticeable
       // });
-      if (!isMobile) {
-        setTimeout(() => {
-          chrome.notifications.clear(notificationId);
-        }, 7000);
-      }
+      // if (!isMobile) {
+      //   setTimeout(() => {
+      //     chrome.notifications.clear(notificationId);
+      //   }, 7000);
+      // }
 
       // chrome.runtime.sendMessage(
       //   {
@@ -817,19 +820,19 @@ export const checkThreads = async (bringBack) => {
         //   priority: 2, // Use the maximum priority to ensure it's noticeable
 
         // });
-        if (!isMobile) {
-          setTimeout(() => {
-            chrome.notifications.clear(notificationId);
-          }, 7000);
-        }
+        // if (!isMobile) {
+        //   setTimeout(() => {
+        //     chrome.notifications.clear(notificationId);
+        //   }, 7000);
+        // }
         playNotificationSound();
       }
     }
     const savedtimestampAfter = await getTimestampGroupAnnouncement();
-    chrome.runtime.sendMessage({
+    window.postMessage({
       action: "SET_GROUP_ANNOUNCEMENTS",
       payload: savedtimestampAfter,
-    });
+    }, "*"); 
   } catch (error) {
   } finally {
   }
@@ -918,18 +921,19 @@ export const checkNewMessages = async () => {
       //   priority: 2, // Use the maximum priority to ensure it's noticeable
 
       // });
-      if (!isMobile) {
-        setTimeout(() => {
-          chrome.notifications.clear(notificationId);
-        }, 7000);
-      }
+      // if (!isMobile) {
+      //   setTimeout(() => {
+      //     chrome.notifications.clear(notificationId);
+      //   }, 7000);
+      // }
       playNotificationSound();
     }
     const savedtimestampAfter = await getTimestampGroupAnnouncement();
-    chrome.runtime.sendMessage({
+    window.postMessage({
       action: "SET_GROUP_ANNOUNCEMENTS",
       payload: savedtimestampAfter,
-    });
+    }, "*"); 
+ 
   } catch (error) {
   } finally {
   }
@@ -1031,10 +1035,10 @@ export async function getSaveWallet() {
 
 
 export async function clearAllNotifications() {
-  const notifications = await chrome.notifications.getAll();
-  for (const notificationId of Object.keys(notifications)) {
-    await chrome.notifications.clear(notificationId);
-  }
+  // const notifications = await chrome.notifications.getAll();
+  // for (const notificationId of Object.keys(notifications)) {
+  //   await chrome.notifications.clear(notificationId);
+  // }
 }
 
 export async function getUserInfo() {
@@ -1634,7 +1638,7 @@ async function sendChat({ qortAddress, recipientPublicKey, message }) {
       reference,
     };
   }
-  const path = chrome.runtime.getURL("memory-pow.wasm.full");
+  const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
 
   const { nonce, chatBytesArray } = await computePow({
     chatBytes: tx.chatBytes,
@@ -1696,7 +1700,7 @@ export async function sendChatGroup({
   // if (!hasEnoughBalance) {
   //   throw new Error("Must have at least 4 QORT to send a chat message");
   // }
-  const path = chrome.runtime.getURL("memory-pow.wasm.full");
+  const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
 
   const { nonce, chatBytesArray } = await computePow({
     chatBytes: tx.chatBytes,
@@ -1776,7 +1780,7 @@ export async function sendChatDirect({
   // if (!hasEnoughBalance) {
   //   throw new Error("Must have at least 4 QORT to send a chat message");
   // }
-  const path = chrome.runtime.getURL("memory-pow.wasm.full");
+  const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
 
   const { nonce, chatBytesArray } = await computePow({
     chatBytes: tx.chatBytes,
@@ -1923,16 +1927,16 @@ async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
         };
       }
 
-      setTimeout(() => {
-        chrome.tabs.query({}, function (tabs) {
-          tabs.forEach((tab) => {
-            chrome.tabs.sendMessage(tab.id, {
-              type: "RESPONSE_FOR_TRADES",
-              message: responseMessage,
-            });
-          });
-        });
-      }, 5000);
+      // setTimeout(() => {
+      //   chrome.tabs.query({}, function (tabs) {
+      //     tabs.forEach((tab) => {
+      //       chrome.tabs.sendMessage(tab.id, {
+      //         type: "RESPONSE_FOR_TRADES",
+      //         message: responseMessage,
+      //       });
+      //     });
+      //   });
+      // }, 5000);
 
       return;
     }
@@ -2579,14 +2583,14 @@ async function listenForChatMessageForBuyOrder({
       senderPublicKey
     );
 
-    chrome.tabs.query({}, function (tabs) {
-      tabs.forEach((tab) => {
-        chrome.tabs.sendMessage(tab.id, {
-          type: "RESPONSE_FOR_TRADES",
-          message: parsedMessageObj,
-        });
-      });
-    });
+    // chrome.tabs.query({}, function (tabs) {
+    //   tabs.forEach((tab) => {
+    //     chrome.tabs.sendMessage(tab.id, {
+    //       type: "RESPONSE_FOR_TRADES",
+    //       message: parsedMessageObj,
+    //     });
+    //   });
+    // });
   } catch (error) {
     console.error(error);
     throw new Error(error.message);
@@ -2594,39 +2598,39 @@ async function listenForChatMessageForBuyOrder({
 }
 
 export function removeDuplicateWindow(popupUrl) {
-  chrome.windows.getAll(
-    { populate: true, windowTypes: ["popup"] },
-    (windows) => {
-      // Filter to find popups matching the specific URL
-      const existingPopupsPending = windows.filter(
-        (w) =>
-          w.tabs &&
-          w.tabs.some(
-            (tab) => tab.pendingUrl && tab.pendingUrl.startsWith(popupUrl)
-          )
-      );
-      const existingPopups = windows.filter(
-        (w) =>
-          w.tabs &&
-          w.tabs.some((tab) => tab.url && tab.url.startsWith(popupUrl))
-      );
+  // chrome.windows.getAll(
+  //   { populate: true, windowTypes: ["popup"] },
+  //   (windows) => {
+  //     // Filter to find popups matching the specific URL
+  //     const existingPopupsPending = windows.filter(
+  //       (w) =>
+  //         w.tabs &&
+  //         w.tabs.some(
+  //           (tab) => tab.pendingUrl && tab.pendingUrl.startsWith(popupUrl)
+  //         )
+  //     );
+  //     const existingPopups = windows.filter(
+  //       (w) =>
+  //         w.tabs &&
+  //         w.tabs.some((tab) => tab.url && tab.url.startsWith(popupUrl))
+  //     );
 
-      if (existingPopupsPending.length > 1) {
-        chrome.windows.remove(
-          existingPopupsPending?.[0]?.tabs?.[0]?.windowId,
-          () => {}
-        );
-      } else if (
-        existingPopupsPending.length > 0 &&
-        existingPopups.length > 0
-      ) {
-        chrome.windows.remove(
-          existingPopupsPending?.[0]?.tabs?.[0]?.windowId,
-          () => {}
-        );
-      }
-    }
-  );
+  //     if (existingPopupsPending.length > 1) {
+  //       chrome.windows.remove(
+  //         existingPopupsPending?.[0]?.tabs?.[0]?.windowId,
+  //         () => {}
+  //       );
+  //     } else if (
+  //       existingPopupsPending.length > 0 &&
+  //       existingPopups.length > 0
+  //     ) {
+  //       chrome.windows.remove(
+  //         existingPopupsPending?.[0]?.tabs?.[0]?.windowId,
+  //         () => {}
+  //       );
+  //     }
+  //   }
+  // );
 }
 
 export async function setChatHeads(data) {
@@ -3143,29 +3147,7 @@ const checkGroupList = async () => {
   }
 };
 
-const checkActiveChatsForNotifications = async () => {
-  try {
-    const popupUrl = chrome.runtime.getURL("index.html?main=true");
 
-    chrome.windows.getAll(
-      { populate: true, windowTypes: ["popup"] },
-      (windows) => {
-        // Attempt to find an existing popup window that has a tab with the correct URL
-        const existingPopup = windows.find((w) => {
-          return (
-            w.tabs &&
-            w.tabs.some((tab) => tab.url && tab.url.startsWith(popupUrl))
-          );
-        });
-
-        if (existingPopup) {
-        } else {
-          checkGroupList();
-        }
-      }
-    );
-  } catch (error) {}
-};
 
 // Reconnect when service worker wakes up
 

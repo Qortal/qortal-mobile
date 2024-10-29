@@ -645,46 +645,16 @@ function App() {
   };
 
   useEffect(() => {
-    // Listen for messages from the background script
-    const messageListener = (message, sender, sendResponse) => {
-      // Handle various actions
-      if (
-        message.action === "UPDATE_STATE_CONFIRM_SEND_QORT" &&
-        !isMainWindow
-      ) {
-        setSendqortState(message.payload);
-        setExtstate("web-app-request-payment");
-      } else if (message.action === "closePopup" && !isMainWindow) {
-        window.close();
+    // Handler function for incoming messages
+    const messageHandler = (event) => {
+      const message = event.data;
+  
+      if (message?.action === "CHECK_FOCUS") {
+       
+        event.source.postMessage({ action: "CHECK_FOCUS_RESPONSE", isFocused: isFocusedRef.current }, event.origin);
+        
       } else if (
-        message.action === "UPDATE_STATE_REQUEST_CONNECTION" &&
-        !isMainWindow
-      ) {
-        setRequestConnection(message.payload);
-        setExtstate("web-app-request-connection");
-      } else if (
-        message.action === "UPDATE_STATE_REQUEST_BUY_ORDER" &&
-        !isMainWindow
-      ) {
-        setRequestBuyOrder(message.payload);
-        setExtstate("web-app-request-buy-order");
-      } else if (
-        message.action === "UPDATE_STATE_REQUEST_AUTHENTICATION" &&
-        !isMainWindow
-      ) {
-        setRequestAuthentication(message.payload);
-        setExtstate("web-app-request-authentication");
-      } else if (message.action === "SET_COUNTDOWN" && !isMainWindow) {
-        setCountdown(message.payload);
-      } else if (message.action === "INITIATE_MAIN") {
-        setIsMain(true);
-        isMainRef.current = true;
-      } else if (message.action === "CHECK_FOCUS" && isMainWindow) {
-        sendResponse(isFocusedRef.current); // Synchronous response
-        return true; // Return true if you plan to send a response asynchronously
-      } else if (
-        message.action === "NOTIFICATION_OPEN_DIRECT" &&
-        isMainWindow
+        message.action === "NOTIFICATION_OPEN_DIRECT" 
       ) {
         executeEvent("openDirectMessage", {
           from: message.payload.from,
@@ -693,7 +663,7 @@ function App() {
         executeEvent("openGroupMessage", {
           from: message.payload.from,
         });
-      } else if (
+      }  else if (
         message.action === "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP" &&
         isMainWindow
       ) {
@@ -708,30 +678,20 @@ function App() {
           data: message.payload.data,
         });
       }
-
-      // Call the permission request handler for "QORTAL_REQUEST_PERMISSION"
-      qortalRequestPermisson(message, sender, sendResponse);
-      if (message.action === "QORTAL_REQUEST_PERMISSION" && !isMainWindow) {
-        return true; // Return true to indicate an async response is coming
-      }
-      if (message.action === "QORTAL_REQUEST_PERMISSION" && isMainWindow && message?.isFromExtension) {
-        qortalRequestPermissonFromExtension(message, sender, sendResponse);
-        return true;
-      }
-      if (message.action === "QORTAL_REQUEST_PERMISSION" && isMainWindow) {
-      
-        return;
-      }
+  
+     
     };
-
-    // Add message listener
-    chrome.runtime?.onMessage.addListener(messageListener);
-
-    // Clean up the listener on component unmount
+  
+    // Attach the event listener
+    window.addEventListener("message", messageHandler);
+  
+    // Clean up the event listener on component unmount
     return () => {
-      chrome.runtime?.onMessage.removeListener(messageListener);
+      window.removeEventListener("message", messageHandler);
     };
   }, []);
+
+
 
   //param = isDecline
   const confirmPayment = (isDecline: boolean) => {
@@ -1396,7 +1356,7 @@ function App() {
               textDecoration: "underline",
             }}
             onClick={() => {
-              chrome.tabs.create({ url: "https://www.qort.trade" });
+          // TODO
             }}
           >
             Get QORT at qort.trade

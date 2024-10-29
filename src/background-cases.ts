@@ -804,30 +804,27 @@ export async function notificationCase(request, event) {
   try {
     const notificationId = "chat_notification_" + Date.now(); // Create a unique ID
 
-    chrome.notifications.create(notificationId, {
-      type: "basic",
-      iconUrl: "qort.png", // Add an appropriate icon for chat notifications
-      title: "New Group Message!",
-      message: "You have received a new message from one of your groups",
-      priority: 2, // Use the maximum priority to ensure it's noticeable
-      // buttons: [
-      //   { title: 'Go to group' }
-      // ]
-    });
+    // chrome.notifications.create(notificationId, {
+    //   type: "basic",
+    //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
+    //   title: "New Group Message!",
+    //   message: "You have received a new message from one of your groups",
+    //   priority: 2, // Use the maximum priority to ensure it's 
+    // });
     // Set a timeout to clear the notification after 'timeout' milliseconds
-    setTimeout(() => {
-      chrome.notifications.clear(notificationId);
-    }, 3000);
+    // setTimeout(() => {
+    //   chrome.notifications.clear(notificationId);
+    // }, 3000);
 
-    event.source.postMessage(
-      {
-        requestId: request.requestId,
-        action: "notification",
-        payload: true,
-        type: "backgroundMessageResponse",
-      },
-      event.origin
-    );
+    // event.source.postMessage(
+    //   {
+    //     requestId: request.requestId,
+    //     action: "notification",
+    //     payload: true,
+    //     type: "backgroundMessageResponse",
+    //   },
+    //   event.origin
+    // );
   } catch (error) {
     event.source.postMessage(
       {
@@ -1399,7 +1396,7 @@ export async function publishGroupEncryptedResourceCase(request, event) {
   export async function encryptSingleCase(request, event) {
     try {
       const { data, secretKeyObject, typeNumber} = request.payload;
-      const response = await encryptSingle({ data, secretKeyObject, typeNumber });
+      const response = await encryptSingle({ data64: data, secretKeyObject, typeNumber });
   
       event.source.postMessage(
         {
@@ -1426,8 +1423,9 @@ export async function publishGroupEncryptedResourceCase(request, event) {
   export async function decryptSingleCase(request, event) {
     try {
       const { data, secretKeyObject, skipDecodeBase64} = request.payload;
-      const response = await decryptSingleFunc({ data, secretKeyObject, skipDecodeBase64 });
-  
+      console.log({data, secretKeyObject, skipDecodeBase64})
+      const response = await decryptSingleFunc({ messages: data, secretKeyObject, skipDecodeBase64 });
+      console.log('response', response)
       event.source.postMessage(
         {
           requestId: request.requestId,

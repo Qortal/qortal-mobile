@@ -35,18 +35,18 @@ export const MessageDisplay = ({ htmlContent , isReply}) => {
     const target = e.target.closest('a');
     if (target) {
       const href = target.getAttribute('href');
-
-      if (chrome && chrome.tabs) {
-        chrome.tabs.create({ url: href }, (tab) => {
-          if (chrome.runtime.lastError) {
-            console.error('Error opening tab:', chrome.runtime.lastError);
-          } else {
-            console.log('Tab opened successfully:', tab);
-          }
-        });
-      } else {
-        console.error('chrome.tabs API is not available.');
-      }
+      // TODO
+      // if (chrome && chrome.tabs) {
+      //   chrome.tabs.create({ url: href }, (tab) => {
+      //     if (chrome.runtime.lastError) {
+      //       console.error('Error opening tab:', chrome.runtime.lastError);
+      //     } else {
+      //       console.log('Tab opened successfully:', tab);
+      //     }
+      //   });
+      // } else {
+      //   console.error('chrome.tabs API is not available.');
+      // }
     } else {
       console.error('No <a> tag found or href is null.');
     }

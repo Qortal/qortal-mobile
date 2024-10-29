@@ -471,16 +471,17 @@ isDOMContentLoaded: false
     
   }, []); // Empty dependency array to run once when the component mounts
 
-  chrome.runtime?.onMessage.addListener( function (message, sender, sendResponse) {
-     if(message.action === "SHOW_SAVE_FILE_PICKER"){
-      showSaveFilePicker(message?.data)
-    }
+  // TODO
+  // chrome.runtime?.onMessage.addListener( function (message, sender, sendResponse) {
+  //    if(message.action === "SHOW_SAVE_FILE_PICKER"){
+  //     showSaveFilePicker(message?.data)
+  //   }
   
-    else  if (message.action === "getFileFromIndexedDB") {
-      handleGetFileFromIndexedDB(message.fileId, sendResponse);
-      return true; // Keep the message channel open for async response
-    }
-  });
+  //   else  if (message.action === "getFileFromIndexedDB") {
+  //     handleGetFileFromIndexedDB(message.fileId, sendResponse);
+  //     return true; // Keep the message channel open for async response
+  //   }
+  // });
 
   return {path, history, resetHistory, changeCurrentIndex}
 };

@@ -130,6 +130,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
             secretKeyObject: secretKey,
           })
             .then((response) => {
+              console.log('decryptSingle', response)
               if (!response?.error) {
                 const filterUIMessages = encryptedMessages.filter((item) => !isExtMsg(item.data));
                 const decodedUIMessages = decodeBase64ForUIChatMessages(filterUIMessages);
