@@ -6,9 +6,13 @@ import {
   banFromGroup,
   cancelBan,
   cancelInvitationToGroup,
+  checkLocalFunc,
+  checkNewMessages,
   checkThreads,
   clearAllNotifications,
   createGroup,
+  decryptDirectFunc,
+  decryptSingleForPublishes,
   decryptSingleFunc,
   decryptWallet,
   findUsableApi,
@@ -32,9 +36,12 @@ import {
   leaveGroup,
   makeAdmin,
   notifyAdminRegenerateSecretKey,
+  pauseAllQueues,
   registerName,
   removeAdmin,
+  resumeAllQueues,
   saveTempPublish,
+  sendChatDirect,
   sendChatGroup,
   sendChatNotification,
   sendCoin,
@@ -1409,6 +1416,230 @@ export async function publishGroupEncryptedResourceCase(request, event) {
         {
           requestId: request.requestId,
           action: "decryptSingle",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function pauseAllQueuesCase(request, event) {
+    try {
+       await pauseAllQueues();
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "pauseAllQueues",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "pauseAllQueues",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function resumeAllQueuesCase(request, event) {
+    try {
+       await resumeAllQueues();
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "resumeAllQueues",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "resumeAllQueues",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+  export async function checkLocalCase(request, event) {
+    try {
+      const response = await checkLocalFunc()
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "pauseAllQueues",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "checkLocal",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function decryptSingleForPublishesCase(request, event) {
+    try {
+      const { data, secretKeyObject, skipDecodeBase64} = request.payload;
+      const response = await decryptSingleForPublishes({ data, secretKeyObject, skipDecodeBase64 });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptSingleForPublishes",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptSingle",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function decryptDirectCase(request, event) {
+    try {
+      const { data, involvingAddress} = request.payload;
+      const response = await decryptDirectFunc({ data, involvingAddress });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptDirect",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "decryptDirect",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+  export async function sendChatGroupCase(request, event) {
+    try {
+      const {   groupId,
+        typeMessage = undefined,
+        chatReference = undefined,
+        messageText} = request.payload;
+      const response = await sendChatGroup({ groupId, typeMessage, chatReference, messageText });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "sendChatGroup",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "sendChatGroup",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+  export async function sendChatDirectCase(request, event) {
+    try {
+      const {    directTo,
+        typeMessage = undefined,
+        chatReference = undefined,
+        messageText,
+        publicKeyOfRecipient,
+        address,
+        otherData} = request.payload;
+      const response = await sendChatDirect({  directTo,
+        chatReference,
+        messageText,
+        typeMessage,
+        publicKeyOfRecipient,
+        address,
+        otherData });
+  
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "sendChatDirect",
+          payload: response,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "sendChatDirect",
+          error: error?.message,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+  }
+
+  export async function setupGroupWebsocketCase(request, event) {
+    try {
+     
+        checkNewMessages();
+        checkThreads();
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "sendChatDirect",
+          payload: true,
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "sendChatDirect",
           error: error?.message,
           type: "backgroundMessageResponse",
         },

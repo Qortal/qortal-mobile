@@ -205,17 +205,18 @@ export const clearAllQueues = () => {
 
 export const pauseAllQueues = () => {
   controlAllQueues("pause");
-  chrome?.runtime?.sendMessage({
-    action: "pauseAllQueues",
-    payload: {},
+  window.sendMessage("pauseAllQueues", {})
+  .catch((error) => {
+    console.error("Failed to pause all queues:", error.message || "An error occurred");
   });
+
 };
 export const resumeAllQueues = () => {
   controlAllQueues("resume");
-  chrome?.runtime?.sendMessage({
-    action: "resumeAllQueues",
-    payload: {},
+  window.sendMessage("resumeAllQueues", {}).catch((error) => {
+    console.error("Failed to resume all queues:", error.message || "An error occurred");
   });
+
 };
 
 export const MyContext = createContext<MyContextInterface>(defaultValues);

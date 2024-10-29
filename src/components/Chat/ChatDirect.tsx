@@ -101,43 +101,41 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
     const decryptMessages = (encryptedMessages: any[], isInitiated: boolean)=> {
       try {
         return new Promise((res, rej)=> {
-          chrome?.runtime?.sendMessage({ action: "decryptDirect", payload: {
+          window.sendMessage("decryptDirect", {
             data: encryptedMessages,
-            involvingAddress: selectedDirect?.address
-        }}, (response) => {
-        
-            if (!response?.error) {
-             
-                processWithNewMessages(response, selectedDirect?.address)
-             
-              res(response)
-              if(isInitiated){
+            involvingAddress: selectedDirect?.address,
+          })
+            .then((response) => {
+              if (!response?.error) {
+                processWithNewMessages(response, selectedDirect?.address);
+                res(response);
           
-                const formatted = response.map((item: any)=> {
-                  return {
+                if (isInitiated) {
+                  const formatted = response.map((item) => ({
                     ...item,
                     id: item.signature,
                     text: item.message,
-                    unread: item?.sender === myAddress ? false :  true
-                  }
-                } )
-                setMessages((prev)=> [...prev, ...formatted])
-              } else {
-                const formatted = response.map((item: any)=> {
-                  return {
+                    unread: item?.sender === myAddress ? false : true,
+                  }));
+                  setMessages((prev) => [...prev, ...formatted]);
+                } else {
+                  const formatted = response.map((item) => ({
                     ...item,
                     id: item.signature,
                     text: item.message,
-                    unread: false
-                  }
-                } )
-                setMessages(formatted)
-                hasInitialized.current = true
-
+                    unread: false,
+                  }));
+                  setMessages(formatted);
+                  hasInitialized.current = true;
+                }
+                return;
               }
-            }
-            rej(response.error)
-          });
+              rej(response.error);
+            })
+            .catch((error) => {
+              rej(error.message || "An error occurred");
+            });
+          
         })  
       } catch (error) {
           
@@ -246,43 +244,52 @@ const sendChatDirect = async ({ chatReference = undefined, messageText, otherDat
  
     if(!directTo) return
     return new Promise((res, rej)=> {
-      chrome?.runtime?.sendMessage({ action: "sendChatDirect", payload: {
-        directTo,  chatReference, messageText, otherData, publicKeyOfRecipient, address: directTo
-    }}, async (response) => {
-    
-        if (!response?.error) {
-          if(isNewChatVar){
-            
-            let getRecipientName = null
-            try {
-              getRecipientName = await getNameInfo(response.recipient)
-            } catch (error) {
-              
+      window.sendMessage("sendChatDirect", {
+        directTo,
+        chatReference,
+        messageText,
+        otherData,
+        publicKeyOfRecipient,
+        address: directTo,
+      })
+        .then(async (response) => {
+          if (!response?.error) {
+            if (isNewChatVar) {
+              let getRecipientName = null;
+              try {
+                getRecipientName = await getNameInfo(response.recipient);
+              } catch (error) {
+                console.error("Error fetching recipient name:", error);
+              }
+              setSelectedDirect({
+                address: response.recipient,
+                name: getRecipientName,
+                timestamp: Date.now(),
+                sender: myAddress,
+                senderName: myName,
+              });
+              setNewChat(null);
+      
+              window.sendMessage("addTimestampEnterChat", {
+                timestamp: Date.now(),
+                groupId: response.recipient,
+              }).catch((error) => {
+                console.error("Failed to add timestamp:", error.message || "An error occurred");
+              });
+      
+              setTimeout(() => {
+                getTimestampEnterChat();
+              }, 400);
             }
-            setSelectedDirect({
-              "address": response.recipient,
-              "name": getRecipientName,
-              "timestamp": Date.now(),
-              "sender": myAddress,
-              "senderName": myName
-          })
-          setNewChat(null)
-          window.sendMessage("addTimestampEnterChat", {
-            timestamp: Date.now(),
-            groupId: response.recipient,
-          }).catch((error) => {
-              console.error("Failed to add timestamp:", error.message || "An error occurred");
-            });
-          
-          setTimeout(() => {
-            getTimestampEnterChat()
-          }, 400);
+            res(response);
+            return;
           }
-          res(response)
-          return
-        }
-        rej(response.error)
-      });
+          rej(response.error);
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     })  
   } catch (error) {
       throw new Error(error)

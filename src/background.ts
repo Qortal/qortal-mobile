@@ -37,10 +37,13 @@ import {
   banFromGroupCase,
   cancelBanCase,
   cancelInvitationToGroupCase,
+  checkLocalCase,
   clearAllNotificationsCase,
   createGroupCase,
+  decryptDirectCase,
   decryptGroupEncryptionCase,
   decryptSingleCase,
+  decryptSingleForPublishesCase,
   decryptWalletCase,
   encryptAndPublishSymmetricKeyGroupChatCase,
   encryptSingleCase,
@@ -64,16 +67,21 @@ import {
   nameCase,
   notificationCase,
   notifyAdminRegenerateSecretKeyCase,
+  pauseAllQueuesCase,
   publishGroupEncryptedResourceCase,
   publishOnQDNCase,
   registerNameCase,
   removeAdminCase,
+  resumeAllQueuesCase,
   saveTempPublishCase,
+  sendChatDirectCase,
+  sendChatGroupCase,
   sendCoinCase,
   setApiKeyCase,
   setChatHeadsCase,
   setCustomNodesCase,
   setGroupDataCase,
+  setupGroupWebsocketCase,
   updateThreadActivityCase,
   userInfoCase,
   validApiCase,
@@ -150,8 +158,8 @@ export const clearAllQueues = () => {
   });
 };
 
-const pauseAllQueues = () => controlAllQueues("pause");
-const resumeAllQueues = () => controlAllQueues("resume");
+export const pauseAllQueues = () => controlAllQueues("pause");
+export const resumeAllQueues = () => controlAllQueues("resume");
 const checkDifference = (createdTimestamp) => {
   return (
     Date.now() - createdTimestamp < timeDifferenceForNotificationChatsBackground
@@ -862,7 +870,7 @@ export const checkThreads = async (bringBack) => {
   } finally {
   }
 };
-const checkNewMessages = async () => {
+export const checkNewMessages = async () => {
   try {
     let mutedGroups = (await getUserSettings({ key: "mutedGroups" })) || [];
     if (!isArray(mutedGroups)) mutedGroups = [];
@@ -1731,7 +1739,7 @@ export async function sendChatGroup({
   return _response;
 }
 
-async function sendChatDirect({
+export async function sendChatDirect({
   address,
   directTo,
   typeMessage,
@@ -1834,7 +1842,7 @@ export async function decryptSingleFunc({
   }
   return holdMessages;
 }
-async function decryptSingleForPublishes({
+export async function decryptSingleForPublishes({
   messages,
   secretKeyObject,
   skipDecodeBase64,
@@ -1857,7 +1865,7 @@ async function decryptSingleForPublishes({
   return holdMessages;
 }
 
-async function decryptDirectFunc({ messages, involvingAddress }) {
+export async function decryptDirectFunc({ messages, involvingAddress }) {
   const senderPublicKey = await getPublicKey(involvingAddress);
   let holdMessages = [];
 
@@ -2665,7 +2673,7 @@ export async function setChatHeads(data) {
   });
 }
 
-async function checkLocalFunc() {
+export async function checkLocalFunc() {
   const apiKey = await getApiKeyFromStorage();
   return !!apiKey;
 }
@@ -3075,12 +3083,90 @@ function setupMessageListener() {
       case "encryptSingle":
         encryptSingleCase(request, event);
         break;
-        case "decryptSingle":
-          decryptSingleCase(request, event);
-          break;
+      case "decryptSingle":
+        decryptSingleCase(request, event);
+        break;
+      case "pauseAllQueues":
+        pauseAllQueuesCase(request, event);
+        break;
+      case "resumeAllQueues":
+        resumeAllQueuesCase(request, event);
+        break;
+      case "checkLocal":
+        checkLocalCase(request, event);
+        break;
+      case "decryptSingleForPublishes":
+        decryptSingleForPublishesCase(request, event);
+        break;
+      case "decryptDirect":
+        decryptDirectCase(request, event);
+        break;
+      case "sendChatGroup":
+        sendChatGroupCase(request, event);
+        break;
+      case "sendChatDirect":
+        sendChatDirectCase(request, event);
+        break;
+      case "setupGroupWebsocket":
+        setupGroupWebsocketCase(request, event);
+        break;
+      case "logout":
+        {
+          try {
+            const logoutFunc = async () => {
+              forceCloseWebSocket();
+              clearAllQueues();
+              if (interval) {
+                // for announcement notification
+                clearInterval(interval);
+              }
+
+              const wallet = await getSaveWallet();
+              const address = wallet.address0;
+              const key1 = `tempPublish-${address}`;
+              const key2 = `group-data-${address}`;
+              const key3 = `${address}-publishData`;
+              chrome.storage.local.remove(
+                [
+                  "keyPair",
+                  "walletInfo",
+                  "active-groups-directs",
+                  key1,
+                  key2,
+                  key3,
+                ],
+                () => {
+                  if (chrome.runtime.lastError) {
+                    // Handle error
+                    console.error(chrome.runtime.lastError.message);
+                  } else {
+                    chrome.tabs.query({}, function (tabs) {
+                      tabs.forEach((tab) => {
+                        chrome.tabs.sendMessage(tab.id, { type: "LOGOUT" });
+                      });
+                    });
+                    // Data removed successfully
+                    event.source.postMessage(
+                      {
+                        requestId: request.requestId,
+                        action: "logout",
+                        payload: true,
+                        type: "backgroundMessageResponse",
+                      },
+                      event.origin
+                    );
+                  }
+                }
+              );
+            };
+            logoutFunc();
+          } catch (error) {}
+        }
+
+        break;
       default:
         console.error("Unknown action:", request.action);
-        break
+        break;
     }
   });
 }

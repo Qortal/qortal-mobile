@@ -86,38 +86,34 @@ export const getTempPublish = async () => {
 export const decryptPublishes = async (encryptedMessages: any[], secretKey) => {
   try {
     return await new Promise((res, rej) => {
-      chrome?.runtime?.sendMessage(
-        {
-          action: "decryptSingleForPublishes",
-          payload: {
-            data: encryptedMessages,
-            secretKeyObject: secretKey,
-            skipDecodeBase64: true,
-          },
-        },
-        (response) => {
+      window.sendMessage("decryptSingleForPublishes", {
+        data: encryptedMessages,
+        secretKeyObject: secretKey,
+        skipDecodeBase64: true,
+      })
+        .then((response) => {
           if (!response?.error) {
             res(response);
             // if(hasInitialized.current){
-
-            //   setMessages((prev)=> [...prev, ...formatted])
+            //   setMessages((prev) => [...prev, ...formatted]);
             // } else {
-            //   const formatted = response.map((item: any)=> {
-            //     return {
-            //       ...item,
-            //       id: item.signature,
-            //       text: item.text,
-            //       unread: false
-            //     }
-            //   } )
-            //   setMessages(formatted)
-            //   hasInitialized.current = true
-
+            //   const formatted = response.map((item) => ({
+            //     ...item,
+            //     id: item.signature,
+            //     text: item.text,
+            //     unread: false
+            //   }));
+            //   setMessages(formatted);
+            //   hasInitialized.current = true;
             // }
+            return;
           }
           rej(response.error);
-        }
-      );
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     });
   } catch (error) {}
 };

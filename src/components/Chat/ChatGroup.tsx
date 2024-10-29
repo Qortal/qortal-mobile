@@ -424,16 +424,23 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
 const sendChatGroup = async ({groupId, typeMessage = undefined, chatReference = undefined, messageText}: any)=> {
   try {
     return new Promise((res, rej)=> {
-      chrome?.runtime?.sendMessage({ action: "sendChatGroup", payload: {
-        groupId, typeMessage, chatReference, messageText
-    }}, (response) => {
-    
-        if (!response?.error) {
-          res(response)
-          return
-        }
-        rej(response.error)
-      });
+      window.sendMessage("sendChatGroup", {
+        groupId,
+        typeMessage,
+        chatReference,
+        messageText,
+      })
+        .then((response) => {
+          if (!response?.error) {
+            res(response);
+            return;
+          }
+          rej(response.error);
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
     })  
   } catch (error) {
       throw new Error(error)
