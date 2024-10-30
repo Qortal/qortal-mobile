@@ -1,54 +1,117 @@
+import { SecureStoragePlugin } from '@evva/capacitor-secure-storage-plugin';
 
+let inMemoryKey: CryptoKey | null = null;
+let inMemoryIV: Uint8Array | null = null;
 
-export const storeData = (key: string, payload: any): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      try {
-        localStorage.setItem(key, JSON.stringify(payload));
-        resolve("Data saved successfully");
-      } catch (error) {
-        reject(new Error("Error saving data"));
-      }
-    });
-  };
-  
-  export const getData = <T = any>(key: string): Promise<T> => {
-    return new Promise((resolve, reject) => {
-      try {
-        const data = localStorage.getItem(key);
-        if (data) {
-          resolve(JSON.parse(data) as T);
-        } else {
-          reject(new Error(`No data found for key: ${key}`));
-        }
-      } catch (error) {
-        reject(new Error("Error retrieving data"));
-      }
-    });
-  };
-  
-
-  export async function removeKeysAndLogout(
-    keys: string[],
-    event: MessageEvent,
-    request: any
-  ) {
-    try {
-      // Remove each key from localStorage
-      keys.forEach((key) => localStorage.removeItem(key));
-  
-   
-      // Send a response back to indicate successful logout
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "logout",
-          payload: true,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      console.error("Error removing keys:", error);
-    }
+async function initializeKeyAndIV() {
+  if (!inMemoryKey) {
+    inMemoryKey = await generateKey();  // Generates the key in memory
   }
-  
+}
+
+async function generateKey(): Promise<CryptoKey> {
+  return await crypto.subtle.generateKey(
+    {
+      name: "AES-GCM",
+      length: 256
+    },
+    true,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptData(data: string, key: CryptoKey): Promise<{ iv: Uint8Array; encryptedData: ArrayBuffer }> {
+  const encoder = new TextEncoder();
+  const encodedData = encoder.encode(data);
+
+  // Generate a random IV each time you encrypt
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+
+  const encryptedData = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: iv
+    },
+    key,
+    encodedData
+  );
+
+  return { iv, encryptedData };
+}
+
+async function decryptData(encryptedData: ArrayBuffer, key: CryptoKey, iv: Uint8Array): Promise<string> {
+  const decryptedData = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: iv
+    },
+    key,
+    encryptedData
+  );
+
+  const decoder = new TextDecoder();
+  return decoder.decode(decryptedData);
+}
+
+// Encrypt data, then concatenate the IV and encrypted data for storage
+export const storeData = async (key: string, payload: any): Promise<string> => {
+  await initializeKeyAndIV();
+
+  if (inMemoryKey) {
+    const { iv, encryptedData } = await encryptData(JSON.stringify(payload), inMemoryKey);
+
+    // Combine IV and encrypted data into a single string
+    const combinedData = new Uint8Array([...iv, ...new Uint8Array(encryptedData)]);
+    await SecureStoragePlugin.set({ key, value: btoa(String.fromCharCode(...combinedData)) });
+
+    return "Data saved successfully";
+  } else {
+    throw new Error("Key is not initialized in memory");
+  }
+};
+
+// Retrieve data, split the IV and encrypted data, then decrypt
+export const getData = async <T = any>(key: string): Promise<T> => {
+  await initializeKeyAndIV();
+
+  if (!inMemoryKey) throw new Error("Encryption key is not initialized");
+
+  const storedDataBase64 = await SecureStoragePlugin.get({ key });
+  if (storedDataBase64.value) {
+    const combinedData = atob(storedDataBase64.value).split("").map((c) => c.charCodeAt(0));
+    const iv = new Uint8Array(combinedData.slice(0, 12)); // First 12 bytes are the IV
+    const encryptedData = new Uint8Array(combinedData.slice(12)).buffer; // The rest is encrypted data
+
+    const decryptedData = await decryptData(encryptedData, inMemoryKey, iv);
+    return JSON.parse(decryptedData) as T;
+  } else {
+    throw new Error(`No data found for key: ${key}`);
+  }
+};
+
+
+// Remove keys from storage and log out
+export async function removeKeysAndLogout(keys: string[], event: MessageEvent, request: any) {
+  try {
+    for (const key of keys) {
+      try {
+        await SecureStoragePlugin.remove({ key });
+        await SecureStoragePlugin.remove({ key: `${key}_iv` });  // Remove associated IV
+      } catch (error) {
+        console.warn(`Key not found: ${key}`);
+      }
+    }
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "logout",
+        payload: true,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    console.error("Error removing keys:", error);
+  }
+}

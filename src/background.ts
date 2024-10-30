@@ -1560,6 +1560,7 @@ const getStoredData = async (key) => {
 
 export async function handleActiveGroupDataFromSocket({ groups, directs }) {
   try {
+    console.log('handleActiveGroupDataFromSocket3', groups, directs)
     window.postMessage({
       action: "SET_GROUPS",
       payload: groups,
@@ -3024,6 +3025,7 @@ function setupMessageListener() {
         publishOnQDNCase(request, event);
         break;
       case "handleActiveGroupDataFromSocket":
+        console.log('handleActiveGroupDataFromSocket2', event)
         handleActiveGroupDataFromSocketCase(request, event);
         break;
       case "getThreadActivity":

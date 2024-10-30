@@ -4,8 +4,7 @@ import { crypto, walletVersion } from '../../constants/decryptWallet';
 import { doInitWorkers, kdf } from '../../deps/kdf';
 import PhraseWallet from './phrase-wallet';
 import * as WORDLISTS from './wordlists';
-import { saveAs } from 'file-saver';
-
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 export function generateRandomSentence(template = 'adverb verb noun adjective noun adverb verb noun adjective noun adjective verbed adjective noun', maxWordLength = 0, capitalize = true) {
     const partsOfSpeechMap = {
         'noun': 'nouns',
@@ -84,19 +83,17 @@ export const createAccount = async()=> {
        
   }
 
-  export const saveFileToDisk = async (data, qortAddress) => {
-    try {
-        const dataString = JSON.stringify(data);
-        const blob = new Blob([dataString], { type: 'application/json' });
-    const fileName = "qortal_backup_" + qortAddress + ".json";
+ export const saveFileToDisk = async (data: any, qortAddress: string) => {
 
-    saveAs(blob, fileName);
-    } catch (error) {
-     
-        if (error.name === 'AbortError') {
-            return;
-        }
-        // This fallback will only be executed if the `showSaveFilePicker` method fails.
-        FileSaver.saveAs(blob, fileName); // Ensure FileSaver is properly imported or available in your environment.
-    }
-}
+    const dataString = JSON.stringify(data);
+    const fileName = `qortal_backup_${qortAddress}.json`;
+
+    // Write the file to the Filesystem
+    await Filesystem.writeFile({
+      path: fileName,
+      data: dataString,
+      directory: Directory.Documents, // Save in the Documents folder
+      encoding: Encoding.UTF8,
+    });
+
+};

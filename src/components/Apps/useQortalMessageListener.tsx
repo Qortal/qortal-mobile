@@ -1,9 +1,60 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import FileSaver from 'file-saver';
 import { executeEvent } from '../../utils/events';
 import { useSetRecoilState } from 'recoil';
 import { navigationControllerAtom } from '../../atoms/global';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Browser } from '@capacitor/browser';
 
+
+
+
+export const saveFileInChunks = async (blob: Blob, fileName: string, chunkSize = 1024 * 1024) => {
+  const base64Prefix = 'data:video/mp4;base64,';
+  try {
+    let offset = 0;
+    let isFirstChunk = true;
+    const fullFileName = fileName + Date.now() + '.mp4'
+    // Read the blob in chunks
+    while (offset < blob.size) {
+      // Extract the current chunk
+      const chunk = blob.slice(offset, offset + chunkSize);
+
+      // Convert the chunk to Base64
+      const base64Chunk = await blobToBase64(chunk);
+
+      // Write the chunk to the file with the prefix added on the first chunk
+      await Filesystem.writeFile({
+        path: fullFileName,
+        data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
+        directory: Directory.Documents,
+        recursive: true,
+        append: !isFirstChunk // Append after the first chunk
+      });
+
+      // Update offset and flag
+      offset += chunkSize;
+      isFirstChunk = false;
+    }
+
+    console.log("File saved successfully in chunks:", fileName);
+  } catch (error) {
+    console.error("Error saving file in chunks:", error);
+  }
+};
+
+
+// Helper function to convert a Blob to a Base64 string
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64data = reader.result?.toString().split(",")[1];
+      resolve(base64data || "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
 
 class Semaphore {
 	constructor(count) {
@@ -166,34 +217,92 @@ const UIQortalRequests = [
     }
   }
 
+
+  
+
   export const showSaveFilePicker = async (data) => {
-    let blob
-    let fileName
+    let blob;
+    let fileName;
+  
     try {
-      const {filename, mimeType,  fileHandleOptions, fileId} = data
-       blob = await retrieveFileFromIndexedDB(fileId)
-     fileName = filename
+      const { filename, mimeType, fileId } = data;
+  
+      // Retrieve file from IndexedDB or any other source
+      blob = await retrieveFileFromIndexedDB(fileId);
+      fileName = filename;
+   
+     await saveFileInChunks(blob, fileName)
+    } catch (error) {
+      console.error("Error saving file:", error);
+     
+    }
+  };
 
-      const fileHandle = await window.showSaveFilePicker({
-          suggestedName: filename,
-          types: [
-              {
-                  description: mimeType,
-                  ...fileHandleOptions
-              }
-          ]
-      })
-      const writeFile = async (fileHandle, contents) => {
-          const writable = await fileHandle.createWritable()
-          await writable.write(contents)
-          await writable.close()
-      }
-      writeFile(fileHandle, blob).then(() => console.log("FILE SAVED"))
-  } catch (error) {
-      FileSaver.saveAs(blob, fileName)
-  } 
-  }
+  declare var cordova: any;
 
+
+  //   try {
+  //     const { filename, mimeType, fileId } = data;
+  
+  //     // Request legacy storage permissions if applicable (for Android 12 and below)
+  //     // await requestLegacyPermissions();
+  
+  //     // Retrieve file from IndexedDB or another source
+  //     const blob = await retrieveFileFromIndexedDB(fileId);
+  //     const buffer = await blob.arrayBuffer();
+  
+  //     return new Promise((resolve, reject) => {
+  //       window.resolveLocalFileSystemURL(
+  //         cordova.file.externalRootDirectory, // Points to the root of public external storage
+  //         (rootDirectoryEntry) => {
+  //           rootDirectoryEntry.getDirectory(
+  //             "Downloads",
+  //             { create: true },
+  //             (downloadsDirectory) => {
+  //               downloadsDirectory.getFile(
+  //                 filename,
+  //                 { create: true, exclusive: false },
+  //                 (fileEntry) => {
+  //                   fileEntry.createWriter((fileWriter) => {
+  //                     fileWriter.onwriteend = () => {
+  //                       console.log("Video saved successfully in public Downloads:", fileEntry.nativeURL);
+  //                       resolve(fileEntry.nativeURL);
+  //                     };
+  
+  //                     fileWriter.onerror = (error) => {
+  //                       console.error("Error writing video file:", error);
+  //                       reject(error);
+  //                     };
+  
+  //                     const videoBlob = new Blob([buffer], { type: mimeType || "video/mp4" });
+  //                     fileWriter.truncate(0);
+  //                     fileWriter.write(videoBlob);
+  //                   });
+  //                 },
+  //                 (error) => {
+  //                   console.error("Error accessing or creating file:", error);
+  //                   reject(error);
+  //                 }
+  //               );
+  //             },
+  //             (error) => {
+  //               console.error("Error accessing Downloads folder:", error);
+  //               reject(error);
+  //             }
+  //           );
+  //         },
+  //         (error) => {
+  //           console.error("Error accessing external storage:", error);
+  //           reject(error);
+  //         }
+  //       );
+  //     });
+  //   } catch (error) {
+  //     console.error("Error saving video file:", error);
+  //     throw error;
+  //   }
+  // };
+  
   async function storeFilesInIndexedDB(obj) {
     // First delete any existing files in IndexedDB with '_qortalfile' in their ID
     await deleteQortalFilesFromIndexedDB();
@@ -353,7 +462,6 @@ isDOMContentLoaded: false
       ) {
         let data;
         try {
-          console.log('storeFilesInIndexedDB', structuredClone(event.data))
           data = await storeFilesInIndexedDB(event.data);
         } catch (error) {
           console.error('Error storing files in IndexedDB:', error);

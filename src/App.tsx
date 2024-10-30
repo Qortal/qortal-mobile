@@ -331,6 +331,13 @@ function App() {
     show: showUnsavedChanges,
     message: messageUnsavedChanges,
   } = useModal();
+  const {
+    isShow: isShowInfo,
+    onCancel: onCancelInfo,
+    onOk: onOkInfo,
+    show: showInfo,
+    message: messageInfo,
+  } = useModal();
 
   const {
     onCancel: onCancelQortalRequest,
@@ -848,6 +855,9 @@ function App() {
         walletToBeDownloaded.wallet,
         walletToBeDownloaded.qortAddress
       );
+     await showInfo({
+      message: `Your wallet file was saved to internal storage, in the document folder. Keep that file secure.`,
+     })
     } catch (error: any) {
       setWalletToBeDownloadedError(error?.message);
     } finally {
@@ -1520,6 +1530,7 @@ function App() {
             show,
             message,
             rootHeight,
+            showInfo
           }}
         >
           <Box
@@ -2406,8 +2417,8 @@ function App() {
               </TextP>
               <Spacer height="100px" />
               <CustomButton
-                onClick={() => {
-                  saveFileToDiskFunc();
+                onClick={async () => {
+                  await saveFileToDiskFunc();
                   returnToMain();
                 }}
               >
@@ -2543,6 +2554,27 @@ function App() {
             </Button>
             <Button variant="contained" onClick={onOk} autoFocus>
               Agree
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+      {isShowInfo && (
+        <Dialog
+          open={isShow}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Important Info"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              {message.message}
+            </DialogContentText>
+           
+          </DialogContent>
+          <DialogActions>
+            
+            <Button variant="contained" onClick={onOk} autoFocus>
+              Close
             </Button>
           </DialogActions>
         </Dialog>

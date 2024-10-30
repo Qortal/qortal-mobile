@@ -72,7 +72,7 @@ export const WebSocketActive = ({ myAddress, setIsLoadingGroups }) => {
               const sortedDirects = (data?.direct || []).filter(item =>
                 item?.name !== 'extension-proxy' && item?.address !== 'QSMMGSgysEuqDCuLw3S4cHrQkBrh3vP3VH'
               ).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
+                console.log('sortedGroups', sortedGroups)
            
               window.sendMessage("handleActiveGroupDataFromSocket", {
                 groups: sortedGroups,
