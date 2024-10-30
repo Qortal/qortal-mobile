@@ -851,9 +851,7 @@ function App() {
         walletToBeDownloaded.wallet,
         walletToBeDownloaded.qortAddress
       );
-     await showInfo({
-      message: `Your wallet file was saved to internal storage, in the document folder. Keep that file secure.`,
-     })
+     
     } catch (error: any) {
       setWalletToBeDownloadedError(error?.message);
     } finally {
@@ -2415,6 +2413,9 @@ function App() {
                 onClick={async () => {
                   await saveFileToDiskFunc();
                   returnToMain();
+                  await showInfo({
+                    message: `Your wallet file was saved to internal storage, in the document folder. Keep that file secure.`,
+                   })
                 }}
               >
                 Backup Account
@@ -2555,20 +2556,20 @@ function App() {
       )}
       {isShowInfo && (
         <Dialog
-          open={isShow}
+          open={isShowInfo}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
           <DialogTitle id="alert-dialog-title">{"Important Info"}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
-              {message.message}
+              {messageInfo.message}
             </DialogContentText>
            
           </DialogContent>
           <DialogActions>
             
-            <Button variant="contained" onClick={onOk} autoFocus>
+            <Button variant="contained" onClick={onOkInfo} autoFocus>
               Close
             </Button>
           </DialogActions>
