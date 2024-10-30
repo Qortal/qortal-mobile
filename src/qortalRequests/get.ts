@@ -201,20 +201,16 @@ const handleFileMessage = (event) => {
 window.addEventListener("message", handleFileMessage);
 
 function getFileFromContentScript(fileId) {
-  console.log('handleGetFileFromIndexedDB', fileId)
   return new Promise((resolve, reject) => {
     const requestId = `getFile_${fileId}_${Date.now()}`;
-    console.log('handleGetFileFromIndexedDB', requestId)
 
     fileRequestResolvers.set(requestId, { resolve, reject }); // Store resolvers by requestId
-    console.log('handleGetFileFromIndexedDB', 'passed')
 
     // Send the request message
     window.postMessage(
       { action: "getFileFromIndexedDB", fileId, requestId },
       "*"
     );
-    console.log('handleGetFileFromIndexedDB', 'after', window.origin)
 
     // Timeout to handle no response scenario
     setTimeout(() => {
@@ -239,7 +235,6 @@ const responseResolvers = new Map();
 
 const handleMessage = (event) => {
   const { action, requestId, result } = event.data;
-  console.log("Received message:", event);
 
   // Check if this is the expected response action and if we have a stored resolver
   if (action === "QORTAL_REQUEST_PERMISSION_RESPONSE" && responseResolvers.has(requestId)) {

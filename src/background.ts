@@ -1560,7 +1560,6 @@ const getStoredData = async (key) => {
 
 export async function handleActiveGroupDataFromSocket({ groups, directs }) {
   try {
-    console.log('handleActiveGroupDataFromSocket3', groups, directs)
     window.postMessage({
       action: "SET_GROUPS",
       payload: groups,
@@ -2887,7 +2886,6 @@ function setupMessageListener() {
     // Check if the message is intended for this listener
     if (request?.type !== "backgroundMessage") return; // Only process messages of type 'backgroundMessage'
 
-    console.log("REQUEST MESSAGE", request);
 
     switch (request.action) {
       case "version":
@@ -2913,7 +2911,6 @@ function setupMessageListener() {
         userInfoCase(request, event);
         break;
       case "decryptWallet":
-        console.log('going through')
         decryptWalletCase(request, event);
         break;
       case "balance":

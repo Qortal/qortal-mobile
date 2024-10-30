@@ -30,7 +30,6 @@ function setLocalStorage(key, data) {
       // Save the updated object back to storage
       await setLocalStorage('qortalRequestPermissions', qortalRequestPermissions );
       
-      console.log('Permission set for', key);
     } catch (error) {
       console.error('Error setting permission:', error);
     }
@@ -61,7 +60,6 @@ function setLocalStorage(key, data) {
       const isFromExtension = request?.isExtension;
       if (request?.type !== "backgroundMessage") return; // Only process messages of type 'backgroundMessage'
   
-      console.log("REQUEST MESSAGE QORTALREQUEST", request);
   
       // Handle actions based on the `request.action` value
       switch (request.action) {
@@ -87,7 +85,6 @@ function setLocalStorage(key, data) {
   
         case "ENCRYPT_DATA": {
           try {
-            console.log('ENCRYPTDATA', request)
             const res = await encryptData(request.payload, event.source);
             event.source.postMessage({
               requestId: request.requestId,
@@ -369,7 +366,6 @@ function setLocalStorage(key, data) {
         case "GET_WALLET_BALANCE": {
           try {
             const res = await getWalletBalance(request.payload, false, isFromExtension);
-            console.log('ressss', res)
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,

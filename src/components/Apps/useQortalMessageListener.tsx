@@ -241,68 +241,7 @@ const UIQortalRequests = [
   declare var cordova: any;
 
 
-  //   try {
-  //     const { filename, mimeType, fileId } = data;
-  
-  //     // Request legacy storage permissions if applicable (for Android 12 and below)
-  //     // await requestLegacyPermissions();
-  
-  //     // Retrieve file from IndexedDB or another source
-  //     const blob = await retrieveFileFromIndexedDB(fileId);
-  //     const buffer = await blob.arrayBuffer();
-  
-  //     return new Promise((resolve, reject) => {
-  //       window.resolveLocalFileSystemURL(
-  //         cordova.file.externalRootDirectory, // Points to the root of public external storage
-  //         (rootDirectoryEntry) => {
-  //           rootDirectoryEntry.getDirectory(
-  //             "Downloads",
-  //             { create: true },
-  //             (downloadsDirectory) => {
-  //               downloadsDirectory.getFile(
-  //                 filename,
-  //                 { create: true, exclusive: false },
-  //                 (fileEntry) => {
-  //                   fileEntry.createWriter((fileWriter) => {
-  //                     fileWriter.onwriteend = () => {
-  //                       console.log("Video saved successfully in public Downloads:", fileEntry.nativeURL);
-  //                       resolve(fileEntry.nativeURL);
-  //                     };
-  
-  //                     fileWriter.onerror = (error) => {
-  //                       console.error("Error writing video file:", error);
-  //                       reject(error);
-  //                     };
-  
-  //                     const videoBlob = new Blob([buffer], { type: mimeType || "video/mp4" });
-  //                     fileWriter.truncate(0);
-  //                     fileWriter.write(videoBlob);
-  //                   });
-  //                 },
-  //                 (error) => {
-  //                   console.error("Error accessing or creating file:", error);
-  //                   reject(error);
-  //                 }
-  //               );
-  //             },
-  //             (error) => {
-  //               console.error("Error accessing Downloads folder:", error);
-  //               reject(error);
-  //             }
-  //           );
-  //         },
-  //         (error) => {
-  //           console.error("Error accessing external storage:", error);
-  //           reject(error);
-  //         }
-  //       );
-  //     });
-  //   } catch (error) {
-  //     console.error("Error saving video file:", error);
-  //     throw error;
-  //   }
-  // };
-  
+
   async function storeFilesInIndexedDB(obj) {
     // First delete any existing files in IndexedDB with '_qortalfile' in their ID
     await deleteQortalFilesFromIndexedDB();
@@ -421,9 +360,7 @@ isDOMContentLoaded: false
   useEffect(() => {
 
     const listener = async (event) => {
-      console.log('eventreactt', event)
-      // event.preventDefault(); // Prevent default behavior
-      // event.stopImmediatePropagation(); // Stop other listeners from firing
+
 
       if (event?.data?.requestedHandler !== 'UI') return;
 

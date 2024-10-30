@@ -203,7 +203,6 @@ export const decryptResource = async (data: string) => {
         data,
       })
         .then((response) => {
-          console.log('decryptseroucs', response)
           if (!response?.error) {
             res(response);
             return;
@@ -440,7 +439,6 @@ export const Group = ({
   const [appsMode, setAppsMode] = useState('home')
   const [isOpenSideViewDirects, setIsOpenSideViewDirects] = useState(false)
   const [isOpenSideViewGroups, setIsOpenSideViewGroups] = useState(false)
-  console.log('groups', groups)
   const toggleSideViewDirects = ()=> {
     if(isOpenSideViewGroups){
       setIsOpenSideViewGroups(false)
@@ -896,9 +894,7 @@ export const Group = ({
     // Handler function for incoming messages
     const messageHandler = (event) => {
       const message = event.data;
-      console.log('SET_GROUPS100', event)
       if (message?.action === "SET_GROUPS") {
-        console.log('SET_GROUPS200', event)
 
         // Update the component state with the received 'sendqort' state
         setGroups(message.payload);

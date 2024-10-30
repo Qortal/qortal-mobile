@@ -6,7 +6,6 @@ function fetchFromLocalStorage(key) {
     try {
         const serializedValue = localStorage.getItem(key);
         if (serializedValue === null) {
-            console.log(`No data found for key: ${key}`);
             return null;
         }
         return JSON.parse(serializedValue);

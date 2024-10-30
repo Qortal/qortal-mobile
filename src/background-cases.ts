@@ -200,11 +200,8 @@ export async function userInfoCase(request, event) {
 
 export async function decryptWalletCase(request, event) {
   try { 
-    console.log('request', request)
     const { password, wallet } = request.payload;
-    console.log({password, wallet})
     const response = await decryptWallet({password, wallet, walletVersion});
-    console.log('response', response)
     event.source.postMessage(
       {
         requestId: request.requestId,
@@ -1368,9 +1365,7 @@ export async function publishGroupEncryptedResourceCase(request, event) {
   export async function decryptGroupEncryptionCase(request, event) {
     try {
       const { data} = request.payload;
-      console.log('data', data)
       const response = await decryptGroupEncryption({ data });
-      console.log('dataresponse', response)
       event.source.postMessage(
         {
           requestId: request.requestId,
@@ -1423,9 +1418,7 @@ export async function publishGroupEncryptedResourceCase(request, event) {
   export async function decryptSingleCase(request, event) {
     try {
       const { data, secretKeyObject, skipDecodeBase64} = request.payload;
-      console.log({data, secretKeyObject, skipDecodeBase64})
       const response = await decryptSingleFunc({ messages: data, secretKeyObject, skipDecodeBase64 });
-      console.log('response', response)
       event.source.postMessage(
         {
           requestId: request.requestId,

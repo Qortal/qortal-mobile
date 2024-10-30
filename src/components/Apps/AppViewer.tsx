@@ -17,7 +17,6 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
   const { document, window: frameWindow } = useFrame();
   const {path, history, changeCurrentIndex} = useQortalMessageListener(frameWindow, iframeRef, app?.tabId) 
   const [url, setUrl] = useState('')
-  console.log('historyreact', history)
 
   useEffect(()=> {
     setUrl(`${getBaseApiReact()}/render/${app?.service}/${app?.name}${app?.path != null ? `/${app?.path}` : ''}?theme=dark&identifier=${(app?.identifier != null && app?.identifier != 'null') ? app?.identifier : ''}`)
@@ -55,14 +54,12 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
     iframeRef.current.contentWindow.postMessage(
       { action: 'PERFORMING_NON_MANUAL', currentIndex: previousPageIndex }, '*'
     );
-      console.log('previousPageIndex', previousPageIndex)
     // Update the current index locally
     changeCurrentIndex(previousPageIndex);
 
     // Create a navigation promise with a 200ms timeout
     const navigationPromise = new Promise((resolve, reject) => {
       function handleNavigationSuccess(event) {
-        console.log('listeninghandlenav', event)
         if (event.data?.action === 'NAVIGATION_SUCCESS' && event.data.path === previousPath) {
           frameWindow.removeEventListener('message', handleNavigationSuccess);
           resolve();
@@ -86,7 +83,6 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
     // Execute navigation promise and handle timeout fallback
     try {
       await navigationPromise;
-      console.log('Navigation succeeded within 200ms.');
     } catch (error) {
      
       setUrl(`${getBaseApiReact()}/render/${app?.service}/${app?.name}${previousPath != null ? previousPath : ''}?theme=dark&identifier=${(app?.identifier != null && app?.identifier != 'null') ? app?.identifier : ''}&time=${new Date().getMilliseconds()}&isManualNavigation=false`)
@@ -117,7 +113,6 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
 
  
   if (iframeRef.current && iframeRef.current.contentWindow) {
-      console.log('iframeRef.contentWindow', iframeRef.current.contentWindow);
       iframeRef.current.contentWindow.postMessage(
           { action: 'NAVIGATE_FORWARD'},
           '*' 

@@ -641,9 +641,7 @@ function App() {
   const qortalRequestPermissonFromExtension = async (message, event) => {
     if (message.action === "QORTAL_REQUEST_PERMISSION") {
       try {
-        console.log("QORTAL_REQUEST_PERMISSION2", event, message);
         await showQortalRequestExtension(message?.payload);
-        console.log("event100", event);
         if (qortalRequestCheckbox1Ref.current) {
           event.source.postMessage(
             {
@@ -686,7 +684,6 @@ function App() {
   useEffect(() => {
     // Handler function for incoming messages
     const messageHandler = (event) => {
-      console.log("messageHandler", event);
       const message = event.data;
 
       if (message?.action === "CHECK_FOCUS") {
@@ -761,7 +758,6 @@ function App() {
       window
         .sendMessage("getWalletInfo")
         .then((response) => {
-          console.log("getwalll", response);
           if (response && response?.walletInfo) {
             setRawWallet(response?.walletInfo);
             if (
@@ -1022,7 +1018,6 @@ function App() {
           wallet: rawWallet,
         })
         .then((response) => {
-          console.log("response2", response);
           if (response && !response.error) {
             setAuthenticatePassword("");
             setExtstate("authenticated");

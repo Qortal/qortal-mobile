@@ -330,7 +330,6 @@ export const decodeBase64ForUIChatMessages = (messages)=> {
 
 
 export function decryptGroupData(data64EncryptedData: string, privateKey: string) {
-	console.log({data64EncryptedData, privateKey})
 	const allCombined = base64ToUint8Array(data64EncryptedData)
 	const str = "qortalGroupEncryptedData"
 	const strEncoder = new TextEncoder()

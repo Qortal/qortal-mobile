@@ -261,12 +261,7 @@ export const GroupMail = ({
     async (groupId: string, members: any) => {
       try {
         setIsLoading(true)
-        // const memberNames = Object.keys(members);
-        // const queryString = memberNames
-        //   .map(name => `&name=${encodeURIComponent(name)}`)
-        //   .join("");
 
-        // dispatch(setIsLoadingCustom("Loading recent threads"));
         const identifier = `thmsg-grp-${groupId}-thread-`;
         const url = `${getBaseApiReact()}${getArbitraryEndpointReact()}?mode=ALL&service=${threadIdentifier}&identifier=${identifier}&limit=100&includemetadata=false&offset=${0}&reverse=true&prefix=true`;
         const response = await fetch(url, {
@@ -432,19 +427,7 @@ export const GroupMail = ({
     }
   }, []);
 
-  // useEffect(() => {
-  //   if(groupId){
-  //     getGroupMembers(groupId);
-  //     interval.current = setInterval(async () => {
-  //       getGroupMembers(groupId);
-  //     }, 180000)
-  //   }
-  //   return () => {
-  //     if (interval?.current) {
-  //       clearInterval(interval.current)
-  //     }
-  //   }
-  // }, [getGroupMembers, groupId]);
+
 
  
   let listOfThreadsToDisplay = recentThreads;
