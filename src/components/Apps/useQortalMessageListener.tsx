@@ -3,6 +3,8 @@ import FileSaver from 'file-saver';
 import { executeEvent } from '../../utils/events';
 import { useSetRecoilState } from 'recoil';
 import { navigationControllerAtom } from '../../atoms/global';
+
+
 class Semaphore {
 	constructor(count) {
 		this.count = count
@@ -58,7 +60,7 @@ const fileToBase64 = (file) => new Promise(async (resolve, reject) => {
 	}
 })
 
-function openIndexedDB() {
+export function openIndexedDB() {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open("fileStorageDB", 1);
   
@@ -79,58 +81,7 @@ function openIndexedDB() {
     });
   }
 
-async function handleGetFileFromIndexedDB(fileId, sendResponse) {
-    try {
-      const db = await openIndexedDB();
-      const transaction = db.transaction(["files"], "readonly");
-      const objectStore = transaction.objectStore("files");
-  
-      const getRequest = objectStore.get(fileId);
-  
-      getRequest.onsuccess = async function (event) {
-        if (getRequest.result) {
-          const file = getRequest.result.data;
-  
-          try {
-            const base64String = await fileToBase64(file);
-  
-            // Create a new transaction to delete the file
-            const deleteTransaction = db.transaction(["files"], "readwrite");
-            const deleteObjectStore = deleteTransaction.objectStore("files");
-            const deleteRequest = deleteObjectStore.delete(fileId);
-  
-            deleteRequest.onsuccess = function () {
-              try {
-                sendResponse({ result: base64String });
-  
-              } catch (error) {
-                console.log('error', error)
-              }
-            };
-  
-            deleteRequest.onerror = function () {
-              console.error(`Error deleting file with ID ${fileId} from IndexedDB`);
-              sendResponse({ result: null, error: "Failed to delete file from IndexedDB" });
-            };
-          } catch (error) {
-            console.error("Error converting file to Base64:", error);
-            sendResponse({ result: null, error: "Failed to convert file to Base64" });
-          }
-        } else {
-          console.error(`File with ID ${fileId} not found in IndexedDB`);
-          sendResponse({ result: null, error: "File not found in IndexedDB" });
-        }
-      };
-  
-      getRequest.onerror = function () {
-        console.error(`Error retrieving file with ID ${fileId} from IndexedDB`);
-        sendResponse({ result: null, error: "Error retrieving file from IndexedDB" });
-      };
-    } catch (error) {
-      console.error("Error opening IndexedDB:", error);
-      sendResponse({ result: null, error: "Error opening IndexedDB" });
-    } 
-  }
+
 
 const UIQortalRequests = [
   'GET_USER_ACCOUNT', 'DECRYPT_DATA', 'SEND_COIN', 'GET_LIST_ITEMS',
@@ -215,7 +166,7 @@ const UIQortalRequests = [
     }
   }
 
-  const showSaveFilePicker = async (data) => {
+  export const showSaveFilePicker = async (data) => {
     let blob
     let fileName
     try {
@@ -368,7 +319,7 @@ isDOMContentLoaded: false
       if (event?.data?.requestedHandler !== 'UI') return;
 
       const sendMessageToRuntime = (message, eventPort) => {
-        window.sendMessage(message.action, message, 60000, message.isFromExtension)
+        window.sendMessage(message.action, message.payload, 60000, message.isExtension)
         .then((response) => {
           if (response.error) {
             eventPort.postMessage({
@@ -402,6 +353,7 @@ isDOMContentLoaded: false
       ) {
         let data;
         try {
+          console.log('storeFilesInIndexedDB', structuredClone(event.data))
           data = await storeFilesInIndexedDB(event.data);
         } catch (error) {
           console.error('Error storing files in IndexedDB:', error);
@@ -457,7 +409,9 @@ isDOMContentLoaded: false
             name: event?.data?.payload?.name
           }  }, '*'
         );
-      }
+      } 
+      
+
     };
 
     // Add the listener for messages coming from the frameWindow
@@ -471,17 +425,7 @@ isDOMContentLoaded: false
     
   }, []); // Empty dependency array to run once when the component mounts
 
-  // TODO
-  // chrome.runtime?.onMessage.addListener( function (message, sender, sendResponse) {
-  //    if(message.action === "SHOW_SAVE_FILE_PICKER"){
-  //     showSaveFilePicker(message?.data)
-  //   }
-  
-  //   else  if (message.action === "getFileFromIndexedDB") {
-  //     handleGetFileFromIndexedDB(message.fileId, sendResponse);
-  //     return true; // Keep the message channel open for async response
-  //   }
-  // });
+
 
   return {path, history, resetHistory, changeCurrentIndex}
 };

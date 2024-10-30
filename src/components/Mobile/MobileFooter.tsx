@@ -9,6 +9,7 @@ import { Home, Groups, Message, ShowChart } from "@mui/icons-material";
 import Box from "@mui/material/Box";
 import BottomLogo from "../../assets/svgs/BottomLogo5.svg";
 import LogoSelected from "../../assets/svgs/LogoSelected.svg";
+import { Browser } from '@capacitor/browser';
 
 import { CustomSvg } from "../../common/CustomSvg";
 import { WalletIcon } from "../../assets/Icons/WalletIcon";
@@ -183,10 +184,10 @@ export const MobileFooter = ({
           }}
         />
         <BottomNavigationAction
-          onClick={() => {
-            // TODO
-            // chrome.tabs.create({ url: "https://www.qort.trade"});
+          onClick={async () => {
+            await Browser.open({ url: 'https://www.qort.trade' });
           }}
+          
           icon={
             <IconWrapper label="Trading" color="rgba(250, 250, 250, 0.5)">
               <TradingIcon color="rgba(250, 250, 250, 0.5)" />

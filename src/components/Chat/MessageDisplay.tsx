@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import './styles.css'; // Ensure this CSS file is imported
+import { Browser } from '@capacitor/browser';
 
 export const MessageDisplay = ({ htmlContent , isReply}) => {
 
@@ -28,25 +29,15 @@ export const MessageDisplay = ({ htmlContent , isReply}) => {
   });
 
   // Function to handle link clicks
-  const handleClick = (e) => {
+  const handleClick = async (e) => {
     e.preventDefault();
 
     // Ensure we are targeting an <a> element
     const target = e.target.closest('a');
     if (target) {
       const href = target.getAttribute('href');
-      // TODO
-      // if (chrome && chrome.tabs) {
-      //   chrome.tabs.create({ url: href }, (tab) => {
-      //     if (chrome.runtime.lastError) {
-      //       console.error('Error opening tab:', chrome.runtime.lastError);
-      //     } else {
-      //       console.log('Tab opened successfully:', tab);
-      //     }
-      //   });
-      // } else {
-      //   console.error('chrome.tabs API is not available.');
-      // }
+      await Browser.open({ url: href });
+      
     } else {
       console.error('No <a> tag found or href is null.');
     }

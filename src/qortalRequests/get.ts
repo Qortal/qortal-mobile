@@ -180,173 +180,100 @@ const _voteOnPoll = async ({pollName, optionIndex, optionName}, isFromExtension)
   }
 };
 
-function getFileFromContentScript(fileId, sender) {
+// Map to store resolvers and rejectors by requestId
+const fileRequestResolvers = new Map();
+
+const handleFileMessage = (event) => {
+  const { action, requestId, result, error } = event.data;
+
+  if (action === "getFileFromIndexedDBResponse" && fileRequestResolvers.has(requestId)) {
+    const { resolve, reject } = fileRequestResolvers.get(requestId);
+    fileRequestResolvers.delete(requestId); // Clean up after resolving
+
+    if (result) {
+      resolve(result);
+    } else {
+      reject(error || "Failed to retrieve file");
+    }
+  }
+};
+
+window.addEventListener("message", handleFileMessage);
+
+function getFileFromContentScript(fileId) {
+  console.log('handleGetFileFromIndexedDB', fileId)
   return new Promise((resolve, reject) => {
-    chrome.tabs.sendMessage(
-      sender.tab.id,
-      { action: "getFileFromIndexedDB", fileId: fileId },
-      (response) => {
-        if (response && response.result) {
-          resolve(response.result);
-        } else {
-          reject(response?.error || "Failed to retrieve file");
-        }
-      }
+    const requestId = `getFile_${fileId}_${Date.now()}`;
+    console.log('handleGetFileFromIndexedDB', requestId)
+
+    fileRequestResolvers.set(requestId, { resolve, reject }); // Store resolvers by requestId
+    console.log('handleGetFileFromIndexedDB', 'passed')
+
+    // Send the request message
+    window.postMessage(
+      { action: "getFileFromIndexedDB", fileId, requestId },
+      "*"
     );
-  });
-}
-function sendToSaveFilePicker(data, sender) {
+    console.log('handleGetFileFromIndexedDB', 'after', window.origin)
 
-  chrome.tabs.sendMessage(sender.tab.id, {
-    action: "SHOW_SAVE_FILE_PICKER",
-    data,
-  });
-}
-
-async function responseFromExtension() {
-  return new Promise((resolve) => {
-  
-    // Send message to the content script to check focus
-    chrome.runtime.sendMessage({ action: "QORTAL_REQUEST_PERMISSION", payloa }, (response) => {
-
-      if (chrome.runtime.lastError) {
-        resolve(false); // Error occurred, assume not focused
-      } else {
-        resolve(response); // Resolve based on the response
-      }
-    });
-  });
-}
-
-async function getUserPermission(payload: any, isFromExtension?: boolean) {
-  function waitForWindowReady(windowId) {
-    return new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        chrome.windows.get(windowId, (win) => {
-          if (chrome.runtime.lastError) {
-            clearInterval(checkInterval); // Stop polling if there's an error
-            resolve(false);
-          } else if (win.state === "normal" || win.state === "maximized") {
-            clearInterval(checkInterval); // Window is ready
-            resolve(true);
-          }
-        });
-      }, 100); // Check every 100ms
-    });
-  }
-
-  if(isFromExtension){
-
-
-    return new Promise((resolve) => {
-      // Set a timeout for 1 second
-      const timeout = setTimeout(() => {
-        resolve(false); 
-      }, 30000);
-  
-      // Send message to the content script to check focus
-      chrome.runtime.sendMessage(
-        { action: "QORTAL_REQUEST_PERMISSION", payload, isFromExtension },
-        (response) => {
-          if (response === undefined) return;
-          clearTimeout(timeout); // Clear the timeout if we get a response
-  
-          if (chrome.runtime.lastError) {
-            resolve(false); // Error occurred, assume not focused
-          } else {
-            resolve(response); // Resolve based on the response
-          }
-        }
-      );
-    });
-  }
-  await new Promise((res) => {
-    const popupUrl = chrome.runtime.getURL("index.html?secondary=true");
-    chrome.windows.getAll(
-      { populate: true, windowTypes: ["popup"] },
-      (windows) => {
-        // Attempt to find an existing popup window that has a tab with the correct URL
-        const existingPopup = windows.find(
-          (w) =>
-            w.tabs &&
-            w.tabs.some((tab) => tab.url && tab.url.startsWith(popupUrl))
-        );
-        if (existingPopup) {
-          // If the popup exists but is minimized or not focused, focus it
-          chrome.windows.update(existingPopup.id, {
-            focused: true,
-            state: "normal",
-          });
-          res(null);
-        } else {
-          // No existing popup found, create a new one
-          chrome.system.display.getInfo((displays) => {
-            // Assuming the primary display is the first one (adjust logic as needed)
-            const primaryDisplay = displays[0];
-            const screenWidth = primaryDisplay.bounds.width;
-            const windowHeight = 500; // Your window height
-            const windowWidth = 400; // Your window width
-
-            // Calculate left position for the window to appear on the right of the screen
-            const leftPosition = screenWidth - windowWidth;
-
-            // Calculate top position for the window, adjust as desired
-            const topPosition =
-              (primaryDisplay.bounds.height - windowHeight) / 2;
-
-            chrome.windows.create(
-              {
-                url: popupUrl,
-                type: "popup",
-                width: windowWidth,
-                height: windowHeight,
-                left: leftPosition,
-                top: 0,
-              },
-              async (newWindow) => {
-                removeDuplicateWindow(popupUrl);
-                await waitForWindowReady(newWindow.id);
-
-                res(null);
-              }
-            );
-          });
-        }
-      }
-    );
-  });
-
-  await new Promise((res) => {
+    // Timeout to handle no response scenario
     setTimeout(() => {
-      chrome.runtime.sendMessage({
-        action: "SET_COUNTDOWN",
-        payload: 30,
-      });
-      res(true);
-    }, 1000);
-  });
-  return new Promise((resolve) => {
-    // Set a timeout for 1 second
-    const timeout = setTimeout(() => {
-      resolve(false); 
-    }, 30000);
-
-    // Send message to the content script to check focus
-    chrome.runtime.sendMessage(
-      { action: "QORTAL_REQUEST_PERMISSION", payload },
-      (response) => {
-        if (response === undefined) return;
-        clearTimeout(timeout); // Clear the timeout if we get a response
-
-        if (chrome.runtime.lastError) {
-          resolve(false); // Error occurred, assume not focused
-        } else {
-          resolve(response); // Resolve based on the response
-        }
+      if (fileRequestResolvers.has(requestId)) {
+        fileRequestResolvers.get(requestId).reject("Request timed out");
+        fileRequestResolvers.delete(requestId); // Clean up on timeout
       }
-    );
+    }, 10000); // 10-second timeout
   });
 }
+
+
+function sendToSaveFilePicker(data) {
+  window.postMessage({
+    action: "SHOW_SAVE_FILE_PICKER",
+    payload: data,
+  }, "*"); 
+}
+
+
+const responseResolvers = new Map();
+
+const handleMessage = (event) => {
+  const { action, requestId, result } = event.data;
+  console.log("Received message:", event);
+
+  // Check if this is the expected response action and if we have a stored resolver
+  if (action === "QORTAL_REQUEST_PERMISSION_RESPONSE" && responseResolvers.has(requestId)) {
+    // Resolve the stored promise with the result
+    responseResolvers.get(requestId)(result || false);
+    responseResolvers.delete(requestId); // Clean up after resolving
+  }
+};
+
+window.addEventListener("message", handleMessage);
+
+
+
+async function getUserPermission(payload, isFromExtension) {
+  return new Promise((resolve) => {
+    const requestId = `qortalRequest_${Date.now()}`;
+    responseResolvers.set(requestId, resolve); // Store resolver by requestId
+
+    // Send the request message
+    window.postMessage(
+      { action: "QORTAL_REQUEST_PERMISSION", payload, requestId, isFromExtension },
+      "*"
+    );
+
+    // Optional timeout to handle no response scenario
+    setTimeout(() => {
+      if (responseResolvers.has(requestId)) {
+        responseResolvers.get(requestId)(false); // Resolve with `false` if no response
+        responseResolvers.delete(requestId);
+      }
+    }, 30000); // 30-second timeout
+  });
+}
+
 
 export const getUserAccount = async () => {
   try {
@@ -366,7 +293,7 @@ export const encryptData = async (data, sender) => {
   let data64 = data.data64;
   let publicKeys = data.publicKeys || [];
   if (data.fileId) {
-    data64 = await getFileFromContentScript(data.fileId, sender);
+    data64 = await getFileFromContentScript(data.fileId);
   }
   if (!data64) {
     throw new Error("Please include data to encrypt");
@@ -633,7 +560,7 @@ export const publishQDNResource = async (data: any, sender, isFromExtension) => 
     throw new Error("Only encrypted data can go into private services");
   }
   if (data.fileId) {
-    data64 = await getFileFromContentScript(data.fileId, sender);
+    data64 = await getFileFromContentScript(data.fileId);
   }
   if (data.encrypt) {
     try {
@@ -669,7 +596,7 @@ export const publishQDNResource = async (data: any, sender, isFromExtension) => 
   const { accepted } = resPermission;
   if (accepted) {
     if (data.fileId && !data.encrypt) {
-      data64 = await getFileFromContentScript(data.fileId, sender);
+      data64 = await getFileFromContentScript(data.fileId);
     }
     try {
       const resPublish = await publishData({
@@ -853,7 +780,7 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
         continue;
       }
       if (resource.fileId) {
-        data64 = await getFileFromContentScript(resource.fileId, sender);
+        data64 = await getFileFromContentScript(resource.fileId);
       }
       if (data.encrypt) {
         try {
@@ -1108,7 +1035,8 @@ export const sendChatMessage = async (data, isFromExtension) => {
         isEncrypted: 1,
         isText: 1,
       });
-      const path = chrome.runtime.getURL("memory-pow.wasm.full");
+      const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
+
 
       const { nonce, chatBytesArray } = await computePow({
         chatBytes: tx.chatBytes,
@@ -1154,7 +1082,8 @@ export const sendChatMessage = async (data, isFromExtension) => {
       // if (!hasEnoughBalance) {
       //   throw new Error("Must have at least 4 QORT to send a chat message");
       // }
-      const path = chrome.runtime.getURL("memory-pow.wasm.full");
+      const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
+
 
       const { nonce, chatBytesArray } = await computePow({
         chatBytes: tx.chatBytes,
@@ -1277,8 +1206,7 @@ export const saveFile = async (data, sender, isFromExtension) => {
           blob,
           fileId,
           fileHandleOptions,
-        },
-        sender
+        }
       );
       return true;
     } else {

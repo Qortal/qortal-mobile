@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { Browser } from "@capacitor/browser";
 import "./App.css";
 import { useDropzone } from "react-dropzone";
 import {
@@ -102,9 +102,20 @@ import { MainAvatar } from "./components/MainAvatar";
 import { useRetrieveDataLocalStorage } from "./useRetrieveDataLocalStorage";
 import { useQortalGetSaveSettings } from "./useQortalGetSaveSettings";
 import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
-import { canSaveSettingToQdnAtom, fullScreenAtom, hasSettingsChangedAtom, oldPinnedAppsAtom, settingsLocalLastUpdatedAtom, settingsQDNLastUpdatedAtom, sortablePinnedAppsAtom } from "./atoms/global";
+import {
+  canSaveSettingToQdnAtom,
+  fullScreenAtom,
+  hasSettingsChangedAtom,
+  oldPinnedAppsAtom,
+  settingsLocalLastUpdatedAtom,
+  settingsQDNLastUpdatedAtom,
+  sortablePinnedAppsAtom,
+} from "./atoms/global";
 import { useAppFullScreen } from "./useAppFullscreen";
 import { NotAuthenticated } from "./ExtStates/NotAuthenticated";
+import {  openIndexedDB, showSaveFilePicker } from "./components/Apps/useQortalMessageListener";
+import { fileToBase64 } from "./utils/fileReading";
+import { handleGetFileFromIndexedDB } from "./utils/indexedDB";
 
 
 type extStates =
@@ -205,18 +216,21 @@ export const clearAllQueues = () => {
 
 export const pauseAllQueues = () => {
   controlAllQueues("pause");
-  window.sendMessage("pauseAllQueues", {})
-  .catch((error) => {
-    console.error("Failed to pause all queues:", error.message || "An error occurred");
+  window.sendMessage("pauseAllQueues", {}).catch((error) => {
+    console.error(
+      "Failed to pause all queues:",
+      error.message || "An error occurred"
+    );
   });
-
 };
 export const resumeAllQueues = () => {
   controlAllQueues("resume");
   window.sendMessage("resumeAllQueues", {}).catch((error) => {
-    console.error("Failed to resume all queues:", error.message || "An error occurred");
+    console.error(
+      "Failed to resume all queues:",
+      error.message || "An error occurred"
+    );
   });
-
 };
 
 export const MyContext = createContext<MyContextInterface>(defaultValues);
@@ -255,15 +269,17 @@ export const getBaseApiReactSocket = (customApi?: string) => {
   }
 
   if (globalApiKey) {
-    return `${getProtocol(globalApiKey?.url) === 'http' ? 'ws://': 'wss://'}${cleanUrl(globalApiKey?.url)}`
+    return `${
+      getProtocol(globalApiKey?.url) === "http" ? "ws://" : "wss://"
+    }${cleanUrl(globalApiKey?.url)}`;
   } else {
     return groupApiSocket;
   }
 };
-export const isMainWindow = true
+export const isMainWindow = true;
 function App() {
   const [extState, setExtstate] = useState<extStates>("not-authenticated");
-  const [desktopViewMode, setDesktopViewMode] = useState('home')
+  const [desktopViewMode, setDesktopViewMode] = useState("home");
 
   const [backupjson, setBackupjson] = useState<any>(null);
   const [rawWallet, setRawWallet] = useState<any>(null);
@@ -286,9 +302,7 @@ function App() {
   const [walletToBeDownloaded, setWalletToBeDownloaded] = useState<any>(null);
   const [walletToBeDownloadedPassword, setWalletToBeDownloadedPassword] =
     useState<string>("");
-  const [isMain, setIsMain] = useState<boolean>(
-    true
-  );
+  const [isMain, setIsMain] = useState<boolean>(true);
   const isMainRef = useRef(false);
   const [authenticatePassword, setAuthenticatePassword] = useState<string>("");
   const [sendqortState, setSendqortState] = useState<any>(null);
@@ -304,11 +318,19 @@ function App() {
   const [txList, setTxList] = useState([]);
   const [memberGroups, setMemberGroups] = useState([]);
   const [isFocused, setIsFocused] = useState(true);
-  const [hasSettingsChanged, setHasSettingsChanged] =  useRecoilState(hasSettingsChangedAtom)
+  const [hasSettingsChanged, setHasSettingsChanged] = useRecoilState(
+    hasSettingsChangedAtom
+  );
   const holdRefExtState = useRef<extStates>("not-authenticated");
   const isFocusedRef = useRef<boolean>(true);
   const { isShow, onCancel, onOk, show, message } = useModal();
-  const { isShow: isShowUnsavedChanges, onCancel:  onCancelUnsavedChanges, onOk: onOkUnsavedChanges, show:  showUnsavedChanges, message: messageUnsavedChanges } = useModal();
+  const {
+    isShow: isShowUnsavedChanges,
+    onCancel: onCancelUnsavedChanges,
+    onOk: onOkUnsavedChanges,
+    show: showUnsavedChanges,
+    message: messageUnsavedChanges,
+  } = useModal();
 
   const {
     onCancel: onCancelQortalRequest,
@@ -324,7 +346,7 @@ function App() {
     isShow: isShowQortalRequestExtension,
     message: messageQortalRequestExtension,
   } = useModal();
-  
+
   const [openRegisterName, setOpenRegisterName] = useState(false);
   const registerNamePopoverRef = useRef(null);
   const [isLoadingRegisterName, setIsLoadingRegisterName] = useState(false);
@@ -339,34 +361,42 @@ function App() {
   const [rootHeight, setRootHeight] = useState("100%");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const qortalRequestCheckbox1Ref = useRef(null);
-  useRetrieveDataLocalStorage()
-  useQortalGetSaveSettings(userInfo?.name)
+  useRetrieveDataLocalStorage();
+  useQortalGetSaveSettings(userInfo?.name);
   const [fullScreen, setFullScreen] = useRecoilState(fullScreenAtom);
 
   const { toggleFullScreen } = useAppFullScreen(setFullScreen);
 
-
-
-
   useEffect(() => {
-      // Attach a global event listener for double-click
-      const handleDoubleClick = () => {
-          toggleFullScreen();
-      };
+    // Attach a global event listener for double-click
+    const handleDoubleClick = () => {
+      toggleFullScreen();
+    };
 
-      // Add the event listener to the root HTML document
-      document.documentElement.addEventListener('dblclick', handleDoubleClick);
+    // Add the event listener to the root HTML document
+    document.documentElement.addEventListener("dblclick", handleDoubleClick);
 
-      // Clean up the event listener on unmount
-      return () => {
-          document.documentElement.removeEventListener('dblclick', handleDoubleClick);
-      };
+    // Clean up the event listener on unmount
+    return () => {
+      document.documentElement.removeEventListener(
+        "dblclick",
+        handleDoubleClick
+      );
+    };
   }, [toggleFullScreen]);
   //resets for recoil
-  const resetAtomSortablePinnedAppsAtom = useResetRecoilState(sortablePinnedAppsAtom);
-  const resetAtomCanSaveSettingToQdnAtom = useResetRecoilState(canSaveSettingToQdnAtom);
-  const resetAtomSettingsQDNLastUpdatedAtom = useResetRecoilState(settingsQDNLastUpdatedAtom);
-  const resetAtomSettingsLocalLastUpdatedAtom = useResetRecoilState(settingsLocalLastUpdatedAtom);
+  const resetAtomSortablePinnedAppsAtom = useResetRecoilState(
+    sortablePinnedAppsAtom
+  );
+  const resetAtomCanSaveSettingToQdnAtom = useResetRecoilState(
+    canSaveSettingToQdnAtom
+  );
+  const resetAtomSettingsQDNLastUpdatedAtom = useResetRecoilState(
+    settingsQDNLastUpdatedAtom
+  );
+  const resetAtomSettingsLocalLastUpdatedAtom = useResetRecoilState(
+    settingsLocalLastUpdatedAtom
+  );
   const resetAtomOldPinnedAppsAtom = useResetRecoilState(oldPinnedAppsAtom);
 
   const resetAllRecoil = () => {
@@ -401,21 +431,24 @@ function App() {
       window.visualViewport?.removeEventListener("resize", resetHeight);
     };
   }, []);
-  const handleSetGlobalApikey = (key)=> {
+  const handleSetGlobalApikey = (key) => {
     globalApiKey = key;
-  }
+  };
   useEffect(() => {
-    window.sendMessage("getApiKey")
-    .then((response) => {
-      if (response) {
-        handleSetGlobalApikey(response);
-        setApiKey(response);
-      }
-    })
-    .catch((error) => {
-      console.error("Failed to get API key:", error?.message || "An error occurred");
-    });
-  
+    window
+      .sendMessage("getApiKey")
+      .then((response) => {
+        if (response) {
+          handleSetGlobalApikey(response);
+          setApiKey(response);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Failed to get API key:",
+          error?.message || "An error occurred"
+        );
+      });
   }, []);
   useEffect(() => {
     if (extState) {
@@ -426,8 +459,6 @@ function App() {
   useEffect(() => {
     isFocusedRef.current = isFocused;
   }, [isFocused]);
-
- 
 
   // const checkIfUserHasLocalNode = useCallback(async () => {
   //   try {
@@ -528,37 +559,35 @@ function App() {
     };
   };
 
- 
-
   const getBalanceFunc = () => {
     setQortBalanceLoading(true);
-    window.sendMessage("balance")
-    .then((response) => {
-      if (!response?.error && !isNaN(+response)) {
-        setBalance(response);
-      }
-      setQortBalanceLoading(false);
-    })
-    .catch((error) => {
-      console.error("Failed to get balance:", error);
-      setQortBalanceLoading(false);
-    });
-  
+    window
+      .sendMessage("balance")
+      .then((response) => {
+        if (!response?.error && !isNaN(+response)) {
+          setBalance(response);
+        }
+        setQortBalanceLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to get balance:", error);
+        setQortBalanceLoading(false);
+      });
   };
   const getLtcBalanceFunc = () => {
     setLtcBalanceLoading(true);
-    window.sendMessage("ltcBalance")
-  .then((response) => {
-    if (!response?.error && !isNaN(+response)) {
-      setLtcBalance(response);
-    }
-    setLtcBalanceLoading(false);
-  })
-  .catch((error) => {
-    console.error("Failed to get LTC balance:", error);
-    setLtcBalanceLoading(false);
-  });
-
+    window
+      .sendMessage("ltcBalance")
+      .then((response) => {
+        if (!response?.error && !isNaN(+response)) {
+          setLtcBalance(response);
+        }
+        setLtcBalanceLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to get LTC balance:", error);
+        setLtcBalanceLoading(false);
+      });
   };
   const sendCoinFunc = () => {
     setSendPaymentError("");
@@ -576,11 +605,12 @@ function App() {
       return;
     }
     setIsLoading(true);
-    window.sendMessage("sendCoin", {
-      amount: Number(paymentAmount),
-      receiver: paymentTo.trim(),
-      password: paymentPassword,
-    })
+    window
+      .sendMessage("sendCoin", {
+        amount: Number(paymentAmount),
+        receiver: paymentTo.trim(),
+        password: paymentPassword,
+      })
       .then((response) => {
         if (response?.error) {
           setSendPaymentError(response.error);
@@ -594,7 +624,6 @@ function App() {
         console.error("Failed to send coin:", error);
         setIsLoading(false);
       });
-    
   };
 
   const clearAllStates = () => {
@@ -602,60 +631,63 @@ function App() {
     setRequestAuthentication(null);
   };
 
-  const qortalRequestPermisson = async (message, sender, sendResponse) => {
-    if (message.action === "QORTAL_REQUEST_PERMISSION" && !isMainWindow) {
+  const qortalRequestPermissonFromExtension = async (message, event) => {
+    if (message.action === "QORTAL_REQUEST_PERMISSION") {
       try {
-
-        await showQortalRequest(message?.payload);
-        if (qortalRequestCheckbox1Ref.current) {
-         
-          sendResponse({
-            accepted: true,
-            checkbox1: qortalRequestCheckbox1Ref.current,
-          });
-          return;
-        }
-        sendResponse({ accepted: true });
-      } catch (error) {
-        sendResponse({ accepted: false });
-      } finally {
-        window.close();
-      }
-    }
-  };
-  const qortalRequestPermissonFromExtension = async (message, sender, sendResponse) => {
-    if (message.action === "QORTAL_REQUEST_PERMISSION" && isMainWindow) {
-      try {
-
+        console.log("QORTAL_REQUEST_PERMISSION2", event, message);
         await showQortalRequestExtension(message?.payload);
-       
+        console.log("event100", event);
         if (qortalRequestCheckbox1Ref.current) {
-         
-          sendResponse({
-            accepted: true,
-            checkbox1: qortalRequestCheckbox1Ref.current,
-          });
+          event.source.postMessage(
+            {
+              action: "QORTAL_REQUEST_PERMISSION_RESPONSE",
+              requestId: message?.requestId,
+              result: {
+                accepted: true,
+                checkbox1: qortalRequestCheckbox1Ref.current,
+              },
+            },
+            event.origin
+          );
           return;
         }
-        sendResponse({ accepted: true });
+        event.source.postMessage(
+          {
+            action: "QORTAL_REQUEST_PERMISSION_RESPONSE",
+            requestId: message?.requestId,
+            result: {
+              accepted: true,
+            },
+          },
+          event.origin
+        );
       } catch (error) {
-        sendResponse({ accepted: false });
-      } 
+        event.source.postMessage(
+          {
+            action: "QORTAL_REQUEST_PERMISSION_RESPONSE",
+            requestId: message?.requestId,
+            result: {
+              accepted: false,
+            },
+          },
+          event.origin
+        );
+      }
     }
   };
 
   useEffect(() => {
     // Handler function for incoming messages
     const messageHandler = (event) => {
+      console.log("messageHandler", event);
       const message = event.data;
-  
+
       if (message?.action === "CHECK_FOCUS") {
-       
-        event.source.postMessage({ action: "CHECK_FOCUS_RESPONSE", isFocused: isFocusedRef.current }, event.origin);
-        
-      } else if (
-        message.action === "NOTIFICATION_OPEN_DIRECT" 
-      ) {
+        event.source.postMessage(
+          { action: "CHECK_FOCUS_RESPONSE", isFocused: isFocusedRef.current },
+          event.origin
+        );
+      } else if (message.action === "NOTIFICATION_OPEN_DIRECT") {
         executeEvent("openDirectMessage", {
           from: message.payload.from,
         });
@@ -663,7 +695,7 @@ function App() {
         executeEvent("openGroupMessage", {
           from: message.payload.from,
         });
-      }  else if (
+      } else if (
         message.action === "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP" &&
         isMainWindow
       ) {
@@ -677,21 +709,27 @@ function App() {
         executeEvent("openThreadNewPost", {
           data: message.payload.data,
         });
+      } else if (
+        message.action === "QORTAL_REQUEST_PERMISSION" &&
+        message?.isFromExtension
+      ) {
+        qortalRequestPermissonFromExtension(message, event);
+      } else if(message?.action === 'SHOW_SAVE_FILE_PICKER'){
+        showSaveFilePicker(message?.payload)
+
+      } else if(message?.action === 'getFileFromIndexedDB'){
+        handleGetFileFromIndexedDB(event);
       }
-  
-     
     };
-  
+
     // Attach the event listener
     window.addEventListener("message", messageHandler);
-  
+
     // Clean up the event listener on component unmount
     return () => {
       window.removeEventListener("message", messageHandler);
     };
   }, []);
-
-
 
   //param = isDecline
   const confirmPayment = (isDecline: boolean) => {
@@ -699,40 +737,39 @@ function App() {
   };
 
   const confirmBuyOrder = (isDecline: boolean) => {
-        // REMOVED FOR MOBILE APP
-
+    // REMOVED FOR MOBILE APP
   };
   const responseToConnectionRequest = (
     isOkay: boolean,
     hostname: string,
     interactionId: string
   ) => {
-        // REMOVED FOR MOBILE APP
+    // REMOVED FOR MOBILE APP
   };
-
 
   useEffect(() => {
     try {
       setIsLoading(true);
-     
-      window.sendMessage("getWalletInfo")
-      .then((response) => {
-        console.log('getwalll', response)
-        if (response && response?.walletInfo) {
-          setRawWallet(response?.walletInfo);
-          if (
-            holdRefExtState.current === "web-app-request-payment" ||
-            holdRefExtState.current === "web-app-request-connection" ||
-            holdRefExtState.current === "web-app-request-buy-order"
-          )
-            return;
 
-          setExtstate("authenticated");
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to get wallet info:", error);
-      });
+      window
+        .sendMessage("getWalletInfo")
+        .then((response) => {
+          console.log("getwalll", response);
+          if (response && response?.walletInfo) {
+            setRawWallet(response?.walletInfo);
+            if (
+              holdRefExtState.current === "web-app-request-payment" ||
+              holdRefExtState.current === "web-app-request-connection" ||
+              holdRefExtState.current === "web-app-request-buy-order"
+            )
+              return;
+
+            setExtstate("authenticated");
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to get wallet info:", error);
+        });
     } catch (error) {
     } finally {
       setIsLoading(false);
@@ -748,16 +785,17 @@ function App() {
           }, 10000);
         });
       }
-      window.sendMessage("userInfo")
-      .then((response) => {
-        if (response && !response.error) {
-          setUserInfo(response);
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to get user info:", error);
-      });
-    
+      window
+        .sendMessage("userInfo")
+        .then((response) => {
+          if (response && !response.error) {
+            setUserInfo(response);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to get user info:", error);
+        });
+
       getBalanceFunc();
     } catch (error) {}
   }, []);
@@ -844,10 +882,11 @@ function App() {
         crypto.kdfThreads,
         () => {}
       );
-      window.sendMessage("decryptWallet", {
-        password: walletToBeDownloadedPassword,
-        wallet,
-      })
+      window
+        .sendMessage("decryptWallet", {
+          password: walletToBeDownloadedPassword,
+          wallet,
+        })
         .then((response) => {
           if (response && !response.error) {
             setRawWallet(wallet);
@@ -855,8 +894,9 @@ function App() {
               wallet,
               qortAddress: wallet.address0,
             });
-      
-            window.sendMessage("userInfo")
+
+            window
+              .sendMessage("userInfo")
               .then((response2) => {
                 setIsLoading(false);
                 if (response2 && !response2.error) {
@@ -867,7 +907,7 @@ function App() {
                 setIsLoading(false);
                 console.error("Failed to get user info:", error);
               });
-      
+
             getBalanceFunc();
           } else if (response?.error) {
             setIsLoading(false);
@@ -878,7 +918,6 @@ function App() {
           setIsLoading(false);
           console.error("Failed to decrypt wallet:", error);
         });
-      
     } catch (error: any) {
       setWalletToBeDownloadedError(error?.message);
       setIsLoading(false);
@@ -887,20 +926,26 @@ function App() {
 
   const logoutFunc = async () => {
     try {
-      if(hasSettingsChanged){
-        await showUnsavedChanges({message: 'Your settings have changed. If you logout you will lose your changes. Click on the save button in the header to keep your changed settings.'})
+      if (hasSettingsChanged) {
+        await showUnsavedChanges({
+          message:
+            "Your settings have changed. If you logout you will lose your changes. Click on the save button in the header to keep your changed settings.",
+        });
       }
-      window.sendMessage("logout", {})
-      .then((response) => {
-        if (response) {
-          resetAllStates();
-          executeEvent("logout-event", {});
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to log out:", error.message || "An error occurred");
-      });
-    
+      window
+        .sendMessage("logout", {})
+        .then((response) => {
+          if (response) {
+            resetAllStates();
+            executeEvent("logout-event", {});
+          }
+        })
+        .catch((error) => {
+          console.error(
+            "Failed to log out:",
+            error.message || "An error occurred"
+          );
+        });
     } catch (error) {}
   };
 
@@ -944,7 +989,7 @@ function App() {
     setHasLocalNode(false);
     setTxList([]);
     setMemberGroups([]);
-    resetAllRecoil()
+    resetAllRecoil();
   };
 
   function roundUpToDecimals(number, decimals = 8) {
@@ -961,18 +1006,20 @@ function App() {
           res();
         }, 250);
       });
-      window.sendMessage("decryptWallet", {
-        password: authenticatePassword,
-        wallet: rawWallet,
-      })
+      window
+        .sendMessage("decryptWallet", {
+          password: authenticatePassword,
+          wallet: rawWallet,
+        })
         .then((response) => {
-          console.log('response2', response)
+          console.log("response2", response);
           if (response && !response.error) {
             setAuthenticatePassword("");
             setExtstate("authenticated");
             setWalletToBeDecryptedError("");
-      
-            window.sendMessage("userInfo")
+
+            window
+              .sendMessage("userInfo")
               .then((response) => {
                 setIsLoading(false);
                 if (response && !response.error) {
@@ -983,10 +1030,11 @@ function App() {
                 setIsLoading(false);
                 console.error("Failed to get user info:", error);
               });
-      
+
             getBalanceFunc();
-      
-            window.sendMessage("getWalletInfo")
+
+            window
+              .sendMessage("getWalletInfo")
               .then((response) => {
                 if (response && response.walletInfo) {
                   setRawWallet(response.walletInfo);
@@ -1004,7 +1052,6 @@ function App() {
           setIsLoading(false);
           console.error("Failed to decrypt wallet:", error);
         });
-      
     } catch (error) {
       setWalletToBeDecryptedError("Unable to authenticate. Wrong password");
     }
@@ -1054,13 +1101,13 @@ function App() {
     const handleFocus = () => {
       setIsFocused(true);
       if (isMobile) {
-        window.sendMessage("clearAllNotifications", {})
-        .catch((error) => {
-          console.error("Failed to clear notifications:", error.message || "An error occurred");
+        window.sendMessage("clearAllNotifications", {}).catch((error) => {
+          console.error(
+            "Failed to clear notifications:",
+            error.message || "An error occurred"
+          );
         });
-      
       }
-
     };
 
     // Handler for when the window loses focus
@@ -1077,11 +1124,12 @@ function App() {
       if (document.visibilityState === "visible") {
         setIsFocused(true);
         if (isMobile) {
-          window.sendMessage("clearAllNotifications", {})
-          .catch((error) => {
-            console.error("Failed to clear notifications:", error.message || "An error occurred");
+          window.sendMessage("clearAllNotifications", {}).catch((error) => {
+            console.error(
+              "Failed to clear notifications:",
+              error.message || "An error occurred"
+            );
           });
-        
         }
       } else {
         setIsFocused(false);
@@ -1123,16 +1171,18 @@ function App() {
       });
       setIsLoadingRegisterName(true);
       new Promise((res, rej) => {
-        window.sendMessage("registerName", {
-          name: registerNameValue,
-        })
+        window
+          .sendMessage("registerName", {
+            name: registerNameValue,
+          })
           .then((response) => {
             if (!response?.error) {
               res(response);
               setIsLoadingRegisterName(false);
               setInfoSnack({
                 type: "success",
-                message: "Successfully registered. It may take a couple of minutes for the changes to propagate",
+                message:
+                  "Successfully registered. It may take a couple of minutes for the changes to propagate",
               });
               setOpenRegisterName(false);
               setRegisterNameValue("");
@@ -1164,7 +1214,6 @@ function App() {
             setOpenSnack(true);
             rej(error);
           });
-        
       });
     } catch (error) {
       if (error?.message) {
@@ -1355,8 +1404,8 @@ function App() {
               marginTop: "10px",
               textDecoration: "underline",
             }}
-            onClick={() => {
-          // TODO
+            onClick={async () => {
+              await Browser.open({ url: "https://www.qort.trade" });
             }}
           >
             Get QORT at qort.trade
@@ -1438,15 +1487,22 @@ function App() {
     <AppContainer
       sx={{
         height: isMobile ? "100%" : "100vh",
-        backgroundImage: desktopViewMode === 'apps' && 'url("appsBg.svg")',
-        backgroundSize: desktopViewMode === 'apps' &&  'cover',
-        backgroundPosition: desktopViewMode === 'apps' &&  'center',
-        backgroundRepeat: desktopViewMode === 'apps' &&  'no-repeat',
+        backgroundImage: desktopViewMode === "apps" && 'url("appsBg.svg")',
+        backgroundSize: desktopViewMode === "apps" && "cover",
+        backgroundPosition: desktopViewMode === "apps" && "center",
+        backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
       }}
     >
-   
       {extState === "not-authenticated" && (
-       <NotAuthenticated getRootProps={getRootProps} getInputProps={getInputProps} setExtstate={setExtstate}     apiKey={apiKey}  globalApiKey={globalApiKey} setApiKey={setApiKey}  handleSetGlobalApikey={handleSetGlobalApikey}/>
+        <NotAuthenticated
+          getRootProps={getRootProps}
+          getInputProps={getInputProps}
+          setExtstate={setExtstate}
+          apiKey={apiKey}
+          globalApiKey={globalApiKey}
+          setApiKey={setApiKey}
+          handleSetGlobalApikey={handleSetGlobalApikey}
+        />
       )}
       {/* {extState !== "not-authenticated" && (
         <button onClick={logoutFunc}>logout</button>
@@ -1487,7 +1543,7 @@ function App() {
               desktopViewMode={desktopViewMode}
               setDesktopViewMode={setDesktopViewMode}
             />
-            {(!isMobile && desktopViewMode !== 'apps') && renderProfile()}
+            {!isMobile && desktopViewMode !== "apps" && renderProfile()}
           </Box>
 
           <Box
@@ -1716,7 +1772,7 @@ function App() {
             />
           )}
           <Spacer height="15px" />
-       
+
           <TextP
             sx={{
               textAlign: "center",
@@ -1731,10 +1787,10 @@ function App() {
 
           {messageQortalRequest?.fee && (
             <>
-                      <Spacer height="15px" />
+              <Spacer height="15px" />
 
-            <TextP
-    sx={{
+              <TextP
+                sx={{
                   textAlign: "center",
                   lineHeight: 1.2,
                   fontSize: "16px",
@@ -1742,10 +1798,11 @@ function App() {
                   maxWidth: "90%",
                 }}
               >
-                {'Fee: '}{messageQortalRequest?.fee}{' QORT'}
+                {"Fee: "}
+                {messageQortalRequest?.fee}
+                {" QORT"}
               </TextP>
-<Spacer height="15px" />
-
+              <Spacer height="15px" />
             </>
           )}
           {messageQortalRequest?.checkbox1 && (
@@ -2490,7 +2547,7 @@ function App() {
           </DialogActions>
         </Dialog>
       )}
-       {isShowUnsavedChanges && (
+      {isShowUnsavedChanges && (
         <Dialog
           open={isShowUnsavedChanges}
           aria-labelledby="alert-dialog-title"
@@ -2524,210 +2581,217 @@ function App() {
             colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
             colorsTime={[7, 5, 2, 0]}
             onComplete={() => {
-              onCancelQortalRequestExtension()
+              onCancelQortalRequestExtension();
             }}
             size={50}
             strokeWidth={5}
           >
             {({ remainingTime }) => <TextP>{remainingTime}</TextP>}
           </CountdownCircleTimer>
-           <Box sx={{
-            display: 'flex',
-            padding: '20px',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            minHeight: '400px',
-            maxHeight: '90vh',
-            overflow: 'auto'
-           }}>
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center",
-              width: "100%",
+              padding: "20px",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              minHeight: "400px",
+              maxHeight: "90vh",
+              overflow: "auto",
             }}
           >
-            <TextP
-              sx={{
-                lineHeight: 1.2,
-                maxWidth: "90%",
-                textAlign: "center",
-              }}
-            >
-              {messageQortalRequestExtension?.text1}
-            </TextP>
-          </Box>
-          {messageQortalRequestExtension?.text2 && (
-            <>
-              <Spacer height="10px" />
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "flex-start",
-                  width: "90%",
-                }}
-              >
-                <TextP
-                  sx={{
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                  }}
-                >
-                  {messageQortalRequestExtension?.text2}
-                </TextP>
-              </Box>
-              <Spacer height="15px" />
-            </>
-          )}
-          {messageQortalRequestExtension?.text3 && (
-            <>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "flex-start",
-                  width: "90%",
-                }}
-              >
-                <TextP
-                  sx={{
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                  }}
-                >
-                  {messageQortalRequestExtension?.text3}
-                </TextP>
-                <Spacer height="15px" />
-              </Box>
-            </>
-          )}
-
-          {messageQortalRequestExtension?.text4 && (
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "flex-start",
-                width: "90%",
+                justifyContent: "center",
+                width: "100%",
               }}
             >
               <TextP
                 sx={{
                   lineHeight: 1.2,
-                  fontSize: "16px",
-                  fontWeight: "normal",
+                  maxWidth: "90%",
+                  textAlign: "center",
                 }}
               >
-                {messageQortalRequestExtension?.text4}
+                {messageQortalRequestExtension?.text1}
               </TextP>
             </Box>
-          )}
+            {messageQortalRequestExtension?.text2 && (
+              <>
+                <Spacer height="10px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    width: "90%",
+                  }}
+                >
+                  <TextP
+                    sx={{
+                      lineHeight: 1.2,
+                      fontSize: "16px",
+                      fontWeight: "normal",
+                    }}
+                  >
+                    {messageQortalRequestExtension?.text2}
+                  </TextP>
+                </Box>
+                <Spacer height="15px" />
+              </>
+            )}
+            {messageQortalRequestExtension?.text3 && (
+              <>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    width: "90%",
+                  }}
+                >
+                  <TextP
+                    sx={{
+                      lineHeight: 1.2,
+                      fontSize: "16px",
+                      fontWeight: "normal",
+                    }}
+                  >
+                    {messageQortalRequestExtension?.text3}
+                  </TextP>
+                  <Spacer height="15px" />
+                </Box>
+              </>
+            )}
 
-          {messageQortalRequestExtension?.html && (
-            <div
-              dangerouslySetInnerHTML={{ __html: messageQortalRequestExtension?.html }}
-            />
-          )}
-          <Spacer height="15px" />
-       
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: 1.2,
-              fontSize: "16px",
-              fontWeight: 700,
-              maxWidth: "90%",
-            }}
-          >
-            {messageQortalRequestExtension?.highlightedText}
-          </TextP>
-
-          {messageQortalRequestExtension?.fee && (
-            <>
-                      <Spacer height="15px" />
-
-            <TextP
-    sx={{
-                  textAlign: "center",
-                  lineHeight: 1.2,
-                  fontSize: "16px",
-                  fontWeight: "normal",
-                  maxWidth: "90%",
+            {messageQortalRequestExtension?.text4 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-start",
+                  width: "90%",
                 }}
               >
-                {'Fee: '}{messageQortalRequestExtension?.fee}{' QORT'}
-              </TextP>
-<Spacer height="15px" />
+                <TextP
+                  sx={{
+                    lineHeight: 1.2,
+                    fontSize: "16px",
+                    fontWeight: "normal",
+                  }}
+                >
+                  {messageQortalRequestExtension?.text4}
+                </TextP>
+              </Box>
+            )}
 
-            </>
-          )}
-          {messageQortalRequestExtension?.checkbox1 && (
+            {messageQortalRequestExtension?.html && (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: messageQortalRequestExtension?.html,
+                }}
+              />
+            )}
+            <Spacer height="15px" />
+
+            <TextP
+              sx={{
+                textAlign: "center",
+                lineHeight: 1.2,
+                fontSize: "16px",
+                fontWeight: 700,
+                maxWidth: "90%",
+              }}
+            >
+              {messageQortalRequestExtension?.highlightedText}
+            </TextP>
+
+            {messageQortalRequestExtension?.fee && (
+              <>
+                <Spacer height="15px" />
+
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: 1.2,
+                    fontSize: "16px",
+                    fontWeight: "normal",
+                    maxWidth: "90%",
+                  }}
+                >
+                  {"Fee: "}
+                  {messageQortalRequestExtension?.fee}
+                  {" QORT"}
+                </TextP>
+                <Spacer height="15px" />
+              </>
+            )}
+            {messageQortalRequestExtension?.checkbox1 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: "10px",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "90%",
+                  marginTop: "20px",
+                }}
+              >
+                <Checkbox
+                  onChange={(e) => {
+                    qortalRequestCheckbox1Ref.current = e.target.checked;
+                  }}
+                  edge="start"
+                  tabIndex={-1}
+                  disableRipple
+                  defaultChecked={
+                    messageQortalRequestExtension?.checkbox1?.value
+                  }
+                  sx={{
+                    "&.Mui-checked": {
+                      color: "white", // Customize the color when checked
+                    },
+                    "& .MuiSvgIcon-root": {
+                      color: "white",
+                    },
+                  }}
+                />
+
+                <Typography
+                  sx={{
+                    fontSize: "14px",
+                  }}
+                >
+                  {messageQortalRequestExtension?.checkbox1?.label}
+                </Typography>
+              </Box>
+            )}
+
+            <Spacer height="29px" />
             <Box
               sx={{
                 display: "flex",
-                gap: "10px",
                 alignItems: "center",
-                justifyContent: "center",
-                width: "90%",
-                marginTop: "20px",
+                gap: "14px",
               }}
             >
-              <Checkbox
-                onChange={(e) => {
-                  qortalRequestCheckbox1Ref.current = e.target.checked;
-                }}
-                edge="start"
-                tabIndex={-1}
-                disableRipple
-                defaultChecked={messageQortalRequestExtension?.checkbox1?.value}
+              <CustomButton
                 sx={{
-                  "&.Mui-checked": {
-                    color: "white", // Customize the color when checked
-                  },
-                  "& .MuiSvgIcon-root": {
-                    color: "white",
-                  },
+                  minWidth: "102px",
                 }}
-              />
-
-              <Typography
-                sx={{
-                  fontSize: "14px",
-                }}
+                onClick={() => onOkQortalRequestExtension("accepted")}
               >
-                {messageQortalRequestExtension?.checkbox1?.label}
-              </Typography>
+                accept
+              </CustomButton>
+              <CustomButton
+                sx={{
+                  minWidth: "102px",
+                }}
+                onClick={() => onCancelQortalRequestExtension()}
+              >
+                decline
+              </CustomButton>
             </Box>
-          )}
-
-          <Spacer height="29px" />
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          >
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => onOkQortalRequestExtension("accepted")}
-            >
-              accept
-            </CustomButton>
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => onCancelQortalRequestExtension()}
-            >
-              decline
-            </CustomButton>
+            <ErrorText>{sendPaymentError}</ErrorText>
           </Box>
-          <ErrorText>{sendPaymentError}</ErrorText>
-        </Box>
         </Dialog>
       )}
       <Popover

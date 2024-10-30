@@ -1,5 +1,5 @@
 import { addForeignServer, addListItems, createPoll, decryptData, deleteListItems, deployAt, encryptData, getCrossChainServerInfo, getDaySummary, getForeignFee, getListItems, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getWalletBalance, joinGroup, publishMultipleQDNResources, publishQDNResource, removeForeignServer, saveFile, sendChatMessage, sendCoin, setCurrentForeignServer, updateForeignFee, voteOnPoll } from "./qortalRequests/get";
-import { storeData } from "./utils/chromeStorage";
+import { getData, storeData } from "./utils/chromeStorage";
 
 
 
@@ -28,7 +28,7 @@ function setLocalStorage(key, data) {
       qortalRequestPermissions[key] = value;
       
       // Save the updated object back to storage
-      await setLocalStorage({ qortalRequestPermissions });
+      await setLocalStorage('qortalRequestPermissions', qortalRequestPermissions );
       
       console.log('Permission set for', key);
     } catch (error) {
@@ -53,7 +53,7 @@ function setLocalStorage(key, data) {
   // TODO: GET_FRIENDS_LIST
   // NOT SURE IF TO IMPLEMENT: LINK_TO_QDN_RESOURCE, QDN_RESOURCE_DISPLAYED, SET_TAB_NOTIFICATIONS
 
-  function setupMessageListener() {
+  function setupMessageListenerQortalRequest() {
     window.addEventListener("message", async (event) => {
       const request = event.data;
       
@@ -87,6 +87,7 @@ function setLocalStorage(key, data) {
   
         case "ENCRYPT_DATA": {
           try {
+            console.log('ENCRYPTDATA', request)
             const res = await encryptData(request.payload, event.source);
             event.source.postMessage({
               requestId: request.requestId,
@@ -98,7 +99,7 @@ function setLocalStorage(key, data) {
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
-              error: error.message,
+              error: error?.message,
               type: "backgroundMessageResponse",
             }, event.origin);
           }
@@ -368,6 +369,7 @@ function setLocalStorage(key, data) {
         case "GET_WALLET_BALANCE": {
           try {
             const res = await getWalletBalance(request.payload, false, isFromExtension);
+            console.log('ressss', res)
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
@@ -612,5 +614,5 @@ function setLocalStorage(key, data) {
   }
   
   // Initialize the message listener
-  setupMessageListener();
+  setupMessageListenerQortalRequest();
   

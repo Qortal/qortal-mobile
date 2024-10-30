@@ -1,6 +1,6 @@
 // @ts-nocheck
 // TODO
-// import "./qortalRequests";
+import "./qortalRequests";
 import { isArray } from "lodash";
 import {
   decryptGroupEncryption,
@@ -2878,7 +2878,6 @@ async function getChatHeadsDirect() {
     throw new Error("No Chatheads saved");
   }
 }
-// TODO: listener
 
 function setupMessageListener() {
   window.addEventListener("message", async (event) => {
