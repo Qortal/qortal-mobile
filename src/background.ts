@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO
+
 import "./qortalRequests";
 import { isArray } from "lodash";
 import {
@@ -88,6 +88,16 @@ import {
   versionCase,
 } from "./background-cases";
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
+import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
+import { LocalNotifications } from '@capacitor/local-notifications';
+
+
+LocalNotifications.requestPermissions().then(permission => {
+  if (permission.display === 'granted') {
+    console.log("Notifications enabled");
+  }
+});
+
 
 export function cleanUrl(url) {
   return url?.replace(/^(https?:\/\/)?(www\.)?/, "");
@@ -384,35 +394,21 @@ const handleNotificationDirect = async (directs) => {
       (newestLatestTimestamp &&
         newestLatestTimestamp?.timestamp > oldestLatestTimestamp?.timestamp)
     ) {
-      // const notificationId =
-      //   "chat_notification_" +
-      //   Date.now() +
-      //   "_type=direct" +
-      //   `_from=${newestLatestTimestamp.address}`;
-      // chrome.notifications.create(notificationId, {
-      //   type: "basic",
-      //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
-      //   title: `New Direct message! ${
-      //     newestLatestTimestamp?.name && `from ${newestLatestTimestamp.name}`
-      //   }`,
-      //   message: "You have received a new direct message",
-      //   priority: 2, // Use the maximum priority to ensure it's noticeable
-      // });
-      // if (!isMobile) {
-      //   setTimeout(() => {
-      //     chrome.notifications.clear(notificationId);
-      //   }, 7000);
-      // }
+     
 
-      // chrome.runtime.sendMessage(
-      //   {
-      //     action: "notification",
-      //     payload: {
-      //     },
-      //   }
-      // )
-      // audio.play();
-      playNotificationSound();
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            title: `New Direct message! ${
+              newestLatestTimestamp?.name && `from ${newestLatestTimestamp.name}`
+            }`,
+            body: "You have received a new direct message",
+            id: notificationId,
+            schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+          }
+        ]
+      });
+ 
     }
   } catch (error) {
     if (!isFocused) {
@@ -431,32 +427,21 @@ const handleNotificationDirect = async (directs) => {
         });
 
       const notificationId = "chat_notification_" + Date.now();
-      // chrome.notifications.create(notificationId, {
-      //   type: "basic",
-      //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
-      //   title: `New Direct message!`,
-      //   message: "You have received a new direct message",
-      //   priority: 2, // Use the maximum priority to ensure it's noticeable
-      // });
-      if (!isMobile) {
-        setTimeout(() => {
-          chrome.notifications.clear(notificationId);
-        }, 7000);
-      }
-      playNotificationSound();
-      // audio.play();
-      // }
+  
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            title: `New Direct message!`,
+            body: "You have received a new direct message",
+            id: notificationId,
+            schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+          }
+        ]
+      });
     }
   } finally {
     setChatHeadsDirect(dataDirects);
-    // chrome.runtime.sendMessage(
-    //   {
-    //     action: "setChatHeads",
-    //     payload: {
-    //       data,
-    //     },
-    //   }
-    // );
+    
   }
 };
 async function getThreadActivity(): Promise<any | null> {
@@ -625,28 +610,21 @@ const handleNotification = async (groups) => {
           "_type=group" +
           `_from=${newestLatestTimestamp.groupId}`;
 
-        // chrome.notifications.create(notificationId, {
-        //   type: "basic",
-        //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
-        //   title: "New Group Message!",
-        //   message: `You have received a new message from ${newestLatestTimestamp?.groupName}`,
-        //   priority: 2, // Use the maximum priority to ensure it's noticeable
-
-        // });
+        LocalNotifications.schedule({
+          notifications: [
+            {
+              title: "New Group Message!",
+              body: `You have received a new message from ${newestLatestTimestamp?.groupName}`,
+              id: notificationId,
+              schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+            }
+          ]
+        });
         if (!isMobile) {
           setTimeout(() => {
             chrome.notifications.clear(notificationId);
           }, 7000);
         }
-        // chrome.runtime.sendMessage(
-        //   {
-        //     action: "notification",
-        //     payload: {
-        //     },
-        //   }
-        // )
-        // audio.play();
-        playNotificationSound();
         lastGroupNotification = Date.now();
       }
     }
@@ -667,277 +645,31 @@ const handleNotification = async (groups) => {
         });
 
       const notificationId = "chat_notification_" + Date.now();
-      // chrome.notifications.create(notificationId, {
-      //   type: "basic",
-      //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
-      //   title: "New Group Message!",
-      //   message: "You have received a new message from one of your groups",
-      //   priority: 2, // Use the maximum priority to ensure it's noticeable
-
-      // });
-      if (!isMobile) {
-        setTimeout(() => {
-          chrome.notifications.clear(notificationId);
-        }, 7000);
-      }
-      playNotificationSound();
-      // audio.play();
+     
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            title: "New Group Message!",
+            body: "You have received a new message from one of your groups",
+            id: notificationId,
+            schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+          }
+        ]
+      });
+     
+ 
       lastGroupNotification = Date.now();
-      // }
+
     }
   } finally {
     if (!data || data?.length === 0) return;
     setChatHeads(dataWithUpdates);
-    // chrome.runtime.sendMessage(
-    //   {
-    //     action: "setChatHeads",
-    //     payload: {
-    //       data,
-    //     },
-    //   }
-    // );
+    
   }
 };
 
-export const checkThreads = async (bringBack) => {
-  try {
-    let myName = "";
-    const userData = await getUserInfo();
-    if (userData?.name) {
-      myName = userData.name;
-    }
-    let newAnnouncements = [];
-    let dataToBringBack = [];
-    const threadActivity = await getThreadActivity();
-    if (!threadActivity) return null;
 
-    const selectedThreads = [
-      ...threadActivity.createdThreads.slice(0, 2),
-      ...threadActivity.mostVisitedThreads.slice(0, 2),
-      ...threadActivity.recentThreads.slice(0, 2),
-    ];
 
-    if (selectedThreads?.length === 0) return null;
-    const tempData = {};
-    for (const thread of selectedThreads) {
-      try {
-        const identifier = `thmsg-${thread?.threadId}`;
-        const name = thread?.qortalName;
-        const endpoint = await getArbitraryEndpoint();
-        const url = await createEndpoint(
-          `${endpoint}?mode=ALL&service=DOCUMENT&identifier=${identifier}&limit=1&includemetadata=false&offset=${0}&reverse=true&prefix=true`
-        );
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const responseData = await response.json();
-
-        const latestMessage = responseData.filter(
-          (pub) => pub?.name !== myName
-        )[0];
-        // const latestMessage = responseData[0]
-
-        if (!latestMessage) {
-          continue;
-        }
-
-        if (
-          checkDifference(latestMessage.created) &&
-          latestMessage.created > thread?.lastVisited &&
-          (!thread?.lastNotified || thread?.lastNotified < thread?.created)
-        ) {
-          tempData[thread.threadId] = latestMessage.created;
-          newAnnouncements.push(thread);
-        }
-        if (latestMessage.created > thread?.lastVisited) {
-          dataToBringBack.push(thread);
-        }
-      } catch (error) {
-        conosle.log({ error });
-      }
-    }
-
-    if (bringBack) {
-      return dataToBringBack;
-    }
-
-    const updateThreadWithLastNotified = {
-      ...threadActivity,
-      createdThreads: (threadActivity?.createdThreads || [])?.map((item) => {
-        if (tempData[item.threadId]) {
-          return {
-            ...item,
-            lastNotified: tempData[item.threadId],
-          };
-        } else {
-          return item;
-        }
-      }),
-      mostVisitedThreads: (threadActivity?.mostVisitedThreads || [])?.map(
-        (item) => {
-          if (tempData[item.threadId]) {
-            return {
-              ...item,
-              lastNotified: tempData[item.threadId],
-            };
-          } else {
-            return item;
-          }
-        }
-      ),
-      recentThreads: (threadActivity?.recentThreads || [])?.map((item) => {
-        if (tempData[item.threadId]) {
-          return {
-            ...item,
-            lastNotified: tempData[item.threadId],
-          };
-        } else {
-          return item;
-        }
-      }),
-    };
-
-    const wallet = await getSaveWallet();
-    const address = wallet.address0;
-     storeData(`threadactivity-${address}`, updateThreadWithLastNotified).catch(() => null);
-    if (newAnnouncements.length > 0) {
-      const notificationId =
-        "chat_notification_" +
-        Date.now() +
-        "_type=thread-post" +
-        `_data=${JSON.stringify(newAnnouncements[0])}`;
-      let isDisableNotifications =
-        (await getUserSettings({ key: "disable-push-notifications" })) || false;
-      if (!isDisableNotifications) {
-        // chrome.notifications.create(notificationId, {
-        //   type: "basic",
-        //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
-        //   title: `New thread post!`,
-        //   message: `New post in ${newAnnouncements[0]?.thread?.threadData?.title}`,
-        //   priority: 2, // Use the maximum priority to ensure it's noticeable
-
-        // });
-        // if (!isMobile) {
-        //   setTimeout(() => {
-        //     chrome.notifications.clear(notificationId);
-        //   }, 7000);
-        // }
-        playNotificationSound();
-      }
-    }
-    const savedtimestampAfter = await getTimestampGroupAnnouncement();
-    window.postMessage({
-      action: "SET_GROUP_ANNOUNCEMENTS",
-      payload: savedtimestampAfter,
-    }, "*"); 
-  } catch (error) {
-  } finally {
-  }
-};
-export const checkNewMessages = async () => {
-  try {
-    let mutedGroups = (await getUserSettings({ key: "mutedGroups" })) || [];
-    if (!isArray(mutedGroups)) mutedGroups = [];
-    let myName = "";
-    const userData = await getUserInfo();
-    if (userData?.name) {
-      myName = userData.name;
-    }
-
-    let newAnnouncements = [];
-    const activeData = (await getStoredData("active-groups-directs")) || {
-      groups: [],
-      directs: [],
-    };
-    const groups = activeData?.groups;
-    if (!groups || groups?.length === 0) return;
-    const savedtimestamp = await getTimestampGroupAnnouncement();
-
-    await Promise.all(
-      groups.map(async (group) => {
-        try {
-          const identifier = `grp-${group.groupId}-anc-`;
-          const endpoint = await getArbitraryEndpoint();
-          const url = await createEndpoint(
-            `${endpoint}?mode=ALL&service=DOCUMENT&identifier=${identifier}&limit=1&includemetadata=false&offset=0&reverse=true&prefix=true`
-          );
-          const response = await requestQueueAnnouncements.enqueue(() => {
-            return fetch(url, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-          });
-          const responseData = await response.json();
-
-          const latestMessage = responseData.filter(
-            (pub) => pub?.name !== myName
-          )[0];
-          if (!latestMessage) {
-            return; // continue to the next group
-          }
-
-          if (
-            checkDifference(latestMessage.created) &&
-            (!savedtimestamp[group.groupId] ||
-              latestMessage.created >
-                savedtimestamp?.[group.groupId]?.notification)
-          ) {
-            newAnnouncements.push(group);
-            await addTimestampGroupAnnouncement({
-              groupId: group.groupId,
-              timestamp: Date.now(),
-            });
-            // save new timestamp
-          }
-        } catch (error) {
-          console.error(error); // Handle error if needed
-        }
-      })
-    );
-    let isDisableNotifications =
-      (await getUserSettings({ key: "disable-push-notifications" })) || false;
-
-    if (
-      newAnnouncements.length > 0 &&
-      !mutedGroups.includes(newAnnouncements[0]?.groupId) &&
-      !isDisableNotifications
-    ) {
-      const notificationId =
-        "chat_notification_" +
-        Date.now() +
-        "_type=group-announcement" +
-        `_from=${newAnnouncements[0]?.groupId}`;
-
-      // chrome.notifications.create(notificationId, {
-      //   type: "basic",
-      //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
-      //   title: `New group announcement!`,
-      //   message: `You have received a new announcement from ${newAnnouncements[0]?.groupName}`,
-      //   priority: 2, // Use the maximum priority to ensure it's noticeable
-
-      // });
-      // if (!isMobile) {
-      //   setTimeout(() => {
-      //     chrome.notifications.clear(notificationId);
-      //   }, 7000);
-      // }
-      playNotificationSound();
-    }
-    const savedtimestampAfter = await getTimestampGroupAnnouncement();
-    window.postMessage({
-      action: "SET_GROUP_ANNOUNCEMENTS",
-      payload: savedtimestampAfter,
-    }, "*"); 
- 
-  } catch (error) {
-  } finally {
-  }
-};
 
 const listenForNewGroupAnnouncements = async () => {
   try {
@@ -3146,10 +2878,299 @@ const checkGroupList = async () => {
 };
 
 
+export const checkNewMessages = async () => {
+  try {
+    let mutedGroups = await getUserSettings({key: 'mutedGroups'}) || []
+    if(!isArray(mutedGroups)) mutedGroups = []
+    let myName = "";
+    const userData = await getUserInfo();
+    if (userData?.name) {
+      myName = userData.name;
+    }
 
-// Reconnect when service worker wakes up
+    let newAnnouncements = [];
+    const activeData = (await getStoredData("active-groups-directs")) || {
+      groups: [],
+      directs: [],
+    };
+    const groups = activeData?.groups;
+    if (!groups || groups?.length === 0) return;
+    const savedtimestamp = await getTimestampGroupAnnouncement();
+
+    await Promise.all(
+      groups.map(async (group) => {
+        try {
+          const identifier = `grp-${group.groupId}-anc-`;
+          const endpoint = await getArbitraryEndpoint();
+          const url = await createEndpoint(
+            `${endpoint}?mode=ALL&service=DOCUMENT&identifier=${identifier}&limit=1&includemetadata=false&offset=0&reverse=true&prefix=true`
+          );
+          const response = await requestQueueAnnouncements.enqueue(() => {
+            return fetch(url, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+          });
+          const responseData = await response.json();
+
+          const latestMessage = responseData.filter(
+            (pub) => pub?.name !== myName
+          )[0];
+          if (!latestMessage) {
+            return; // continue to the next group
+          }
+
+          if (
+            checkDifference(latestMessage.created) &&
+            (!savedtimestamp[group.groupId] ||
+              latestMessage.created >
+                savedtimestamp?.[group.groupId]?.notification)
+          ) {
+            newAnnouncements.push(group);
+            await addTimestampGroupAnnouncement({
+              groupId: group.groupId,
+              timestamp: Date.now(),
+            });
+            // save new timestamp
+          }
+        } catch (error) {
+          console.error(error); // Handle error if needed
+        }
+      })
+    );
+    let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
+
+    if (newAnnouncements.length > 0 && !mutedGroups.includes(newAnnouncements[0]?.groupId) && !isDisableNotifications) {
+      const notificationId =
+        "chat_notification_" +
+        Date.now() +
+        "_type=group-announcement" +
+        `_from=${newAnnouncements[0]?.groupId}`;
+
+    
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            title: "New group announcement!",
+            body: `You have received a new announcement from ${newAnnouncements[0]?.groupName}`,
+            id: notificationId,
+            schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+          }
+        ]
+      });
+    }
+    const savedtimestampAfter = await getTimestampGroupAnnouncement();
+    window.postMessage({
+      action: "SET_GROUP_ANNOUNCEMENTS",
+      payload: savedtimestampAfter,
+    }, "*"); 
+  } catch (error) {
+  } finally {
+  }
+};
+
+const checkActiveChatsForNotifications = async () => {
+  try {
+   
+     checkGroupList();
+        
+      
+    
+  } catch (error) {}
+};
+
+export const checkThreads = async (bringBack) => {
+  try {
+    let myName = "";
+    const userData = await getUserInfo();
+    if (userData?.name) {
+      myName = userData.name;
+    }
+    let newAnnouncements = [];
+    let dataToBringBack = [];
+    const threadActivity = await getThreadActivity();
+    if (!threadActivity) return null;
+
+    const selectedThreads = [
+      ...threadActivity.createdThreads.slice(0, 2),
+      ...threadActivity.mostVisitedThreads.slice(0, 2),
+      ...threadActivity.recentThreads.slice(0, 2),
+    ];
+
+    if (selectedThreads?.length === 0) return null;
+    const tempData = {};
+    for (const thread of selectedThreads) {
+      try {
+        const identifier = `thmsg-${thread?.threadId}`;
+        const name = thread?.qortalName;
+        const endpoint = await getArbitraryEndpoint();
+        const url = await createEndpoint(
+          `${endpoint}?mode=ALL&service=DOCUMENT&identifier=${identifier}&limit=1&includemetadata=false&offset=${0}&reverse=true&prefix=true`
+        );
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const responseData = await response.json();
+
+        const latestMessage = responseData.filter(
+          (pub) => pub?.name !== myName
+        )[0];
+        // const latestMessage = responseData[0]
+
+        if (!latestMessage) {
+          continue;
+        }
+
+        if (
+          checkDifference(latestMessage.created) &&
+          latestMessage.created > thread?.lastVisited &&
+          (!thread?.lastNotified || thread?.lastNotified < thread?.created)
+        ) {
+          tempData[thread.threadId] = latestMessage.created;
+          newAnnouncements.push(thread);
+        }
+        if (latestMessage.created > thread?.lastVisited) {
+          dataToBringBack.push(thread);
+        }
+      } catch (error) {
+        conosle.log({ error });
+      }
+    }
+
+    if (bringBack) {
+      return dataToBringBack;
+    }
+
+    const updateThreadWithLastNotified = {
+      ...threadActivity,
+      createdThreads: (threadActivity?.createdThreads || [])?.map((item) => {
+        if (tempData[item.threadId]) {
+          return {
+            ...item,
+            lastNotified: tempData[item.threadId],
+          };
+        } else {
+          return item;
+        }
+      }),
+      mostVisitedThreads: (threadActivity?.mostVisitedThreads || [])?.map(
+        (item) => {
+          if (tempData[item.threadId]) {
+            return {
+              ...item,
+              lastNotified: tempData[item.threadId],
+            };
+          } else {
+            return item;
+          }
+        }
+      ),
+      recentThreads: (threadActivity?.recentThreads || [])?.map((item) => {
+        if (tempData[item.threadId]) {
+          return {
+            ...item,
+            lastNotified: tempData[item.threadId],
+          };
+        } else {
+          return item;
+        }
+      }),
+    };
+
+    const wallet = await getSaveWallet();
+    const address = wallet.address0;
+    const dataString = JSON.stringify(updateThreadWithLastNotified);
+    chrome.storage.local.set({ [`threadactivity-${address}`]: dataString });
+
+    if (newAnnouncements.length > 0) {
+      const notificationId =
+        "chat_notification_" +
+        Date.now() +
+        "_type=thread-post" +
+        `_data=${JSON.stringify(newAnnouncements[0])}`;
+        let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
+      if(!isDisableNotifications){
+       
+        LocalNotifications.schedule({
+          notifications: [
+            {
+              title: `New thread post!`,
+              body: `New post in ${newAnnouncements[0]?.thread?.threadData?.title}`,
+              id: notificationId,
+              schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+            }
+          ]
+        });
+      }
+      
+    }
+    const savedtimestampAfter = await getTimestampGroupAnnouncement();
+    window.postMessage({
+      action: "SET_GROUP_ANNOUNCEMENTS",
+      payload: savedtimestampAfter,
+    }, "*"); 
+  } catch (error) {
+  } finally {
+  }
+};
+
+// Configure Background Fetch
+BackgroundFetch.configure({
+  minimumFetchInterval: 15,    // Minimum 15-minute interval
+  enableHeadless: true,        // Enable headless mode for Android
+}, async (taskId) => {
+  // This is where your background task logic goes
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  console.log('alarm', address)
+  if (!address) return;
+   checkActiveChatsForNotifications();
+   checkNewMessages();
+  checkThreads();
+
+  await new Promise((res)=> {
+    setTimeout(() => {
+      res()
+    }, 55000);
+  })
+  // Always finish the task when complete
+  BackgroundFetch.finish(taskId);
+}, (taskId) => {
+  // Optional timeout callback
+  BackgroundFetch.finish(taskId);
+});
 
 
 
+LocalNotifications.addListener('localNotificationActionPerformed', async (notification) => {
+  const notificationId = notification.notification.id;
 
+  // Check the type of notification by parsing notificationId
+  const isDirect = notificationId.includes('_type=direct_');
+  const isGroup = notificationId.includes('_type=group_');
+  const isGroupAnnouncement = notificationId.includes('_type=group-announcement_');
+  const isNewThreadPost = notificationId.includes('_type=thread-post_');
 
+ 
+
+  // Handle specific notification types
+  if (isDirect) {
+    const fromValue = notificationId.split('_from=')[1];
+    handleDirectNotification(fromValue);
+  } else if (isGroup) {
+    const fromValue = notificationId.split('_from=')[1];
+    handleGroupNotification(fromValue);
+  } else if (isGroupAnnouncement) {
+    const fromValue = notificationId.split('_from=')[1];
+    handleAnnouncementNotification(fromValue);
+  } else if (isNewThreadPost) {
+    const dataValue = notificationId.split('_data=')[1];
+    const dataParsed = JSON.parse(dataValue);
+    handleThreadPostNotification(dataParsed);
+  }
+});

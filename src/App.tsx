@@ -695,20 +695,18 @@ function App() {
         executeEvent("openDirectMessage", {
           from: message.payload.from,
         });
-      } else if (message.action === "NOTIFICATION_OPEN_GROUP" && isMainWindow) {
+      } else if (message.action === "NOTIFICATION_OPEN_GROUP") {
         executeEvent("openGroupMessage", {
           from: message.payload.from,
         });
       } else if (
-        message.action === "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP" &&
-        isMainWindow
+        message.action === "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP" 
       ) {
         executeEvent("openGroupAnnouncement", {
           from: message.payload.from,
         });
       } else if (
-        message.action === "NOTIFICATION_OPEN_THREAD_NEW_POST" &&
-        isMainWindow
+        message.action === "NOTIFICATION_OPEN_THREAD_NEW_POST" 
       ) {
         executeEvent("openThreadNewPost", {
           data: message.payload.data,
