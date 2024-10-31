@@ -2311,7 +2311,12 @@ function App() {
 
           {walletToBeDownloaded && (
             <>
-              <CustomButton onClick={saveFileToDiskFunc}>
+              <CustomButton onClick={async ()=> {
+                await saveFileToDiskFunc()
+await showInfo({
+  message: `Your wallet file was saved to internal storage, in the document folder. Keep that file secure.`,
+ })
+              }}>
                 Download wallet
               </CustomButton>
             </>
