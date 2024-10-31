@@ -3127,16 +3127,18 @@ LocalNotifications.addListener('localNotificationActionPerformed', async (notifi
   // Handle specific notification types
   if (isDirect) {
     const fromValue = notificationId.split('_from=')[1];
-    handleDirectNotification(fromValue);
+    
+    window.postMessage({ action: "NOTIFICATION_OPEN_DIRECT",  payload: { from: fromValue } }, "*");
   } else if (isGroup) {
     const fromValue = notificationId.split('_from=')[1];
-    handleGroupNotification(fromValue);
+    
+    window.postMessage({ action: "NOTIFICATION_OPEN_GROUP",  payload: { from: fromValue } }, "*");
   } else if (isGroupAnnouncement) {
     const fromValue = notificationId.split('_from=')[1];
-    handleAnnouncementNotification(fromValue);
+    window.postMessage({ action: "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP",  payload: { from: fromValue } }, "*");
   } else if (isNewThreadPost) {
     const dataValue = notificationId.split('_data=')[1];
     const dataParsed = JSON.parse(dataValue);
-    handleThreadPostNotification(dataParsed);
+    window.postMessage({ action: "NOTIFICATION_OPEN_THREAD_NEW_POST",  payload: { data: dataParsed } }, "*");
   }
 });
