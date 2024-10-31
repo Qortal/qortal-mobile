@@ -680,10 +680,14 @@ function App() {
       }
     }
   };
+  
 
   useEffect(() => {
     // Handler function for incoming messages
     const messageHandler = (event) => {
+      if (event.origin !== window.location.origin) {
+        return;  
+      }
       const message = event.data;
 
       if (message?.action === "CHECK_FOCUS") {

@@ -107,7 +107,9 @@ export const WebSocketActive = ({ myAddress, setIsLoadingGroups }) => {
       }
     };
 
-    initWebsocketMessageGroup(); // Initialize WebSocket on component mount
+   
+      initWebsocketMessageGroup(); // Initialize WebSocket on component mount
+   
 
     return () => {
       forceCloseWebSocket(); // Clean up WebSocket on component unmount

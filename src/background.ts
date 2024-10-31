@@ -2578,6 +2578,9 @@ async function getChatHeadsDirect() {
 
 function setupMessageListener() {
   window.addEventListener("message", async (event) => {
+    if (event.origin !== window.location.origin) {
+      return;  
+    }
     const request = event.data;
 
     // Check if the message is intended for this listener
@@ -2719,7 +2722,6 @@ function setupMessageListener() {
         publishOnQDNCase(request, event);
         break;
       case "handleActiveGroupDataFromSocket":
-        console.log('handleActiveGroupDataFromSocket2', event)
         handleActiveGroupDataFromSocketCase(request, event);
         break;
       case "getThreadActivity":
