@@ -394,7 +394,11 @@ const handleNotificationDirect = async (directs) => {
       (newestLatestTimestamp &&
         newestLatestTimestamp?.timestamp > oldestLatestTimestamp?.timestamp)
     ) {
-     
+      const notificationId =
+      "chat_notification_" +
+      Date.now() +
+      "_type=direct" +
+      `_from=${newestLatestTimestamp.address}`;
 
       LocalNotifications.schedule({
         notifications: [
@@ -426,8 +430,11 @@ const handleNotificationDirect = async (directs) => {
           );
         });
 
-      const notificationId = "chat_notification_" + Date.now();
-  
+        const notificationId =
+        "chat_notification_" +
+        Date.now() +
+        "_type=direct" +
+        `_from=${newestLatestTimestamp.address}`;  
       LocalNotifications.schedule({
         notifications: [
           {
@@ -620,11 +627,7 @@ const handleNotification = async (groups) => {
             }
           ]
         });
-        if (!isMobile) {
-          setTimeout(() => {
-            chrome.notifications.clear(notificationId);
-          }, 7000);
-        }
+       
         lastGroupNotification = Date.now();
       }
     }
