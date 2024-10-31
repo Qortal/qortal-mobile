@@ -671,42 +671,7 @@ const handleNotification = async (groups) => {
 
 
 
-const listenForNewGroupAnnouncements = async () => {
-  try {
-    setTimeout(() => {
-      checkNewMessages();
-    }, 500);
-    if (interval) {
-      clearInterval(interval);
-    }
 
-    let isCalling = false;
-    interval = setInterval(async () => {
-      if (isCalling) return;
-      isCalling = true;
-      const res = await checkNewMessages();
-      isCalling = false;
-    }, 180000);
-  } catch (error) {}
-};
-const listenForThreadUpdates = async () => {
-  try {
-    setTimeout(() => {
-      checkThreads();
-    }, 500);
-    if (intervalThreads) {
-      clearInterval(intervalThreads);
-    }
-
-    let isCalling = false;
-    intervalThreads = setInterval(async () => {
-      if (isCalling) return;
-      isCalling = true;
-      const res = await checkThreads();
-      isCalling = false;
-    }, 60000);
-  } catch (error) {}
-};
 
 const forceCloseWebSocket = () => {
   if (socket) {
