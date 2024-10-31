@@ -762,8 +762,12 @@ function App() {
               holdRefExtState.current === "web-app-request-buy-order"
             )
               return;
+            if(response?.hasKeyPair){
+              setExtstate("authenticated");
 
-            setExtstate("authenticated");
+            } else {
+              setExtstate("wallet-dropped");
+            }
           }
         })
         .catch((error) => {

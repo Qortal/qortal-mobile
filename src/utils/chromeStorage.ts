@@ -3,6 +3,8 @@ import { SecureStoragePlugin } from '@evva/capacitor-secure-storage-plugin';
 let inMemoryKey: CryptoKey | null = null;
 let inMemoryIV: Uint8Array | null = null;
 
+const keysToEncrypt = ['keyPair'];
+
 async function initializeKeyAndIV() {
   if (!inMemoryKey) {
     inMemoryKey = await generateKey();  // Generates the key in memory
@@ -57,38 +59,43 @@ async function decryptData(encryptedData: ArrayBuffer, key: CryptoKey, iv: Uint8
 export const storeData = async (key: string, payload: any): Promise<string> => {
   await initializeKeyAndIV();
 
-  if (inMemoryKey) {
+  if (keysToEncrypt.includes(key) && inMemoryKey) {
+    // Encrypt the payload if the key is in keysToEncrypt
     const { iv, encryptedData } = await encryptData(JSON.stringify(payload), inMemoryKey);
 
     // Combine IV and encrypted data into a single string
     const combinedData = new Uint8Array([...iv, ...new Uint8Array(encryptedData)]);
     await SecureStoragePlugin.set({ key, value: btoa(String.fromCharCode(...combinedData)) });
-
-    return "Data saved successfully";
   } else {
-    throw new Error("Key is not initialized in memory");
+    // Store data in plain text if not in keysToEncrypt
+    await SecureStoragePlugin.set({ key, value: JSON.stringify(payload) });
   }
+
+  return "Data saved successfully";
 };
 
 // Retrieve data, split the IV and encrypted data, then decrypt
 export const getData = async <T = any>(key: string): Promise<T> => {
   await initializeKeyAndIV();
 
-  if (!inMemoryKey) throw new Error("Encryption key is not initialized");
-
   const storedDataBase64 = await SecureStoragePlugin.get({ key });
   if (storedDataBase64.value) {
-    const combinedData = atob(storedDataBase64.value).split("").map((c) => c.charCodeAt(0));
-    const iv = new Uint8Array(combinedData.slice(0, 12)); // First 12 bytes are the IV
-    const encryptedData = new Uint8Array(combinedData.slice(12)).buffer; // The rest is encrypted data
+    if (keysToEncrypt.includes(key) && inMemoryKey) {
+      // If the key is in keysToEncrypt, decrypt the data
+      const combinedData = atob(storedDataBase64.value).split("").map((c) => c.charCodeAt(0));
+      const iv = new Uint8Array(combinedData.slice(0, 12)); // First 12 bytes are the IV
+      const encryptedData = new Uint8Array(combinedData.slice(12)).buffer; // The rest is encrypted data
 
-    const decryptedData = await decryptData(encryptedData, inMemoryKey, iv);
-    return JSON.parse(decryptedData) as T;
+      const decryptedData = await decryptData(encryptedData, inMemoryKey, iv);
+      return JSON.parse(decryptedData) as T;
+    } else {
+      // If the key is not in keysToEncrypt, parse data as plain text
+      return JSON.parse(storedDataBase64.value) as T;
+    }
   } else {
     throw new Error(`No data found for key: ${key}`);
   }
 };
-
 
 // Remove keys from storage and log out
 export async function removeKeysAndLogout(keys: string[], event: MessageEvent, request: any) {

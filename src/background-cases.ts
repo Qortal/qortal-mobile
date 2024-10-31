@@ -78,7 +78,7 @@ export async function getWalletInfoCase(request, event) {
           {
             requestId: request.requestId,
             action: "getWalletInfo",
-            payload: { walletInfo },
+            payload: { walletInfo, hasKeyPair: true },
             type: "backgroundMessageResponse",
           },
           event.origin
@@ -108,15 +108,41 @@ export async function getWalletInfoCase(request, event) {
     }
    
   } catch (error) {
-    event.source.postMessage(
-      {
-        requestId: request.requestId,
-        action: "getWalletInfo",
-        error: error?.message,
-        type: "backgroundMessageResponse",
-      },
-      event.origin
-    );
+    try {
+      const walletInfo = await getData('walletInfo').catch((error)=> null)
+      if(walletInfo){
+        event.source.postMessage(
+          {
+            requestId: request.requestId,
+            action: "getWalletInfo",
+            payload: { walletInfo, hasKeyPair: false },
+            type: "backgroundMessageResponse",
+          },
+          event.origin
+        );
+      } else {
+        event.source.postMessage(
+          {
+            requestId: request.requestId,
+            action: "getWalletInfo",
+            error: "Wallet not authenticated",
+            type: "backgroundMessageResponse",
+          },
+          event.origin
+        );
+      }
+    } catch (error) {
+      event.source.postMessage(
+        {
+          requestId: request.requestId,
+          action: "getWalletInfo",
+          error: "Wallet not authenticated",
+          type: "backgroundMessageResponse",
+        },
+        event.origin
+      );
+    }
+   
   }
 }
 
