@@ -3094,7 +3094,6 @@ BackgroundFetch.configure({
   // This is where your background task logic goes
   const wallet = await getSaveWallet();
   const address = wallet.address0;
-  console.log('alarm', address)
   if (!address) return;
    checkActiveChatsForNotifications();
    checkNewMessages();
