@@ -303,25 +303,7 @@ function setLocalStorage(key, data) {
           break;
         }
   
-        case "SAVE_FILE": {
-          try {
-            const res = await saveFile(request.payload, event.source, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
+     
   
         case "DEPLOY_AT": {
           try {

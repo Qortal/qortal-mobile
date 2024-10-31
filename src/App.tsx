@@ -716,10 +716,8 @@ function App() {
         message?.isFromExtension
       ) {
         qortalRequestPermissonFromExtension(message, event);
-      } else if(message?.action === 'SHOW_SAVE_FILE_PICKER'){
-        showSaveFilePicker(message?.payload)
-
-      } else if(message?.action === 'getFileFromIndexedDB'){
+      } 
+      else if(message?.action === 'getFileFromIndexedDB'){
         handleGetFileFromIndexedDB(event);
       }
     };
@@ -1521,7 +1519,11 @@ function App() {
             show,
             message,
             rootHeight,
-            showInfo
+            showInfo,
+            openSnackGlobal: openSnack, 
+            setOpenSnackGlobal: setOpenSnack,
+            infoSnackCustom: infoSnack,
+            setInfoSnackCustom: setInfoSnack
           }}
         >
           <Box

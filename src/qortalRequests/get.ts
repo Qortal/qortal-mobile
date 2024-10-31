@@ -15,6 +15,7 @@ import {
   isUsingLocal
 } from "../background";
 import { getNameInfo } from "../backgroundFunctions/encryption";
+import { showSaveFilePicker } from "../components/Apps/useQortalMessageListener";
 import { QORT_DECIMALS } from "../constants/constants";
 import Base58 from "../deps/Base58";
 import {
@@ -223,12 +224,12 @@ function getFileFromContentScript(fileId) {
 }
 
 
-function sendToSaveFilePicker(data) {
-  window.postMessage({
-    action: "SHOW_SAVE_FILE_PICKER",
-    payload: data,
-  }, "*"); 
-}
+// function sendToSaveFilePicker(data) {
+//   window.postMessage({
+//     action: "SHOW_SAVE_FILE_PICKER",
+//     payload: data,
+//   }, "*"); 
+// }
 
 
 const responseResolvers = new Map();
@@ -1149,9 +1150,9 @@ export const joinGroup = async (data, isFromExtension) => {
   }
 };
 
-export const saveFile = async (data, sender, isFromExtension) => {
+export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
   try {
-    const requiredFields = ["filename", "fileId"];
+    const requiredFields = ['filename', 'blob']
     const missingFields: string[] = [];
     requiredFields.forEach((field) => {
       if (!data[field]) {
@@ -1194,15 +1195,20 @@ export const saveFile = async (data, sender, isFromExtension) => {
           },
         };
       }
-      sendToSaveFilePicker(
-        {
-          filename,
-          mimeType,
-          blob,
-          fileId,
-          fileHandleOptions,
-        }
-      );
+
+      showSaveFilePicker(  {
+        filename,
+        mimeType,
+        blob
+      }, snackMethods)
+      // sendToSaveFilePicker(
+      //   {
+      //     filename,
+      //     mimeType,
+      //     blob,
+      //     fileId
+      //   }
+      // );
       return true;
     } else {
       throw new Error("User declined to save file");

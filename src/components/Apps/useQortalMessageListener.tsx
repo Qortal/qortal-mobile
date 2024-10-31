@@ -1,19 +1,60 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { executeEvent } from '../../utils/events';
 import { useSetRecoilState } from 'recoil';
 import { navigationControllerAtom } from '../../atoms/global';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
+import { saveFile } from '../../qortalRequests/get';
+import { mimeToExtensionMap } from '../../utils/memeTypes';
+import { MyContext } from '../../App';
 
 
 
 
-export const saveFileInChunks = async (blob: Blob, fileName: string, chunkSize = 1024 * 1024) => {
-  const base64Prefix = 'data:video/mp4;base64,';
+export const saveFileInChunks = async (
+  blob: Blob,
+  fileName: string,
+  chunkSize = 1024 * 1024
+) => {
   try {
     let offset = 0;
     let isFirstChunk = true;
-    const fullFileName = fileName + Date.now() + '.mp4'
+
+    // Extract the MIME type from the blob
+    const mimeType = blob.type || 'application/octet-stream';
+
+    // Create the dynamic base64 prefix
+    const base64Prefix = `data:${mimeType};base64,`;
+
+    // Function to extract extension from fileName
+    const getExtensionFromFileName = (name: string): string => {
+      const lastDotIndex = name.lastIndexOf('.');
+      if (lastDotIndex !== -1) {
+        return name.substring(lastDotIndex); // includes the dot
+      }
+      return '';
+    };
+
+    // Extract existing extension from fileName
+    const existingExtension = getExtensionFromFileName(fileName);
+
+    // Remove existing extension from fileName to avoid duplication
+    if (existingExtension) {
+      fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+    }
+
+    // Map MIME type to file extension
+    const mimeTypeToExtension = (mimeType: string): string => {
+     
+      return mimeToExtensionMap[mimeType] || existingExtension || ''; // Use existing extension if MIME type not found
+    };
+
+    // Determine the final extension to use
+    const extension = mimeTypeToExtension(mimeType);
+
+    // Construct the full file name with timestamp and extension
+    const fullFileName = `${fileName}_${Date.now()}${extension}`;
+
     // Read the blob in chunks
     while (offset < blob.size) {
       // Extract the current chunk
@@ -28,7 +69,7 @@ export const saveFileInChunks = async (blob: Blob, fileName: string, chunkSize =
         data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
         directory: Directory.Documents,
         recursive: true,
-        append: !isFirstChunk // Append after the first chunk
+        append: !isFirstChunk, // Append after the first chunk
       });
 
       // Update offset and flag
@@ -36,11 +77,12 @@ export const saveFileInChunks = async (blob: Blob, fileName: string, chunkSize =
       isFirstChunk = false;
     }
 
-    console.log("File saved successfully in chunks:", fileName);
+    console.log('File saved successfully in chunks:', fullFileName);
   } catch (error) {
-    console.error("Error saving file in chunks:", error);
+    console.error('Error saving file in chunks:', error);
   }
 };
+
 
 
 // Helper function to convert a Blob to a Base64 string
@@ -220,19 +262,42 @@ const UIQortalRequests = [
 
   
 
-  export const showSaveFilePicker = async (data) => {
-    let blob;
-    let fileName;
+  export const showSaveFilePicker = async (data, {openSnackGlobal, 
+    setOpenSnackGlobal,
+    infoSnackCustom,
+    setInfoSnackCustom}) => {
+ 
   
     try {
-      const { filename, mimeType, fileId } = data;
+      const { filename, mimeType, blob } = data;
   
-      // Retrieve file from IndexedDB or any other source
-      blob = await retrieveFileFromIndexedDB(fileId);
-      fileName = filename;
+      setInfoSnackCustom({
+        type: "info",
+        message:
+          "Saving file...",
+      });
+ 
+     
+      setOpenSnackGlobal(true);
+      
+     await saveFileInChunks(blob, filename)
+     setInfoSnackCustom({
+      type: "success",
+      message:
+        "Saving file success!",
+    });
+
    
-     await saveFileInChunks(blob, fileName)
+    setOpenSnackGlobal(true);
     } catch (error) {
+      setInfoSnackCustom({
+        type: "error",
+        message:
+          error?.message ? `Error saving file: ${error?.message}` : 'Error saving file',
+      });
+  
+     
+      setOpenSnackGlobal(true);
       console.error("Error saving file:", error);
      
     }
@@ -323,6 +388,10 @@ currentIndex: -1,
 isDOMContentLoaded: false
   })
   const setHasSettingsChangedAtom = useSetRecoilState(navigationControllerAtom);
+  const { openSnackGlobal, 
+    setOpenSnackGlobal,
+    infoSnackCustom,
+    setInfoSnackCustom } = useContext(MyContext);
 
  
   useEffect(()=> {
@@ -391,10 +460,23 @@ isDOMContentLoaded: false
           { action: event.data.action, type: 'qortalRequest', payload: event.data, isExtension: true },
           event.ports[0]
         );
+      } else if(event?.data?.action === 'SAVE_FILE'
+      ){
+        try {
+          const res = await saveFile( event.data, null, true, {
+            openSnackGlobal, 
+    setOpenSnackGlobal,
+    infoSnackCustom,
+    setInfoSnackCustom
+          });
+
+        } catch (error) {
+          
+        }
       } else if (
         event?.data?.action === 'PUBLISH_MULTIPLE_QDN_RESOURCES' ||
         event?.data?.action === 'PUBLISH_QDN_RESOURCE' ||
-        event?.data?.action === 'ENCRYPT_DATA' || event?.data?.action === 'SAVE_FILE'
+        event?.data?.action === 'ENCRYPT_DATA' 
         
       ) {
         let data;

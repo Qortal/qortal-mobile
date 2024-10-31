@@ -12,10 +12,13 @@ export const mimeToExtensionMap = {
 	"application/vnd.oasis.opendocument.presentation": ".odp",
 	"text/plain": ".txt",
 	"text/csv": ".csv",
-	"text/html": ".html",
 	"application/xhtml+xml": ".xhtml",
 	"application/xml": ".xml",
-	"application/json": ".json",
+	"application/rtf": ".rtf",
+	"application/vnd.apple.pages": ".pages",
+	"application/vnd.google-apps.document": ".gdoc",
+	"application/vnd.google-apps.spreadsheet": ".gsheet",
+	"application/vnd.google-apps.presentation": ".gslides",
 
 	// Images
 	"image/jpeg": ".jpg",
@@ -25,6 +28,11 @@ export const mimeToExtensionMap = {
 	"image/svg+xml": ".svg",
 	"image/tiff": ".tif",
 	"image/bmp": ".bmp",
+	"image/x-icon": ".ico",
+	"image/heic": ".heic",
+	"image/heif": ".heif",
+	"image/apng": ".apng",
+	"image/avif": ".avif",
 
 	// Audio
 	"audio/mpeg": ".mp3",
@@ -32,6 +40,11 @@ export const mimeToExtensionMap = {
 	"audio/wav": ".wav",
 	"audio/webm": ".weba",
 	"audio/aac": ".aac",
+	"audio/flac": ".flac",
+	"audio/x-m4a": ".m4a",
+	"audio/x-ms-wma": ".wma",
+	"audio/midi": ".midi",
+	"audio/x-midi": ".mid",
 
 	// Video
 	"video/mp4": ".mp4",
@@ -45,6 +58,7 @@ export const mimeToExtensionMap = {
 	"video/3gpp2": ".3g2",
 	"video/x-matroska": ".mkv",
 	"video/x-flv": ".flv",
+	"video/x-ms-asf": ".asf",
 
 	// Archives
 	"application/zip": ".zip",
@@ -53,4 +67,57 @@ export const mimeToExtensionMap = {
 	"application/x-7z-compressed": ".7z",
 	"application/x-gzip": ".gz",
 	"application/x-bzip2": ".bz2",
-}
+	"application/x-apple-diskimage": ".dmg",
+	"application/vnd.android.package-archive": ".apk",
+	"application/x-iso9660-image": ".iso",
+
+	// Code Files
+	"text/javascript": ".js",
+	"text/css": ".css",
+	"text/html": ".html",
+	"application/json": ".json",
+	"text/xml": ".xml",
+	"application/x-sh": ".sh",
+	"application/x-csh": ".csh",
+	"text/x-python": ".py",
+	"text/x-java-source": ".java",
+	"application/java-archive": ".jar",
+	"application/vnd.microsoft.portable-executable": ".exe",
+	"application/x-msdownload": ".msi",
+	"text/x-c": ".c",
+	"text/x-c++": ".cpp",
+	"text/x-go": ".go",
+	"application/x-perl": ".pl",
+	"text/x-php": ".php",
+	"text/x-ruby": ".rb",
+	"text/x-sql": ".sql",
+	"application/x-httpd-php": ".php",
+	"application/x-python-code": ".pyc",
+
+	// ROM Files
+	"application/x-nintendo-nes-rom": ".nes",
+	"application/x-snes-rom": ".smc",
+	"application/x-gameboy-rom": ".gb",
+	"application/x-gameboy-advance-rom": ".gba",
+	"application/x-n64-rom": ".n64",
+	"application/x-sega-genesis-rom": ".gen",
+	"application/x-sega-master-system-rom": ".sms",
+	"application/x-psx-rom": ".iso",  // PlayStation ROMs
+	"application/x-bios-rom": ".rom",
+	"application/x-flash-rom": ".bin",
+	"application/x-eeprom": ".eep",
+	"application/x-c64-rom": ".prg",
+
+	// Miscellaneous
+	"application/octet-stream": ".bin", // General binary files
+	"application/x-shockwave-flash": ".swf",
+	"application/x-silverlight-app": ".xap",
+	"application/x-ms-shortcut": ".lnk",
+	"application/vnd.ms-fontobject": ".eot",
+	"font/woff": ".woff",
+	"font/woff2": ".woff2",
+	"font/ttf": ".ttf",
+	"font/otf": ".otf",
+	"application/vnd.visio": ".vsd",
+	"application/vnd.ms-project": ".mpp",
+};
