@@ -10,6 +10,8 @@ import {
   uint8ArrayToObject,
 } from "./backgroundFunctions/encryption";
 import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from "./constants/codes";
+import ShortUniqueId from "short-unique-id";
+
 import Base58 from "./deps/Base58";
 import {
   base64ToUint8Array,
@@ -90,8 +92,11 @@ import {
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
 import { LocalNotifications } from '@capacitor/local-notifications';
+const uid = new ShortUniqueId({ length: 9, dictionary: 'number'  });
 
-
+const generateId = ()=> {
+  return parseInt(uid.rnd())
+}
 LocalNotifications.requestPermissions().then(permission => {
   if (permission.display === 'granted') {
     console.log("Notifications enabled");
@@ -394,12 +399,7 @@ const handleNotificationDirect = async (directs) => {
       (newestLatestTimestamp &&
         newestLatestTimestamp?.timestamp > oldestLatestTimestamp?.timestamp)
     ) {
-      const notificationId =
-      "chat_notification_" +
-      Date.now() +
-      "_type=direct" +
-      `_from=${newestLatestTimestamp.address}`;
-
+      const notificationId = generateId()
       LocalNotifications.schedule({
         notifications: [
           {
@@ -409,6 +409,10 @@ const handleNotificationDirect = async (directs) => {
             body: "You have received a new direct message",
             id: notificationId,
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+            extra: {
+              type: 'direct',
+              from: newestLatestTimestamp.address
+            }
           }
         ]
       });
@@ -430,11 +434,8 @@ const handleNotificationDirect = async (directs) => {
           );
         });
 
-        const notificationId =
-        "chat_notification_" +
-        Date.now() +
-        "_type=direct" +
-        `_from=${newestLatestTimestamp.address}`;  
+        const notificationId = generateId()
+
       LocalNotifications.schedule({
         notifications: [
           {
@@ -442,6 +443,10 @@ const handleNotificationDirect = async (directs) => {
             body: "You have received a new direct message",
             id: notificationId,
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+            extra: {
+              type: 'direct',
+              from: ""
+            }
           }
         ]
       });
@@ -560,18 +565,15 @@ const handleNotification = async (groups) => {
   const dataWithUpdates = groups.filter(
     (group) => group?.sender !== address && !mutedGroups.includes(group.groupId)
   );
-
   try {
     if (isDisableNotifications) return;
     if (!data || data?.length === 0) return;
     isFocused = await checkWebviewFocus();
-
     if (isFocused) {
       throw new Error("isFocused");
     }
     const newActiveChats = data;
     const oldActiveChats = await getChatHeads();
-
     let results = [];
     let newestLatestTimestamp;
     let oldestLatestTimestamp;
@@ -608,14 +610,10 @@ const handleNotification = async (groups) => {
         if (
           !newestLatestTimestamp?.data ||
           !isExtMsg(newestLatestTimestamp?.data)
-        )
-          return;
+        ) return;
 
-        const notificationId =
-          "chat_notification_" +
-          Date.now() +
-          "_type=group" +
-          `_from=${newestLatestTimestamp.groupId}`;
+          const notificationId = generateId()
+
 
         LocalNotifications.schedule({
           notifications: [
@@ -624,6 +622,10 @@ const handleNotification = async (groups) => {
               body: `You have received a new message from ${newestLatestTimestamp?.groupName}`,
               id: notificationId,
               schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+              extra: {
+                type: 'group',
+                from: newestLatestTimestamp?.groupId
+              }
             }
           ]
         });
@@ -647,7 +649,7 @@ const handleNotification = async (groups) => {
           );
         });
 
-      const notificationId = "chat_notification_" + Date.now();
+        const notificationId = generateId()
      
       LocalNotifications.schedule({
         notifications: [
@@ -656,6 +658,10 @@ const handleNotification = async (groups) => {
             body: "You have received a new message from one of your groups",
             id: notificationId,
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+            extra: {
+              type: 'group',
+              from: ""
+            }
           }
         ]
       });
@@ -735,12 +741,23 @@ export async function getSaveWallet() {
 
 
 export async function clearAllNotifications() {
-  // const notifications = await chrome.notifications.getAll();
-  // for (const notificationId of Object.keys(notifications)) {
-  //   await chrome.notifications.clear(notificationId);
-  // }
-}
+  try {
+    // Get all pending notifications
+    const pending = await LocalNotifications.getPending();
+    const notificationIds = pending.notifications.map((notification) => ({ id: notification.id }));
+    
+    // Cancel all pending notifications if any are found
+    if (notificationIds.length > 0) {
+      await LocalNotifications.cancel({ notifications: notificationIds });
+    }
 
+    // Call this to clear any displayed notifications from the system tray
+    await LocalNotifications.removeAllListeners();
+
+  } catch (error) {
+    console.error("Error clearing notifications:", error);
+  }
+}
 export async function getUserInfo() {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
@@ -2913,11 +2930,8 @@ export const checkNewMessages = async () => {
     let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
 
     if (newAnnouncements.length > 0 && !mutedGroups.includes(newAnnouncements[0]?.groupId) && !isDisableNotifications) {
-      const notificationId =
-        "chat_notification_" +
-        Date.now() +
-        "_type=group-announcement" +
-        `_from=${newAnnouncements[0]?.groupId}`;
+      const notificationId = generateId()
+
 
     
       LocalNotifications.schedule({
@@ -2927,6 +2941,10 @@ export const checkNewMessages = async () => {
             body: `You have received a new announcement from ${newAnnouncements[0]?.groupName}`,
             id: notificationId,
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+            extra: {
+              type: 'group',
+              from: newAnnouncements[0]?.groupId
+            }
           }
         ]
       });
@@ -3058,14 +3076,10 @@ export const checkThreads = async (bringBack) => {
     chrome.storage.local.set({ [`threadactivity-${address}`]: dataString });
 
     if (newAnnouncements.length > 0) {
-      const notificationId =
-        "chat_notification_" +
-        Date.now() +
-        "_type=thread-post" +
-        `_data=${JSON.stringify(newAnnouncements[0])}`;
-        let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
+
+      const notificationId = generateId()
+      let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
       if(!isDisableNotifications){
-       
         LocalNotifications.schedule({
           notifications: [
             {
@@ -3073,12 +3087,16 @@ export const checkThreads = async (bringBack) => {
               body: `New post in ${newAnnouncements[0]?.thread?.threadData?.title}`,
               id: notificationId,
               schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+              extra: {
+                type: 'thread-post',
+                from: ""
+              }
             }
           ]
         });
       }
-      
     }
+    
     const savedtimestampAfter = await getTimestampGroupAnnouncement();
     window.postMessage({
       action: "SET_GROUP_ANNOUNCEMENTS",
@@ -3116,32 +3134,29 @@ BackgroundFetch.configure({
 
 
 
-LocalNotifications.addListener('localNotificationActionPerformed', async (notification) => {
-  const notificationId = notification.notification.id;
+LocalNotifications.addListener('localNotificationActionPerformed', async (event) => {
 
-  // Check the type of notification by parsing notificationId
-  const isDirect = notificationId.includes('_type=direct_');
-  const isGroup = notificationId.includes('_type=group_');
-  const isGroupAnnouncement = notificationId.includes('_type=group-announcement_');
-  const isNewThreadPost = notificationId.includes('_type=thread-post_');
+  // Access nested properties based on your screenshot
+  const extraData = event.notification?.extra;
+  const type = extraData?.type;
+  const from = extraData?.from;
 
- 
 
-  // Handle specific notification types
-  if (isDirect) {
-    const fromValue = notificationId.split('_from=')[1];
-    
-    window.postMessage({ action: "NOTIFICATION_OPEN_DIRECT",  payload: { from: fromValue } }, "*");
-  } else if (isGroup) {
-    const fromValue = notificationId.split('_from=')[1];
-    
-    window.postMessage({ action: "NOTIFICATION_OPEN_GROUP",  payload: { from: fromValue } }, "*");
-  } else if (isGroupAnnouncement) {
-    const fromValue = notificationId.split('_from=')[1];
-    window.postMessage({ action: "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP",  payload: { from: fromValue } }, "*");
-  } else if (isNewThreadPost) {
-    const dataValue = notificationId.split('_data=')[1];
-    const dataParsed = JSON.parse(dataValue);
-    window.postMessage({ action: "NOTIFICATION_OPEN_THREAD_NEW_POST",  payload: { data: dataParsed } }, "*");
+  // Determine notification type based on `type` field
+  if (type === 'direct') {
+    window.postMessage({ action: "NOTIFICATION_OPEN_DIRECT", payload: { from } }, "*");
+  } else if (type === 'group') {
+    window.postMessage({ action: "NOTIFICATION_OPEN_GROUP", payload: { from } }, "*");
+  } else if (type === 'group-announcement') {
+    window.postMessage({ action: "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP", payload: { from } }, "*");
+  } else if (type === 'thread-post') {
+    window.postMessage({ action: "NOTIFICATION_OPEN_THREAD_NEW_POST", payload: { data: extraData?.data } }, "*");
+  }
+
+  // Clear all notifications
+  try {
+    await clearAllNotifications();
+  } catch (error) {
+    console.error("Error clearing notifications:", error);
   }
 });
