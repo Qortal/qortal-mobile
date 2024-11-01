@@ -4,6 +4,7 @@ import {
   BottomNavigationAction,
   ButtonBase,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import { Home, Groups, Message, ShowChart } from "@mui/icons-material";
 import Box from "@mui/material/Box";
@@ -67,6 +68,7 @@ export const MobileFooter = ({
   hasUnreadDirects
 }) => {
   const [value, setValue] = React.useState(0);
+  const isSmallScreen = useMediaQuery("(max-width:370px)"); // Define a custom breakpoint
   return (
     <Box
       sx={{
@@ -95,9 +97,16 @@ export const MobileFooter = ({
             setIsOpenDrawerProfile(true);
           }}
           icon={
-            <IconWrapper color="rgba(250, 250, 250, 0.5)" label="Wallet">
+            <>
+            {isSmallScreen ? (
+              <WalletIcon color="rgba(250, 250, 250, 0.5)" />
+            ) : (
+              <IconWrapper color="rgba(250, 250, 250, 0.5)" label="Wallet">
               <WalletIcon color="rgba(250, 250, 250, 0.5)" />
             </IconWrapper>
+            )}
+            </>
+            
           }
           sx={{ color: value === 0 ? "white" : "gray", padding: "0px 10px" }}
         />
@@ -106,14 +115,21 @@ export const MobileFooter = ({
             setMobileViewMode("groups");
           }}
           icon={
-            <IconWrapper color="rgba(250, 250, 250, 0.5)" label="Hubs">
+            <>
+              {isSmallScreen ? (
+              <HubsIcon color={hasUnreadGroups ? "var(--unread)" : "rgba(250, 250, 250, 0.5)"} />
+              ) : (
+              <IconWrapper color="rgba(250, 250, 250, 0.5)" label="Hubs">
               <HubsIcon color={hasUnreadGroups ? "var(--unread)" : "rgba(250, 250, 250, 0.5)"} />
             </IconWrapper>
+            )}
+            </>
+           
           }
           sx={{
             color: value === 0 ? "white" : "gray",
-            paddingLeft: "10px",
-            paddingRight: "42px",
+            paddingLeft: isSmallScreen ? '0px' :  "10px",
+            paddingRight: isSmallScreen ? '30px' : "42px",
           }}
         />
       </BottomNavigation>
@@ -173,14 +189,22 @@ export const MobileFooter = ({
             setMobileViewModeKeepOpen("messaging");
           }}
           icon={
-            <IconWrapper label="Messaging" color="rgba(250, 250, 250, 0.5)">
+            <>
+            {isSmallScreen ? (
+                         <MessagingIcon color={hasUnreadDirects ? "var(--unread)" :"rgba(250, 250, 250, 0.5)"} />
+
+            ) : (
+              <IconWrapper label="Messaging" color="rgba(250, 250, 250, 0.5)">
               <MessagingIcon color={hasUnreadDirects ? "var(--unread)" :"rgba(250, 250, 250, 0.5)"} />
             </IconWrapper>
+          )}
+          </>
+           
           }
           sx={{
             color: value === 2 ? "white" : "gray",
-            paddingLeft: "55px",
-            paddingRight: "10px",
+            paddingLeft: isSmallScreen ? '30px' : "55px",
+            paddingRight: isSmallScreen ? '0px' : "10px",
           }}
         />
         <BottomNavigationAction
@@ -189,9 +213,17 @@ export const MobileFooter = ({
           }}
           
           icon={
-            <IconWrapper label="Trading" color="rgba(250, 250, 250, 0.5)">
+          
+             <>
+             {isSmallScreen ? (
+              <TradingIcon color="rgba(250, 250, 250, 0.5)" />
+ 
+             ) : (
+              <IconWrapper label="Trading" color="rgba(250, 250, 250, 0.5)">
               <TradingIcon color="rgba(250, 250, 250, 0.5)" />
             </IconWrapper>
+           )}
+           </>
           }
           sx={{ color: value === 3 ? "white" : "gray", padding: "0px 10px" }}
         />

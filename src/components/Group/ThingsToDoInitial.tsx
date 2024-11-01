@@ -78,7 +78,7 @@ export const ThingsToDoInitial = ({ myAddress, name, hasGroups, balance }) => {
       <Box
         sx={{
           width: "322px",
-          height: isMobile ? "165px" : "250px",
+          minHeight: isMobile ? "165px" : "250px",
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.paper",
