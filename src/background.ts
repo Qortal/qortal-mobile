@@ -495,7 +495,7 @@ export function updateThreadActivity({
         lastResetTime: 0,
       };
     } else {
-      threads = storedData
+      threads = JSON.parse(storedData);
     }
 
     let lastResetTime = threads.lastResetTime || 0;
