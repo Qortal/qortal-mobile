@@ -531,10 +531,11 @@ isDOMContentLoaded: false
         executeEvent("addTab", {
           data: event?.data?.payload
         })
+        const targetOrigin = iframeRef.current ? new URL(iframeRef.current.src).origin : "*";
         iframeRef.current.contentWindow.postMessage(
           { action: 'SET_TAB_SUCCESS', requestedHandler: 'UI',payload: {
             name: event?.data?.payload?.name
-          }  }, '*'
+          }  }, targetOrigin
         );
       } 
       

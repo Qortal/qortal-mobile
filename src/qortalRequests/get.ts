@@ -208,9 +208,11 @@ function getFileFromContentScript(fileId) {
     fileRequestResolvers.set(requestId, { resolve, reject }); // Store resolvers by requestId
 
     // Send the request message
+    const targetOrigin = window.location.origin;
+
     window.postMessage(
       { action: "getFileFromIndexedDB", fileId, requestId },
-      "*"
+      targetOrigin
     );
 
     // Timeout to handle no response scenario
@@ -224,12 +226,6 @@ function getFileFromContentScript(fileId) {
 }
 
 
-// function sendToSaveFilePicker(data) {
-//   window.postMessage({
-//     action: "SHOW_SAVE_FILE_PICKER",
-//     payload: data,
-//   }, "*"); 
-// }
 
 
 const responseResolvers = new Map();
@@ -253,11 +249,12 @@ async function getUserPermission(payload, isFromExtension) {
   return new Promise((resolve) => {
     const requestId = `qortalRequest_${Date.now()}`;
     responseResolvers.set(requestId, resolve); // Store resolver by requestId
+    const targetOrigin = window.location.origin;
 
     // Send the request message
     window.postMessage(
       { action: "QORTAL_REQUEST_PERMISSION", payload, requestId, isFromExtension },
-      "*"
+      targetOrigin
     );
 
     // Optional timeout to handle no response scenario

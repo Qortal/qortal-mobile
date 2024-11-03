@@ -49,10 +49,10 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
     // Calculate the previous index and path
     const previousPageIndex = history.currentIndex - 1;
     const previousPath = history.customQDNHistoryPaths[previousPageIndex];
-
+    const targetOrigin = iframeRef.current ? new URL(iframeRef.current.src).origin : "*"; 
     // Signal non-manual navigation
     iframeRef.current.contentWindow.postMessage(
-      { action: 'PERFORMING_NON_MANUAL', currentIndex: previousPageIndex }, '*'
+      { action: 'PERFORMING_NON_MANUAL', currentIndex: previousPageIndex }, targetOrigin
     );
     // Update the current index locally
     changeCurrentIndex(previousPageIndex);
@@ -73,10 +73,10 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
         window.removeEventListener('message', handleNavigationSuccess);
         reject(new Error("Navigation timeout"));
       }, 200);
-
+      const targetOrigin = iframeRef.current ? new URL(iframeRef.current.src).origin : "*"; 
       // Send the navigation command after setting up the listener and timeout
       iframeRef.current.contentWindow.postMessage(
-        { action: 'NAVIGATE_TO_PATH', path: previousPath, requestedHandler: 'UI' }, '*'
+        { action: 'NAVIGATE_TO_PATH', path: previousPath, requestedHandler: 'UI' }, targetOrigin
       );
     });
 
@@ -111,11 +111,11 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
  // Function to navigate back in iframe
  const navigateForwardInIframe = async () => {
 
- 
+  const targetOrigin = iframeRef.current ? new URL(iframeRef.current.src).origin : "*"; 
   if (iframeRef.current && iframeRef.current.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
           { action: 'NAVIGATE_FORWARD'},
-          '*' 
+          targetOrigin
       );
   } else {
       console.log('Iframe not accessible or does not have a content window.');

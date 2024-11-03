@@ -329,9 +329,10 @@ async function checkWebviewFocus() {
     const timeout = setTimeout(() => {
       resolve(false); // No response within 1 second, assume not focused
     }, 1000);
+    const targetOrigin = window.location.origin;
 
     // Send a message to check focus
-    window.postMessage({ action: "CHECK_FOCUS" }, "*");
+    window.postMessage({ action: "CHECK_FOCUS" }, targetOrigin);
 
     // Listen for the response
     const handleMessage = (event) => {
@@ -1277,14 +1278,16 @@ const getStoredData = async (key) => {
 
 export async function handleActiveGroupDataFromSocket({ groups, directs }) {
   try {
+    const targetOrigin = window.location.origin;
+
     window.postMessage({
       action: "SET_GROUPS",
       payload: groups,
-    }, "*"); 
+    }, targetOrigin); 
     window.postMessage({
       action: "SET_DIRECTS",
       payload: directs,
-    }, "*"); 
+    }, targetOrigin); 
 
     groups = groups;
     directs = directs;
@@ -2949,11 +2952,13 @@ export const checkNewMessages = async () => {
         ]
       });
     }
+    const targetOrigin = window.location.origin;
+
     const savedtimestampAfter = await getTimestampGroupAnnouncement();
     window.postMessage({
       action: "SET_GROUP_ANNOUNCEMENTS",
       payload: savedtimestampAfter,
-    }, "*"); 
+    }, targetOrigin); 
   } catch (error) {
   } finally {
   }
@@ -3098,10 +3103,12 @@ export const checkThreads = async (bringBack) => {
     }
     
     const savedtimestampAfter = await getTimestampGroupAnnouncement();
+    const targetOrigin = window.location.origin;
+
     window.postMessage({
       action: "SET_GROUP_ANNOUNCEMENTS",
       payload: savedtimestampAfter,
-    }, "*"); 
+    }, targetOrigin); 
   } catch (error) {
   } finally {
   }
@@ -3141,16 +3148,17 @@ LocalNotifications.addListener('localNotificationActionPerformed', async (event)
   const type = extraData?.type;
   const from = extraData?.from;
 
+  const targetOrigin = window.location.origin;
 
   // Determine notification type based on `type` field
   if (type === 'direct') {
-    window.postMessage({ action: "NOTIFICATION_OPEN_DIRECT", payload: { from } }, "*");
+    window.postMessage({ action: "NOTIFICATION_OPEN_DIRECT", payload: { from } }, targetOrigin);
   } else if (type === 'group') {
-    window.postMessage({ action: "NOTIFICATION_OPEN_GROUP", payload: { from } }, "*");
+    window.postMessage({ action: "NOTIFICATION_OPEN_GROUP", payload: { from } }, targetOrigin);
   } else if (type === 'group-announcement') {
-    window.postMessage({ action: "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP", payload: { from } }, "*");
+    window.postMessage({ action: "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP", payload: { from } }, targetOrigin);
   } else if (type === 'thread-post') {
-    window.postMessage({ action: "NOTIFICATION_OPEN_THREAD_NEW_POST", payload: { data: extraData?.data } }, "*");
+    window.postMessage({ action: "NOTIFICATION_OPEN_THREAD_NEW_POST", payload: { data: extraData?.data } }, targetOrigin);
   }
 
   // Clear all notifications
