@@ -12,7 +12,8 @@ import {
   joinGroup as joinGroupFunc,
   sendQortFee,
   sendCoin as sendCoinFunc,
-  isUsingLocal
+  isUsingLocal,
+  createBuyOrderTx
 } from "../background";
 import { getNameInfo } from "../backgroundFunctions/encryption";
 import { showSaveFilePicker } from "../components/Apps/useQortalMessageListener";
@@ -38,6 +39,10 @@ const dogeFeePerByte = 0.00001000
 const dgbFeePerByte = 0.00000010
 const rvnFeePerByte = 0.00001125
 
+function roundUpToDecimals(number, decimals = 8) {
+  const factor = Math.pow(10, decimals); // Create a factor based on the number of decimals
+  return Math.ceil(+number * factor) / factor;
+}
 
 const _createPoll = async ({pollName, pollDescription, options}, isFromExtension) => {
   const fee = await getFee("CREATE_POLL");
@@ -2386,4 +2391,64 @@ export const sendCoin = async (data, isFromExtension) => {
             throw new Error("User declined request")
           }
     }
+};
+
+
+export const createBuyOrder = async (data, isFromExtension) => {
+ 
+  const requiredFields = [
+    "crosschainAtInfo",
+    "processType"
+  ];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (!data[field]) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+  const crosschainAtInfo = data.crosschainAtInfo;
+  const atAddresses = data.crosschainAtInfo?.map((order)=> order.qortalAtAddress);
+  const processType = data.processType;
+  if(processType !== 'local' && processType !== 'gateway'){
+    throw new Error('Process Type must be either local or gateway')
+  }
+
+  try {
+    const resPermission = await getUserPermission({
+      text1: "Do you give this application permission to perform a buy order?",
+      text2: `${atAddresses?.length}${" "}
+      ${`buy order${
+        atAddresses?.length === 1 ? "" : "s"
+      }`}`, 
+      text3: `${crosschainAtInfo?.reduce((latest, cur) => {
+        return latest + +cur?.qortAmount;
+      }, 0)} QORT FOR   ${roundUpToDecimals(
+        crosschainAtInfo?.reduce((latest, cur) => {
+          return latest + +cur?.foreignAmount;
+        }, 0)
+      )}
+      ${` ${crosschainAtInfo?.[0]?.foreignBlockchain}`}`,
+      highlightedText: `Using ${processType}`,
+      fee: ''
+    }, isFromExtension);
+    const { accepted } = resPermission;
+    if (accepted) {
+    const resBuyOrder = await createBuyOrderTx(
+      {
+        crosschainAtInfo,
+        useLocal: processType === 'local' ? true : false
+    }
+    );
+    return resBuyOrder;
+  } else {
+    throw new Error("User declined request");
+  }
+  } catch (error) {
+    throw new Error(error?.message || "Failed to submit trade order.");
+  }
 };
