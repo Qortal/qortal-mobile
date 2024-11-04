@@ -42,7 +42,6 @@ import Return from "./assets/svgs/Return.svg";
 import Success from "./assets/svgs/Success.svg";
 import Info from "./assets/svgs/Info.svg";
 import CloseIcon from "@mui/icons-material/Close";
-
 import {
   createAccount,
   generateRandomSentence,
@@ -112,7 +111,7 @@ import {
   sortablePinnedAppsAtom,
 } from "./atoms/global";
 import { useAppFullScreen } from "./useAppFullscreen";
-import { NotAuthenticated } from "./ExtStates/NotAuthenticated";
+import { NotAuthenticated, manifestData } from "./ExtStates/NotAuthenticated";
 import {  openIndexedDB, showSaveFilePicker } from "./components/Apps/useQortalMessageListener";
 import { fileToBase64 } from "./utils/fileReading";
 import { handleGetFileFromIndexedDB } from "./utils/indexedDB";
@@ -181,6 +180,70 @@ if (isMobileDevice()) {
   console.log("Running on a mobile device");
 } else {
   console.log("Running on a desktop");
+}
+
+async function isFromPlayStore() {
+  try {
+    return false;
+  } catch (error) {
+    console.error("Error checking installer:", error);
+    return false; // Assume sideloaded if there's an error
+  }
+}
+
+function promptUserToUpdate(apkUrl) {
+  if (confirm('A new version is available on github. Would you like to download it?')) {
+    window.open(apkUrl, '_system'); // Opens the APK download URL in the default browser
+  }
+}
+
+function isNewerVersion(current, latest) {
+  const currentParts = current.split('.').map(Number);
+  const latestParts = latest.split('.').map(Number);
+
+  for (let i = 0; i < currentParts.length; i++) {
+    if (latestParts[i] > currentParts[i]) return true;
+    if (latestParts[i] < currentParts[i]) return false;
+  }
+  return false;
+}
+
+async function checkForUpdateFromGitHub() {
+  try {
+
+    const currentVersion = manifestData.version;
+    // Fetch the latest release information
+    const response = await fetch('https://api.github.com/repos/Qortal/qortal-mobile/releases/latest');
+    const latestRelease = await response.json();
+
+    // Get the version from the release name, assuming it follows the pattern "v0.2.0"
+    const latestVersion = latestRelease.name.replace(/^v/, ''); // Remove the "v" prefix if present
+
+    if (isNewerVersion(currentVersion, latestVersion)) {
+      const apkAsset = latestRelease.assets.find(asset => asset.name.endsWith('.apk'));
+      console.log('apkAsset', apkAsset)
+      if (apkAsset) {
+        // Prompt user to download the APK if a new version is available
+        promptUserToUpdate(apkAsset.browser_download_url);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for update:', error);
+  }
+}
+
+
+
+async function checkForUpdate() {
+  const fromPlayStore = await isFromPlayStore();
+  if (fromPlayStore) {
+    console.log("App is from the Play Store. Handle updates through the Play Store.");
+    // Show instructions for Play Store updates, or redirect the user to the Play Store.
+  } else {
+    console.log("App is sideloaded. Handle APK-based update.");
+    // Implement APK-based update check, as discussed previously.
+    checkForUpdateFromGitHub();
+  }
 }
 
 export const allQueues = {
@@ -1167,6 +1230,10 @@ function App() {
       unsubscribeFromEvent("openPaymentInternal", openPaymentInternal);
     };
   }, []);
+
+  useEffect(()=> {
+    checkForUpdate()
+  }, [])
 
   const registerName = async () => {
     try {
