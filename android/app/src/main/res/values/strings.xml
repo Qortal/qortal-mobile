@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Qortal </string>
-    <string name="title_activity_main">Qortal </string>
-    <string name="package_name">com.example.app</string>
-    <string name="custom_url_scheme">com.example.app</string>
+    <string name="app_name">Qortal Go</string>
+    <string name="title_activity_main">Qortal Go</string>
+    <string name="package_name">com.github.Qortal.qortalMobile</string>
+    <string name="custom_url_scheme">com.github.Qortal.qortalMobile</string>
 </resources>
