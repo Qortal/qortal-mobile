@@ -122,7 +122,7 @@ export const groupApi = "https://ext-node.qortal.link";
 export const groupApiSocket = "wss://ext-node.qortal.link";
 export const groupApiLocal = "http://127.0.0.1:12391";
 export const groupApiSocketLocal = "ws://127.0.0.1:12391";
-const timeDifferenceForNotificationChatsBackground = 600000;
+const timeDifferenceForNotificationChatsBackground = 86400000; // one day
 const requestQueueAnnouncements = new RequestQueueWithPromise(1);
 let isMobile = true;
 
@@ -2934,7 +2934,6 @@ export const checkNewMessages = async () => {
       })
     );
     let isDisableNotifications = await getUserSettings({key: 'disable-push-notifications'}) || false
-
     if (newAnnouncements.length > 0 && !mutedGroups.includes(newAnnouncements[0]?.groupId) && !isDisableNotifications) {
       const notificationId = generateId()
 

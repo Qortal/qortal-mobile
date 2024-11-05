@@ -36,7 +36,7 @@ export const MessageDisplay = ({ htmlContent , isReply}) => {
     const target = e.target.closest('a');
     if (target) {
       const href = target.getAttribute('href');
-      await Browser.open({ url: href });
+      window.open(href, '_system');
       
     } else {
       console.error('No <a> tag found or href is null.');
