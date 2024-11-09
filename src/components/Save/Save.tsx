@@ -83,9 +83,9 @@ export const Save = ({ isDesktop }) => {
           .sendMessage(
             "ENCRYPT_DATA",
             {
-              payload: {
+             
                 data64,
-              },
+            
             },
             60000
           )
