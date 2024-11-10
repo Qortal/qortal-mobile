@@ -7,6 +7,8 @@ import {
 import NavBack from "../../assets/svgs/NavBack.svg";
 import NavAdd from "../../assets/svgs/NavAdd.svg";
 import NavMoreMenu from "../../assets/svgs/NavMoreMenu.svg";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+
 import {
   ButtonBase,
   ListItemIcon,
@@ -339,6 +341,38 @@ export const AppsNavBar = () => {
               },
             }}
             primary="Refresh"
+          />
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            executeEvent("copyLink", {
+              tabId: selectedTab?.tabId,
+            });
+            handleClose();
+          }}
+        >
+          <ListItemIcon
+            sx={{
+              minWidth: "24px !important",
+              marginRight: "5px",
+            }}
+          >
+            <ContentCopyIcon
+              height={20}
+              sx={{
+                color: "rgba(250, 250, 250, 0.5)",
+              }}
+            />
+          </ListItemIcon>
+          <ListItemText
+            sx={{
+              "& .MuiTypography-root": {
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "rgba(250, 250, 250, 0.5)",
+              },
+            }}
+            primary="Copy link"
           />
         </MenuItem>
       </Menu>

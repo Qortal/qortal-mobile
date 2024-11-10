@@ -43,6 +43,35 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
     };
   }, [app, path]);
 
+  const removeTrailingSlash = (str) => str.replace(/\/$/, '');
+  const copyLinkFunc = (e) => {
+    const {tabId} = e.detail
+    if(tabId === app?.tabId){
+      let link = 'qortal://' + app?.service + '/' + app?.name 
+      if(path && path.startsWith('/')){
+        link = link +  removeTrailingSlash(path)
+      }
+      if(path && !path.startsWith('/')){
+        link = link + '/' +  removeTrailingSlash(path)
+      }
+      navigator.clipboard.writeText(link)
+      .then(() => {
+        console.log("Path copied to clipboard:", path);
+      })
+      .catch((error) => {
+        console.error("Failed to copy path:", error);
+      });
+    }
+  };
+
+  useEffect(() => {
+    subscribeToEvent("copyLink", copyLinkFunc);
+
+    return () => {
+      unsubscribeFromEvent("copyLink", copyLinkFunc);
+    };
+  }, [app, path]);
+
  // Function to navigate back in iframe
  const navigateBackInIframe = async () => {
   if (iframeRef.current && iframeRef.current.contentWindow && history?.currentIndex > 0) {
