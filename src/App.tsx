@@ -1007,8 +1007,8 @@ function App() {
         .sendMessage("logout", {})
         .then((response) => {
           if (response) {
-            resetAllStates();
             executeEvent("logout-event", {});
+            resetAllStates();
           }
         })
         .catch((error) => {
