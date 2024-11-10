@@ -1282,6 +1282,45 @@ export const Group = ({
     initiatedGetMembers.current = false;
   };
 
+  const openDevModeFunc = () => {
+    if (isMobile) {
+      setMobileViewMode("apps");
+    }
+    if (!isMobile) {
+      setDesktopViewMode('apps')
+
+    }
+    setIsOpenSideViewDirects(false)
+    setIsOpenSideViewGroups(false)
+    setGroupSection("default");
+    setSelectedGroup(null);
+    setNewChat(false);
+    setSelectedDirect(null);
+    setSecretKey(null);
+    setGroupOwner(null)
+    lastFetchedSecretKey.current = null;
+    initiatedGetMembers.current = false;
+    setSecretKeyPublishDate(null);
+    setAdmins([]);
+    setSecretKeyDetails(null);
+    setAdminsWithNames([]);
+    setMembers([]);
+    setMemberCountFromSecretKeyData(null);
+    setTriedToFetchSecretKey(false);
+    setFirstSecretKeyInCreation(false);
+    setIsOpenSideViewDirects(false)
+    setIsOpenSideViewGroups(false)
+
+  };
+
+  useEffect(() => {
+    subscribeToEvent("open-dev-mode", openDevModeFunc);
+
+    return () => {
+      unsubscribeFromEvent("open-dev-mode", openDevModeFunc);
+    };
+  }, []);
+
   const logoutEventFunc = () => {
     resetAllStatesAndRefs();
     clearStatesMessageQueueProvider();
