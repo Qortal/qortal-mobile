@@ -151,6 +151,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
               ...(message?.message || {}),
               isTemp: true,
               unread: false,
+              status: message?.status
             };
           }
 

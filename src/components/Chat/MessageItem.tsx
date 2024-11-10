@@ -258,25 +258,25 @@ export const MessageItem = ({
               }} />
             )}
        
-          {isUpdating ? (
+       {isUpdating ? (
             <Typography
               sx={{
                 fontSize: "14px",
-                color: "gray",
+                color:  "gray",
                 fontFamily: "Inter",
               }}
             >
-              Updating...
+              {message?.status === 'failed-permanent' ? 'Failed to update' : 'Updating...'} 
             </Typography>
           ) : isTemp ? (
             <Typography
               sx={{
                 fontSize: "14px",
-                color: "gray",
+                color:  "gray",
                 fontFamily: "Inter",
               }}
             >
-              Sending...
+              {message?.status === 'failed-permanent' ? 'Failed to send' : 'Sending...'}
             </Typography>
           ) : (
             <Typography
