@@ -140,7 +140,7 @@ export const DesktopFooter = ({
         >
           <IconWrapper
             color="rgba(250, 250, 250, 0.5)"
-            label="Hubs"
+            label="Groups"
             selected={isGroups}
           >
             <HubsIcon
