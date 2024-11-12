@@ -28,16 +28,25 @@ import {
   uint8ArrayToBase64,
 } from "../qdn/encryption/group-encryption";
 import { publishData } from "../qdn/publish/pubish";
-import { getPermission, setPermission } from "../qortalRequests";
+import { getPermission, setPermission, isRunningGateway } from "../qortalRequests";
 import { createTransaction } from "../transactions/transactions";
 import { mimeToExtensionMap } from "../utils/memeTypes";
-
+import TradeBotCreateRequest from "../transactions/TradeBotCreateRequest";
+import DeleteTradeOffer from "../transactions/TradeBotDeleteRequest";
+import signTradeBotTransaction from "../transactions/signTradeBotTransaction";
 
 const btcFeePerByte = 0.00000100
 const ltcFeePerByte = 0.00000030
 const dogeFeePerByte = 0.00001000
 const dgbFeePerByte = 0.00000010
 const rvnFeePerByte = 0.00001125
+
+const sellerForeignFee = {
+  'LITECOIN': {
+    value: '~0.00005',
+    ticker: 'LTC'
+  }
+}
 
 function roundUpToDecimals(number, decimals = 8) {
   const factor = Math.pow(10, decimals); // Create a factor based on the number of decimals
@@ -1359,22 +1368,30 @@ export const getWalletBalance = async (data, bypassPermission?: boolean, isFromE
     const errorMsg = `Missing fields: ${missingFieldsString}`;
     throw new Error(errorMsg);
   }
+
+  const value = (await getPermission(`qAPPAutoWalletBalance-${data.coin}`)) || false;
+  console.log('value', value)
+  let skip = false;
+  if (value) {
+    skip = true;
+  }
   let resPermission
 
-  if(!bypassPermission){
+  if(!bypassPermission && !skip){
      resPermission = await getUserPermission({
         text1: "Do you give this application permission to fetch your",
         highlightedText: `${data.coin} balance`,
+        checkbox1: {
+          value: true,
+          label: "Always allow balance to be retrieved automatically",
+        },
       }, isFromExtension);
-  } else {
-    resPermission = {
-        accepted: false
-    }
+  } 
+  const { accepted = false, checkbox1 = false } = resPermission || {};
+  if(resPermission){
+    setPermission(`qAPPAutoWalletBalance-${data.coin}`, checkbox1);
   }
- 
-  const { accepted } = resPermission;
-
-  if (accepted || bypassPermission) {
+  if (accepted || bypassPermission || skip) {
     let coin = data.coin;
     const wallet = await getSaveWallet();
     const address = wallet.address0;
@@ -1461,7 +1478,7 @@ export const getWalletBalance = async (data, bypassPermission?: boolean, isFromE
   }
 };
 
-const getUserWalletFunc = async (coin) => {
+export const getUserWalletFunc = async (coin) => {
   let userWallet = {};
   const wallet = await getSaveWallet();
   const address = wallet.address0;
@@ -2394,11 +2411,13 @@ export const sendCoin = async (data, isFromExtension) => {
 };
 
 
+
+
 export const createBuyOrder = async (data, isFromExtension) => {
  
   const requiredFields = [
     "crosschainAtInfo",
-    "processType"
+    "foreignBlockchain"
   ];
   const missingFields: string[] = [];
   requiredFields.forEach((field) => {
@@ -2411,12 +2430,10 @@ export const createBuyOrder = async (data, isFromExtension) => {
     const errorMsg = `Missing fields: ${missingFieldsString}`;
     throw new Error(errorMsg);
   }
+  const isGateway = await isRunningGateway()
+  const foreignBlockchain = data.foreignBlockchain
   const crosschainAtInfo = data.crosschainAtInfo;
   const atAddresses = data.crosschainAtInfo?.map((order)=> order.qortalAtAddress);
-  const processType = data.processType;
-  if(processType !== 'local' && processType !== 'gateway'){
-    throw new Error('Process Type must be either local or gateway')
-  }
 
   try {
     const resPermission = await getUserPermission({
@@ -2433,16 +2450,18 @@ export const createBuyOrder = async (data, isFromExtension) => {
         }, 0)
       )}
       ${` ${crosschainAtInfo?.[0]?.foreignBlockchain}`}`,
-      highlightedText: `Using ${processType}`,
-      fee: ''
+      highlightedText: `Is using gateway: ${isGateway}`,
+      fee: '',
+      foreignFee: `${sellerForeignFee[foreignBlockchain].value} ${sellerForeignFee[foreignBlockchain].ticker}`
     }, isFromExtension);
     const { accepted } = resPermission;
     if (accepted) {
     const resBuyOrder = await createBuyOrderTx(
       {
         crosschainAtInfo,
-        useLocal: processType === 'local' ? true : false
-    }
+        isGateway,
+        foreignBlockchain 
+      }
     );
     return resBuyOrder;
   } else {
@@ -2450,5 +2469,250 @@ export const createBuyOrder = async (data, isFromExtension) => {
   }
   } catch (error) {
     throw new Error(error?.message || "Failed to submit trade order.");
+  }
+};
+
+ const cancelTradeOfferTradeBot = async (body, keyPair) => {
+	const txn = new DeleteTradeOffer().createTransaction(body)
+  const url = await createEndpoint(`/crosschain/tradeoffer`);
+  const bodyToString = JSON.stringify(txn);
+
+  const deleteTradeBotResponse = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: bodyToString,
+  });
+
+  if(!deleteTradeBotResponse.ok) throw new Error('Unable to update tradebot')
+  const unsignedTxn = await deleteTradeBotResponse.text()
+  const signedTxnBytes = await signTradeBotTransaction(
+    unsignedTxn,
+    keyPair
+  )
+  const signedBytes = Base58.encode(signedTxnBytes);
+
+  let res
+  try {
+    res = await processTransactionVersion2(signedBytes)
+  } catch (error) {
+    return {
+      error: "Failed to Cancel Sell Order. Try again!",
+      failedTradeBot: {
+        atAddress: body.atAddress,
+        creatorAddress: body.creatorAddress
+      }
+    }
+  }
+  if(res?.error){
+    return {
+      error: "Failed to Cancel Sell Order. Try again!",
+      failedTradeBot: {
+        atAddress: body.atAddress,
+        creatorAddress: body.creatorAddress
+      }
+    }
+  }
+  if (res?.signature){
+    return res
+  } else {
+    throw new Error("Failed to Cancel Sell Order. Try again!")
+  }
+}
+const findFailedTradebot = async (createBotCreationTimestamp, body)=> {
+  //wait 5 secs
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  await new Promise((res)=> {
+    setTimeout(() => {
+      res(null)
+    }, 5000);
+  })
+  const url = await createEndpoint(`/crosschain/tradebot?foreignBlockchain=LITECOIN`);
+
+  const tradeBotsReponse = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const data = await tradeBotsReponse.json()
+  const latestItem2 = data
+  .filter(
+    (item) =>
+      item.creatorAddress === address
+  ).sort((a, b) => b.timestamp - a.timestamp)[0]
+  const latestItem = data
+  .filter(
+    (item) =>
+      item.creatorAddress === address &&
+      +item.foreignAmount === +body.foreignAmount
+  )
+  .sort((a, b) => b.timestamp - a.timestamp)[0];
+    if (
+      latestItem &&
+      createBotCreationTimestamp - latestItem.timestamp <= 5000 && 
+      createBotCreationTimestamp > latestItem.timestamp // Ensure latestItem's timestamp is before createBotCreationTimestamp
+    ) {
+  
+      return latestItem
+    } else {
+      return null
+    }
+  
+}
+const tradeBotCreateRequest = async (body, keyPair)=> {
+  const txn = new TradeBotCreateRequest().createTransaction(body)
+  const url = await createEndpoint(`/crosschain/tradebot/create`);
+  const bodyToString = JSON.stringify(txn);
+
+  const unsignedTxnResponse = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: bodyToString,
+  });
+  if(!unsignedTxnResponse.ok) throw new Error('Unable to create tradebot')
+  const createBotCreationTimestamp = Date.now()
+  const unsignedTxn = await unsignedTxnResponse.text()
+  const signedTxnBytes = await signTradeBotTransaction(
+    unsignedTxn,
+    keyPair
+  )
+  const signedBytes = Base58.encode(signedTxnBytes);
+
+  let res
+  try {
+    res = await processTransactionVersion2(signedBytes)
+  } catch (error) {
+    const findFailedTradeBot =    await findFailedTradebot(createBotCreationTimestamp, body)
+    return {
+      error: "Failed to Create Sell Order. Try again!",
+      failedTradeBot: findFailedTradeBot
+    }
+  }
+
+  if (res?.signature){
+    return res
+  } else {
+    throw new Error("Failed to Create Sell Order. Try again!")
+  }
+
+}
+
+export const createSellOrder = async (data, isFromExtension) => {
+ 
+  const requiredFields = [
+    "qortAmount",
+    "foreignBlockchain",
+    "foreignAmount"
+  ];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (!data[field]) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+
+const receivingAddress = await getUserWalletFunc('LTC')
+  try {
+    const resPermission = await getUserPermission({
+      text1: "Do you give this application permission to perform a sell order?",
+      text2: `${data.qortAmount}${" "}
+      ${`QORT`}`, 
+      text3: `FOR  ${data.foreignAmount} ${data.foreignBlockchain}`,
+      fee: '0.02'
+    }, isFromExtension);
+    const { accepted } = resPermission;
+    if (accepted) {
+      const resKeyPair = await getKeyPair()
+        const parsedData = resKeyPair
+        const userPublicKey = parsedData.publicKey
+        const uint8PrivateKey = Base58.decode(parsedData.privateKey);
+  const uint8PublicKey = Base58.decode(parsedData.publicKey);
+  const keyPair = {
+    privateKey: uint8PrivateKey,
+    publicKey: uint8PublicKey,
+  };
+      const response = await tradeBotCreateRequest({
+        creatorPublicKey: userPublicKey,
+				qortAmount: parseFloat(data.qortAmount),
+				fundingQortAmount: parseFloat(data.qortAmount) + 0.001,
+				foreignBlockchain: data.foreignBlockchain,
+				foreignAmount: parseFloat(data.foreignAmount),
+				tradeTimeout: 120,
+				receivingAddress: receivingAddress.address
+      }, keyPair)
+
+      return response
+
+  } else {
+    throw new Error("User declined request");
+  }
+  } catch (error) {
+    throw new Error(error?.message || "Failed to submit sell order.");
+  }
+};
+
+export const cancelSellOrder = async (data, isFromExtension) => {
+ 
+  const requiredFields = [
+    "qortAmount",
+    "foreignBlockchain",
+    "foreignAmount",
+    "atAddress"
+  ];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (!data[field]) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+
+  try {
+    const fee = await getFee("MESSAGE");
+
+    const resPermission = await getUserPermission({
+      text1: "Do you give this application permission to perform cancel a sell order?",
+      text2: `${data.qortAmount}${" "}
+      ${`QORT`}`, 
+      text3: `FOR  ${data.foreignAmount} ${data.foreignBlockchain}`,
+      fee: fee.fee
+    }, isFromExtension);
+    const { accepted } = resPermission;
+    if (accepted) {
+      const resKeyPair = await getKeyPair()
+        const parsedData = resKeyPair
+        const userPublicKey = parsedData.publicKey
+        const uint8PrivateKey = Base58.decode(parsedData.privateKey);
+  const uint8PublicKey = Base58.decode(parsedData.publicKey);
+  const keyPair = {
+    privateKey: uint8PrivateKey,
+    publicKey: uint8PublicKey,
+  };
+      const response = await cancelTradeOfferTradeBot({
+        creatorPublicKey: userPublicKey,
+        atAddress: data.atAddress
+      }, keyPair)
+
+      return response
+
+  } else {
+    throw new Error("User declined request");
+  }
+  } catch (error) {
+    throw new Error(error?.message || "Failed to submit sell order.");
   }
 };

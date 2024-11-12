@@ -106,9 +106,18 @@ export const Apps = ({ mode, setMode, show , myName}) => {
     }
   }, []);
   useEffect(() => {
+   getCategories()
+  }, [getCategories]);
+
+  useEffect(() => {
     getQapps();
-    getCategories()
-  }, [getQapps, getCategories]);
+
+    const interval = setInterval(() => {
+      getQapps();
+    }, 20 * 60 * 1000); // 20 minutes in milliseconds
+
+    return () => clearInterval(interval);
+  }, [getQapps]);
 
   const selectedAppInfoFunc = (e) => {
     const data = e.detail?.data;
@@ -292,6 +301,7 @@ export const Apps = ({ mode, setMode, show , myName}) => {
           myName={myName}
           hasPublishApp={!!(myApp || myWebsite)}
           categories={categories}
+          getQapps={getQapps}
         />
    
       {mode === "appInfo" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}

@@ -704,6 +704,9 @@ function App() {
   const qortalRequestPermissonFromExtension = async (message, event) => {
     if (message.action === "QORTAL_REQUEST_PERMISSION") {
       try {
+        if(message?.payload?.checkbox1){
+          qortalRequestCheckbox1Ref.current = message?.payload?.checkbox1
+        }
         await showQortalRequestExtension(message?.payload);
         if (qortalRequestCheckbox1Ref.current) {
           event.source.postMessage(
@@ -1479,10 +1482,12 @@ function App() {
               textDecoration: "underline",
             }}
             onClick={async () => {
-              await Browser.open({ url: "https://www.qort.trade" });
+              executeEvent("addTab", { data: { service: 'APP', name: 'q-trade' } });
+              executeEvent("open-apps-mode", { });
+              setIsOpenDrawerProfile(false);
             }}
           >
-            Get QORT at qort.trade
+            Get QORT at q-trade
           </TextP>
         </AuthenticatedContainerInnerLeft>
         <AuthenticatedContainerInnerRight>
@@ -2828,6 +2833,25 @@ await showInfo({
                   {"Fee: "}
                   {messageQortalRequestExtension?.fee}
                   {" QORT"}
+                </TextP>
+                <Spacer height="15px" />
+              </>
+            )}
+            {messageQortalRequestExtension?.foreignFee && (
+              <>
+                <Spacer height="15px" />
+
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: 1.2,
+                    fontSize: "16px",
+                    fontWeight: "normal",
+                    maxWidth: "90%",
+                  }}
+                >
+                  {"Foreign Fee: "}
+                  {messageQortalRequestExtension?.foreignFee}
                 </TextP>
                 <Spacer height="15px" />
               </>

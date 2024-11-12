@@ -117,6 +117,9 @@ export function getProtocol(url) {
   }
 }
 
+export const gateways = ['ext-node.qortal.link']
+
+
 let lastGroupNotification;
 export const groupApi = "https://ext-node.qortal.link";
 export const groupApiSocket = "wss://ext-node.qortal.link";
@@ -173,6 +176,19 @@ export const clearAllQueues = () => {
     }
   });
 };
+
+export const getForeignKey = async (foreignBlockchain)=> {
+  const resKeyPair = await getKeyPair();
+  const parsedData = resKeyPair;
+
+  switch (foreignBlockchain) {
+    case "LITECOIN":
+      return parsedData.ltcPrivateKey
+
+      default:
+        return null
+  }
+}
 
 export const pauseAllQueues = () => controlAllQueues("pause");
 export const resumeAllQueues = () => controlAllQueues("resume");
@@ -1581,27 +1597,29 @@ export async function decryptDirectFunc({ messages, involvingAddress }) {
   return holdMessages;
 }
 
-export async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
+export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlockchain }) {
   try {
-    if (useLocal) {
+
+    if (!isGateway) {
       const wallet = await getSaveWallet();
 
       const address = wallet.address0;
 
-      const resKeyPair = await getKeyPair();
-      const parsedData = resKeyPair;
       const message = {
         addresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
-        foreignKey: parsedData.ltcPrivateKey,
+        foreignKey: await getForeignKey(foreignBlockchain),
         receivingAddress: address,
       };
       let responseVar;
       const txn = new TradeBotRespondMultipleRequest().createTransaction(
         message
       );
-      const apiKey = await getApiKeyFromStorage();
+     
+   
+       const url =  await createEndpoint('/crosschain/tradebot/respondmultiple')
+      
       const responseFetch = await fetch(
-        `http://127.0.0.1:12391/crosschain/tradebot/respondmultiple?apiKey=${apiKey?.apikey}`,
+        url,
         {
           method: "POST",
           headers: {
@@ -1630,7 +1648,7 @@ export async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
             message: "Transaction processed successfully!",
             atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
             senderAddress: address,
-            node: 'http://127.0.0.1:12391'
+            node: url
           },
         };
       } else {
@@ -1640,7 +1658,7 @@ export async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
             message: response,
             atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
             senderAddress: address,
-            node: 'http://127.0.0.1:12391'
+            node: url
           },
         };
       }
@@ -1650,58 +1668,39 @@ export async function createBuyOrderTx({ crosschainAtInfo, useLocal }) {
     const wallet = await getSaveWallet();
     const address = wallet.address0;
 
-    const resKeyPair = await getKeyPair();
-    const parsedData = resKeyPair;
+ 
     const message = {
       addresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
-      foreignKey: parsedData.ltcPrivateKey,
+      foreignKey: await getForeignKey(foreignBlockchain),
       receivingAddress: address,
     };
     const res = await sendChatForBuyOrder({
       qortAddress: proxyAccountAddress,
       recipientPublicKey: proxyAccountPublicKey,
       message,
+      atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
     });
+
+    
     if (res?.signature) {
-      let responseMessage;
+    
+        const message = await listenForChatMessageForBuyOrder({
+          nodeBaseUrl: buyTradeNodeBaseUrl,
+          senderAddress: proxyAccountAddress,
+          senderPublicKey: proxyAccountPublicKey,
+          signature: res?.signature,
+        });
 
-      const message = await listenForChatMessageForBuyOrder({
-        nodeBaseUrl: buyTradeNodeBaseUrl,
-        senderAddress: proxyAccountAddress,
-        senderPublicKey: proxyAccountPublicKey,
-        signature: res?.signature,
-      });
-      // const status = response.callResponse === true ? 'trade-ongoing' : 'trade-failed'
-      // if (res?.encryptedMessageToBase58) {
-      //   return {
-      //     atAddresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
-      //     encryptedMessageToBase58: res?.encryptedMessageToBase58,
-      //     node: buyTradeNodeBaseUrl,
-      //     qortAddress: address,
-      //     chatSignature: res?.signature,
-      //     senderPublicKey: parsedData.publicKey,
-      //     sender: address,
-      //     reference: res?.reference,
-      //     response.callResponse
-      //   };
-      // }
-      // return {
-      //   atAddresses: crosschainAtInfo.map((order) => order.qortalAtAddress),
-      //   chatSignature: res?.signature,
-      //   node: buyTradeNodeBaseUrl,
-      //   qortAddress: address,
-      // };
-      responseMessage = {
-        callResponse: message.callResponse,
-          extra: {
-            message: message?.extra?.message,
-            senderAddress: address,
-            node: buyTradeNodeBaseUrl,
-            atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
-          },
-          encryptedMessageToBase58
-      }
-
+      const responseMessage = {
+          callResponse: message.callResponse,
+            extra: {
+              message: message?.extra?.message,
+              senderAddress: address,
+              node: buyTradeNodeBaseUrl,
+              atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+            }
+          }
+    
       return responseMessage
     } else {
       throw new Error("Unable to send buy order message");
@@ -2306,14 +2305,7 @@ async function listenForChatMessageForBuyOrder({
       senderPublicKey
     );
 
-    // chrome.tabs.query({}, function (tabs) {
-    //   tabs.forEach((tab) => {
-    //     chrome.tabs.sendMessage(tab.id, {
-    //       type: "RESPONSE_FOR_TRADES",
-    //       message: parsedMessageObj,
-    //     });
-    //   });
-    // });
+    return parsedMessageObj
   } catch (error) {
     console.error(error);
     throw new Error(error.message);
