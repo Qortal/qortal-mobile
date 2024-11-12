@@ -637,9 +637,7 @@ export const isRunningGateway = async ()=> {
         }
         case "IS_USING_GATEWAY": {
           try {
-            console.log('isusing going')
             let isGateway =  await isRunningGateway()
-            console.log('isGateway', isGateway)
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
@@ -647,7 +645,6 @@ export const isRunningGateway = async ()=> {
               type: "backgroundMessageResponse",
             }, event.origin);
           } catch (error) {
-            console.log('isusing going', error)
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,

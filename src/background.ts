@@ -2814,7 +2814,6 @@ function setupMessageListener() {
 
         break;
       default:
-        console.error("Unknown action:", request.action);
         break;
     }
   });
