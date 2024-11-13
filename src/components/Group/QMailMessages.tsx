@@ -43,7 +43,6 @@ export const QMailMessages = ({userName, userAddress}) => {
     const [lastEnteredTimestamp, setLastEnteredTimestamp] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    console.log('lastEnteredTimestamp', lastEnteredTimestamp)
     const getMails = useCallback(async () => {
         try {
           setLoading(true)
@@ -100,7 +99,6 @@ export const QMailMessages = ({userName, userAddress}) => {
 
     
 
-      console.log('mails', mails)
   return (
     <Box
     sx={{
