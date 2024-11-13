@@ -33,6 +33,7 @@ import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMu
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
 import {
   addDataPublishesCase,
+  addEnteredQmailTimestampCase,
   addGroupNotificationTimestampCase,
   addTimestampEnterChatCase,
   addUserSettingsCase,
@@ -53,6 +54,7 @@ import {
   getApiKeyCase,
   getCustomNodesFromStorageCase,
   getDataPublishesCase,
+  getEnteredQmailTimestampCase,
   getGroupDataSingleCase,
   getGroupNotificationTimestampCase,
   getTempPublishCase,
@@ -2494,6 +2496,32 @@ export async function addTimestampGroupAnnouncement({
   });
 }
 
+export async function addEnteredQmailTimestamp() {
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  
+  return await new Promise((resolve, reject) => {
+    storeData(`qmail-entered-timestamp-${address}`, Date.now())
+      .then(() => resolve(true))
+      .catch((error) => {
+        reject(new Error(error.message || "Error saving data"));
+      });
+  });
+}
+
+export async function getEnteredQmailTimestamp() {
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  const key = `qmail-entered-timestamp-${address}`;
+  const res = await getData<any>(key).catch(() => null);
+  if (res) {
+    const parsedData = res;
+    return parsedData;
+  } else {
+    return null
+  }
+}
+
 async function getGroupData() {
   const wallet = await getSaveWallet();
   const address = wallet.address0;
@@ -2787,6 +2815,12 @@ function setupMessageListener() {
         break;
       case "setupGroupWebsocket":
         setupGroupWebsocketCase(request, event);
+        break;
+      case "addEnteredQmailTimestamp":
+        addEnteredQmailTimestampCase(request, event);
+        break;
+      case "getEnteredQmailTimestamp":
+        getEnteredQmailTimestampCase(request, event);
         break;
       case "logout":
         {

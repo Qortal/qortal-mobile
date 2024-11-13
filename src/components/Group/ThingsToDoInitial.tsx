@@ -11,8 +11,9 @@ import InfoIcon from "@mui/icons-material/Info";
 import { Box, Typography } from "@mui/material";
 import { Spacer } from "../../common/Spacer";
 import { isMobile } from "../../App";
+import { QMailMessages } from "./QMailMessages";
 
-export const ThingsToDoInitial = ({ myAddress, name, hasGroups, balance }) => {
+export const ThingsToDoInitial = ({ myAddress, name, hasGroups, balance , userInfo}) => {
   const [checked1, setChecked1] = React.useState(false);
   const [checked2, setChecked2] = React.useState(false);
   const [checked3, setChecked3] = React.useState(false);
@@ -47,6 +48,22 @@ export const ThingsToDoInitial = ({ myAddress, name, hasGroups, balance }) => {
     if (name) setChecked2(true);
   }, [name]);
 
+  const isLoaded = React.useMemo(()=> {
+    if(balance !== null &&  userInfo !== null) return true
+  return false
+}, [balance, userInfo])
+
+const hasDoneNameAndBalanceAndIsLoaded = React.useMemo(()=> {
+  if(isLoaded && checked1 && checked2) return true
+return false
+}, [checked1, isLoaded, checked2])
+
+if(hasDoneNameAndBalanceAndIsLoaded){
+return (
+ <QMailMessages userAddress={userInfo?.address} userName={userInfo?.name} />
+);
+}
+
   return (
     <Box
       sx={{
@@ -70,7 +87,8 @@ export const ThingsToDoInitial = ({ myAddress, name, hasGroups, balance }) => {
             fontWeight: 600,
           }}
         >
-          Getting Started:
+                 {!isLoaded ? 'Loading...' : 'Getting Started' }
+
         </Typography>
         <Spacer height="10px" />
       </Box>

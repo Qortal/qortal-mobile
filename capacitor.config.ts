@@ -17,6 +17,9 @@ const config: CapacitorConfig = {
       "androidSpinnerStyle": "large",
       "splashFullScreen": true,
       "splashImmersive": true
+    },
+    CapacitorHttp: {
+      enabled: true,
     }
   }
 };
