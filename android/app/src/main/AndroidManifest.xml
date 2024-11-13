@@ -42,4 +42,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+<!-- Needed if you want to retrieve unredacted EXIF metadata from photos -->
+<uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+
 </manifest>

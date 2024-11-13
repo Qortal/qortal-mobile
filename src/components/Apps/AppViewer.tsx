@@ -15,7 +15,7 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
   const { rootHeight } = useContext(MyContext);
   // const iframeRef = useRef(null);
   const { document, window: frameWindow } = useFrame();
-  const {path, history, changeCurrentIndex} = useQortalMessageListener(frameWindow, iframeRef, app?.tabId) 
+  const {path, history, changeCurrentIndex} = useQortalMessageListener(frameWindow, iframeRef, app?.tabId, app?.name, app?.service) 
   const [url, setUrl] = useState('')
 
   useEffect(()=> {
@@ -162,7 +162,7 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
           height: !isMobile ? '100vh' : `calc(${rootHeight} - 60px - 45px )`,
           border: 'none',
           width: '100%'
-        }} id="browser-iframe" src={defaultUrl} sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-modals" allow="fullscreen">
+        }} id="browser-iframe" src={defaultUrl} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" allow="fullscreen">
     						
     						</iframe>
     </Box>

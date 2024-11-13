@@ -36,6 +36,7 @@ export const NotAuthenticated = ({
   setApiKey,
   globalApiKey,
   handleSetGlobalApikey,
+  handleFilePick
 }) => {
   const [isValidApiKey, setIsValidApiKey] = useState<boolean | null>(null);
   const [hasLocalNode, setHasLocalNode] = useState<boolean | null>(null);
@@ -263,8 +264,7 @@ export const NotAuthenticated = ({
           marginLeft: "28px",
         }}
       >
-        <CustomButton {...getRootProps()}>
-          <input {...getInputProps()} />
+        <CustomButton onClick={handleFilePick}>
           Authenticate
         </CustomButton>
         <Tooltip title="Authenticate by importing your Qortal JSON file" arrow>

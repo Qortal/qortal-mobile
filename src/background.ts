@@ -11,7 +11,7 @@ import {
 } from "./backgroundFunctions/encryption";
 import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from "./constants/codes";
 import ShortUniqueId from "short-unique-id";
-
+import { App as CapacitorApp } from '@capacitor/app';
 import Base58 from "./deps/Base58";
 import {
   base64ToUint8Array,
@@ -19,6 +19,7 @@ import {
   encryptSingle,
   objectToBase64,
 } from "./qdn/encryption/group-encryption";
+import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { reusableGet } from "./qdn/publish/pubish";
 import { signChat } from "./transactions/signChat";
 import { createTransaction } from "./transactions/transactions";
@@ -101,7 +102,14 @@ LocalNotifications.requestPermissions().then(permission => {
   if (permission.display === 'granted') {
     console.log("Notifications enabled");
   }
-});
+}).catch((error)=> console.error(error));
+
+FilePicker.requestPermissions().then(permission => {
+  if (permission?.publicStorage === 'granted') {
+    console.log("File access permission granted");
+  }
+}).catch((error)=> console.error(error));;
+
 
 
 export function cleanUrl(url) {
@@ -3161,3 +3169,17 @@ LocalNotifications.addListener('localNotificationActionPerformed', async (event)
     console.error("Error clearing notifications:", error);
   }
 });
+
+
+const initializeBackButton = () => {
+
+    CapacitorApp.addListener('backButton', (event) => {
+      // Prevent the app from closing on back button press
+      event.preventDefault();
+      
+    });
+  
+};
+
+// Call this function on app startup
+initializeBackButton();

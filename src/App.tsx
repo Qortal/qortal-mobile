@@ -42,6 +42,7 @@ import Return from "./assets/svgs/Return.svg";
 import Success from "./assets/svgs/Success.svg";
 import Info from "./assets/svgs/Info.svg";
 import CloseIcon from "@mui/icons-material/Close";
+import { FilePicker } from '@capawesome/capacitor-file-picker';
 import {
   createAccount,
   generateRandomSentence,
@@ -221,7 +222,6 @@ async function checkForUpdateFromGitHub() {
 
     if (isNewerVersion(currentVersion, latestVersion)) {
       const apkAsset = latestRelease.assets.find(asset => asset.name.endsWith('.apk'));
-      console.log('apkAsset', apkAsset)
       if (apkAsset) {
         // Prompt user to download the APK if a new version is available
         promptUserToUpdate(apkAsset.browser_download_url);
@@ -608,6 +608,48 @@ function App() {
     },
   });
 
+   const handleFilePick = async () => {
+    try {
+      const resultPermission = await FilePicker.checkPermissions();
+      // Open the file picker to select a JSON file
+      const result = await FilePicker.pickFiles({
+        types: ['application/json'], // Restrict to JSON files
+        multiple: false, // Allow only one file
+        readData: true,
+
+      });
+      if (result.files.length > 0) {
+        const decodedData = atob(result.files[0].data); // `atob` decodes Base64 to a string
+        const parsedFile = JSON.parse(decodedData);
+        
+
+        // Validate required fields
+        const requiredFields = [
+          "address0",
+          "salt",
+          "iv",
+          "version",
+          "encryptedSeed",
+          "mac",
+          "kdfThreads",
+        ];
+        for (const field of requiredFields) {
+          if (!(field in parsedFile)) throw new Error(`${field} not found in JSON`);
+        }
+
+        // Set the state with parsed wallet data
+        setRawWallet(parsedFile);
+        setExtstate("wallet-dropped");
+        setdecryptedWallet(null);
+
+      } else {
+        console.log("No file selected.");
+      }
+    } catch (error) {
+      console.error("Error picking JSON file:", error);
+    }
+  };
+
   const saveWalletFunc = async (password: string) => {
     let wallet = structuredClone(rawWallet);
 
@@ -705,7 +747,7 @@ function App() {
     if (message.action === "QORTAL_REQUEST_PERMISSION") {
       try {
         if(message?.payload?.checkbox1){
-          qortalRequestCheckbox1Ref.current = message?.payload?.checkbox1
+          qortalRequestCheckbox1Ref.current = message?.payload?.checkbox1?.value || false
         }
         await showQortalRequestExtension(message?.payload);
         if (qortalRequestCheckbox1Ref.current) {
@@ -1576,6 +1618,7 @@ function App() {
         <NotAuthenticated
           getRootProps={getRootProps}
           getInputProps={getInputProps}
+          handleFilePick={handleFilePick}
           setExtstate={setExtstate}
           apiKey={apiKey}
           globalApiKey={globalApiKey}

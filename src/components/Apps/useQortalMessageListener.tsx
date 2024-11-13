@@ -184,7 +184,7 @@ const UIQortalRequests = [
   'GET_TX_ACTIVITY_SUMMARY', 'GET_FOREIGN_FEE', 'UPDATE_FOREIGN_FEE',
   'GET_SERVER_CONNECTION_HISTORY', 'SET_CURRENT_FOREIGN_SERVER',
   'ADD_FOREIGN_SERVER', 'REMOVE_FOREIGN_SERVER', 'GET_DAY_SUMMARY', 'CREATE_TRADE_BUY_ORDER',
-  'CREATE_TRADE_SELL_ORDER', 'CANCEL_TRADE_SELL_ORDER', 'IS_USING_GATEWAY'
+  'CREATE_TRADE_SELL_ORDER', 'CANCEL_TRADE_SELL_ORDER', 'IS_USING_GATEWAY',  'ADMIN_ACTION'
 ];
 
 
@@ -381,7 +381,7 @@ const UIQortalRequests = [
     return obj; // Updated object with references to stored files
   }
 
-export const useQortalMessageListener = (frameWindow, iframeRef, tabId) => {
+export const useQortalMessageListener = (frameWindow, iframeRef, tabId, appName, appService) => {
   const [path, setPath] = useState('')
   const [history, setHistory] = useState({
     customQDNHistoryPaths: [],
@@ -435,7 +435,9 @@ isDOMContentLoaded: false
       if (event?.data?.requestedHandler !== 'UI') return;
 
       const sendMessageToRuntime = (message, eventPort) => {
-        window.sendMessage(message.action, message.payload, 300000, message.isExtension)
+        window.sendMessage(message.action, message.payload, 300000, message.isExtension,  {
+          name: appName, service: appService
+        })
         .then((response) => {
           if (response.error) {
             eventPort.postMessage({
@@ -552,7 +554,7 @@ isDOMContentLoaded: false
     };
 
     
-  }, []); // Empty dependency array to run once when the component mounts
+  }, [appName, appService]); // Empty dependency array to run once when the component mounts
 
 
 
