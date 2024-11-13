@@ -91,6 +91,7 @@ import { DesktopHeader } from "../Desktop/DesktopHeader";
 import { Apps } from "../Apps/Apps";
 import { AppsNavBar } from "../Apps/AppsNavBar";
 import { AppsDesktop } from "../Apps/AppsDesktop";
+import { formatEmailDate } from "./QMailMessages";
 
 // let touchStartY = 0;
 // let disablePullToRefresh = false;
@@ -1731,6 +1732,8 @@ export const Group = ({
                   </ListItemAvatar>
                   <ListItemText
                     primary={direct?.name || direct?.address}
+                    secondary={!direct?.timestamp ? 'no messages' :`last message: ${formatEmailDate(direct?.timestamp)}`}
+
                     primaryTypographyProps={{
                       style: {
                         color:
@@ -1745,6 +1748,7 @@ export const Group = ({
                         color:
                           direct?.address === selectedDirect?.address &&
                           "black",
+                          fontSize: '12px'
                       },
                     }}
                     sx={{
@@ -1922,6 +1926,7 @@ export const Group = ({
                     </ListItemAvatar>
                     <ListItemText
                       primary={group.groupName}
+                      secondary={!group?.timestamp ? 'no messages' :`last message: ${formatEmailDate(group?.timestamp)}`}
                       primaryTypographyProps={{
                         style: {
                           color:
@@ -1934,6 +1939,7 @@ export const Group = ({
                           color:
                             group?.groupId === selectedGroup?.groupId &&
                             "black",
+                            fontSize: '12px'
                         },
                       }}
                       sx={{
