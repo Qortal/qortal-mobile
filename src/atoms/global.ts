@@ -74,3 +74,19 @@ export const navigationControllerAtom = atom({
   key: 'navigationControllerAtom', 
   default: {}, 
 });
+
+
+export const myGroupsWhereIAmAdminAtom = atom({
+  key: 'myGroupsWhereIAmAdminAtom', 
+  default: [], 
+});
+
+export const promotionTimeIntervalAtom = atom({
+  key: 'promotionTimeIntervalAtom', 
+  default: 0, 
+});
+
+export const promotionsAtom = atom({
+  key: 'promotionsAtom', 
+  default: [], 
+});

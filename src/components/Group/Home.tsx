@@ -6,6 +6,7 @@ import { ThingsToDoInitial } from "./ThingsToDoInitial";
 import { GroupJoinRequests } from "./GroupJoinRequests";
 import { GroupInvites } from "./GroupInvites";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { ListOfGroupPromotions } from "./ListOfGroupPromotions";
 
 export const Home = ({
   refreshHomeDataFunc,
@@ -106,6 +107,9 @@ export const Home = ({
           />
         </Box>
       )}
+         {!isLoadingGroups && (
+      <ListOfGroupPromotions />
+         )}
       <Spacer height="180px" />
     </Box>
   );
