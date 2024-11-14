@@ -108,32 +108,40 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
     getScrollElement: () => parentRef.current,
     estimateSize: () => 80, // Provide an estimated height of items, adjust this as needed
     overscan: 10, // Number of items to render outside the visible area to improve smoothness
-    measureElement:
-    typeof window !== 'undefined' &&
-    navigator.userAgent.indexOf('Firefox') === -1
-      ? element => {
-        return element?.getBoundingClientRect().height
-      }
-      : undefined,
+    getItemKey: React.useCallback(
+      (index) => messages[index].signature,
+      [messages]
+    ),
   });
 
   return (
 <div style={{
   height: '100%',
-  position: 'relative'
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column'
 }}>
-    <div ref={parentRef} style={{ height: '100%', overflow: 'auto', position: 'relative', display: 'flex' }}>
-      <div
-        style={{
-          width: '100%',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center', // Center items horizontally
-          gap: '10px', // Add gap between items
-          flexGrow: 1
-        }}
+     <div
+        ref={parentRef}
+        className="List"
+        style={{ flexGrow: 1, overflow: 'auto', position: 'relative', display: 'flex', height: '0px' }}
       >
+        <div
+          style={{
+            height: rowVirtualizer.getTotalSize(),
+            width: '100%',
+         
+          }}
+        >
+       <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              // transform: `translateY(${rowVirtualizer.getVirtualItems()[0]?.start ?? 0}px)`,
+            }}
+          >
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const index = virtualRow.index;
           let message = messages[index];
@@ -205,7 +213,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
           );
         })}
       </div>
-
+      </div>
       
     </div>
     {showScrollButton && (
