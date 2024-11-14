@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import './styles.css';
 import { executeEvent } from '../../utils/events';
+import { Browser } from '@capacitor/browser';
 
 const extractComponents = (url) => {
   if (!url || !url.startsWith("qortal://")) { // Check if url exists and starts with "qortal://"
@@ -86,7 +87,7 @@ export const MessageDisplay = ({ htmlContent, isReply }) => {
     const target = e.target;
     if (target.tagName === 'A') {
       const href = target.getAttribute('href');
-      window.electronAPI.openExternal(href);
+      window.open(href, '_system');
     } else if (target.getAttribute('data-url')) {
       const url = target.getAttribute('data-url');
       const res = extractComponents(url);
