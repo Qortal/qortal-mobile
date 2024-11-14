@@ -118,7 +118,10 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
   });
 
   return (
-<>
+<div style={{
+  height: '100%',
+  position: 'relative'
+}}>
     <div ref={parentRef} style={{ height: '100%', overflow: 'auto', position: 'relative', display: 'flex' }}>
       <div
         style={{
@@ -223,7 +226,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
         Scroll to Unread Messages
       </button>
     )}
-   </>
+   </div>
  
   );
 };
