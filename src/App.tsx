@@ -2301,6 +2301,7 @@ function App() {
               onClick={() => {
                 setRawWallet(null);
                 setExtstate("not-authenticated");
+                logoutFunc()
               }}
               src={Return}
             />
