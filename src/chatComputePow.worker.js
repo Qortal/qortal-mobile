@@ -24,9 +24,7 @@ async function loadWasm() {
 
     const wasmModule = await wasmInit(importObject);
     compute = wasmModule.exports.compute2;
-    console.log('Wasm loaded successfully:', compute);
   } catch (error) {
-    console.error('Error loading Wasm:', error);
     throw error;
   }
 }
@@ -45,7 +43,6 @@ function sbrk(size) {
   // Grow memory if needed
   if (brk > memory.buffer.byteLength) {
     const pagesNeeded = Math.ceil((brk - memory.buffer.byteLength) / (64 * 1024)); // 64 KiB per page
-    console.log(`Growing memory by ${pagesNeeded} pages`);
     try {
       memory.grow(pagesNeeded);
       heap = new Uint8Array(memory.buffer); // Update heap view
@@ -78,9 +75,7 @@ async function computePow(chatBytes, difficulty) {
     workBufferPtr = sbrk(workBufferLength);
   }
 
-  console.log('Starting POW computation...');
   const nonce = compute(hashPtr, workBufferPtr, workBufferLength, difficulty);
-  console.log('POW computation finished.');
 
   return { nonce, chatBytesArray };
 }
