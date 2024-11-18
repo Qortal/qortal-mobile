@@ -21,10 +21,12 @@ import { ReplyPreview } from './MessageItem'
 import { ExitIcon } from '../../assets/Icons/ExitIcon'
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from '../../constants/resourceTypes'
 import { isExtMsg } from '../../background'
+import MentionList from './MentionList'
+import { ChatOptions } from './ChatOptions'
 
 const uid = new ShortUniqueId({ length: 5 });
 
-export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey, myAddress, handleNewEncryptionNotification, hide, handleSecretKeyCreationInProgress, triedToFetchSecretKey, myName, balance}) => {
+export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey, myAddress, handleNewEncryptionNotification, hide, handleSecretKeyCreationInProgress, triedToFetchSecretKey, myName, balance,  getTimestampEnterChatParent}) => {
   const [messages, setMessages] = useState([])
   const [chatReferences, setChatReferences] = useState({})
   const [isSending, setIsSending] = useState(false)
@@ -43,6 +45,63 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
   const editorRef = useRef(null);
   const { queueChats, addToQueue, processWithNewMessages } = useMessageQueue();
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+
+  const lastReadTimestamp = useRef(null)
+
+ 
+
+  const getTimestampEnterChat = async () => {
+    try {
+      return new Promise((res, rej) => {
+        window.sendMessage("getTimestampEnterChat")
+  .then((response) => {
+    if (!response?.error) {
+      if(response && selectedGroup && response[selectedGroup]){
+        lastReadTimestamp.current = response[selectedGroup]
+        window.sendMessage("addTimestampEnterChat", {
+          timestamp: Date.now(),
+          groupId: selectedGroup
+        }).catch((error) => {
+            console.error("Failed to add timestamp:", error.message || "An error occurred");
+          });
+        
+
+        setTimeout(() => {
+          getTimestampEnterChatParent();
+        }, 200);
+      }
+    
+      res(response);
+      return;
+    }
+    rej(response.error);
+  })
+  .catch((error) => {
+    rej(error.message || "An error occurred");
+  });
+
+      });
+    } catch (error) {}
+  };
+
+  useEffect(()=> {
+    getTimestampEnterChat()
+  }, [])
+
+  
+
+  const members = useMemo(() => {
+    const uniqueMembers = new Set();
+
+    messages.forEach((message) => {
+      if (message?.senderName) {
+        uniqueMembers.add(message?.senderName);
+      }
+    });
+
+    return Array.from(uniqueMembers);
+  }, [messages]);
 
   const triggerRerender = () => {
     forceUpdate(); // Trigger re-render by updating the state
@@ -211,16 +270,25 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
                     return organizedChatReferences;
                   });
                 } else {
+                  let firstUnreadFound = false;
                   const formatted = combineUIAndExtensionMsgs
                     .filter((rawItem) => !rawItem?.chatReference)
-                    .map((item) => ({
-                      ...item,
-                      id: item.signature,
-                      text: item?.decryptedData?.message || "",
-                      repliedTo: item?.repliedTo || item?.decryptedData?.repliedTo,
-                      isNotEncrypted: !!item?.messageText,
-                      unread: false,
-                    }));
+                    .map((item) => {
+                      const divide = lastReadTimestamp.current && !firstUnreadFound && item.timestamp > lastReadTimestamp.current && myAddress !== item?.sender;
+                     
+                      if(divide){
+                        firstUnreadFound = true
+                      }
+                      return {
+                        ...item,
+                        id: item.signature,
+                        text: item?.decryptedData?.message || "",
+                        repliedTo: item?.repliedTo || item?.decryptedData?.repliedTo,
+                        isNotEncrypted: !!item?.messageText,
+                        unread: false,
+                        divide
+                      }
+                    });
                   setMessages(formatted);
           
                   setChatReferences((prev) => {
@@ -621,7 +689,7 @@ const clearEditorContent = () => {
     left: hide && '-100000px',
     }}>
  
-              <ChatList onReply={onReply} chatId={selectedGroup} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} handleReaction={handleReaction} chatReferences={chatReferences} tempChatReferences={tempChatReferences}/>
+              <ChatList enableMentions onReply={onReply} chatId={selectedGroup} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} handleReaction={handleReaction} chatReferences={chatReferences} tempChatReferences={tempChatReferences} members={members} myName={myName} selectedGroup={selectedGroup}/>
 
    
       <div style={{
@@ -668,8 +736,19 @@ const clearEditorContent = () => {
         </Box>
       )}
      
-     
-      <Tiptap setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} isFocusedParent={isFocusedParent} setIsFocusedParent={setIsFocusedParent} />
+     <Box sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%'
+     }}>
+      
+    
+      <Tiptap enableMentions setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} isFocusedParent={isFocusedParent} setIsFocusedParent={setIsFocusedParent} membersWithNames={members} />
+      {!isFocusedParent && (
+        <ChatOptions messages={messages} goToMessage={()=> {}} members={members} myName={myName} selectedGroup={selectedGroup}/>
+)}
+      </Box>
       </div>
       <Box sx={{
         display: 'flex',
@@ -701,36 +780,39 @@ const clearEditorContent = () => {
              </CustomButton>
            
             )}
-      <CustomButton
-              onClick={()=> {
-                if(isSending) return
-                sendMessage()
-              }}
-              style={{
-                marginTop: 'auto',
-                alignSelf: 'center',
-                cursor: isSending ? 'default' : 'pointer',
-                background: isSending && 'rgba(0, 0, 0, 0.8)',
-                flexShrink: 0,
-                padding: isMobile && '5px',
-                
-              }}
-            >
-              {isSending && (
-                <CircularProgress
-                size={18}
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: '-12px',
-                  marginLeft: '-12px',
-                  color: 'white'
-                }}
-              />
-              )}
-              {` Send`}
-            </CustomButton>
+            {!isMobile && !isFocusedParent && (
+                  <CustomButton
+                  onClick={()=> {
+                    if(isSending) return
+                    sendMessage()
+                  }}
+                  style={{
+                    marginTop: 'auto',
+                    alignSelf: 'center',
+                    cursor: isSending ? 'default' : 'pointer',
+                    background: isSending && 'rgba(0, 0, 0, 0.8)',
+                    flexShrink: 0,
+                    padding: isMobile && '5px',
+                    
+                  }}
+                >
+                  {isSending && (
+                    <CircularProgress
+                    size={18}
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      marginTop: '-12px',
+                      marginLeft: '-12px',
+                      color: 'white'
+                    }}
+                  />
+                  )}
+                  {` Send`}
+                </CustomButton>
+            )}
+  
            
               </Box>
       {/* <button onClick={sendMessage}>send</button> */}

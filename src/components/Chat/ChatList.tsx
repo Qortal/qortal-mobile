@@ -9,7 +9,18 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
   const [messages, setMessages] = useState(initialMessages);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const hasLoadedInitialRef = useRef(false);
-  const isAtBottomRef = useRef(true);
+  const [showScrollDownButton, setShowScrollDownButton] = useState(false);
+
+  const showScrollButtonRef = useRef(showScrollButton);
+  const isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef(null);
+
+  // Update the ref whenever the state changes
+  useEffect(() => {
+    showScrollButtonRef.current = showScrollButton;
+  }, [showScrollButton]);
+
+
   // const [ref, inView] = useInView({
   //   threshold: 0.7
   // })
@@ -40,27 +51,36 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
     setMessages(totalMessages);
 
     setTimeout(() => {
-      const hasUnreadMessages = totalMessages.some((msg) => msg.unread && !msg?.chatReference);
+      const hasUnreadMessages = totalMessages.some((msg) => msg.unread && !msg?.chatReference && !msg?.isTemp);
       if (parentRef.current) {
         const { scrollTop, scrollHeight, clientHeight } = parentRef.current;
       const atBottom = scrollTop + clientHeight >= scrollHeight - 10; // Adjust threshold as needed
         if (!atBottom && hasUnreadMessages) {
           setShowScrollButton(hasUnreadMessages);
+          setShowScrollDownButton(false)
+
         } else {
           handleMessageSeen();
         }
       }
       if (!hasLoadedInitialRef.current) {
-        scrollToBottom(totalMessages);
+        const findDivideIndex = totalMessages.findIndex((item)=> !!item?.divide)
+        const divideIndex = findDivideIndex !== -1 ? findDivideIndex : undefined
+        scrollToBottom(totalMessages, divideIndex);
         hasLoadedInitialRef.current = true;
       }
     }, 500);
   }, [initialMessages, tempMessages]);
 
-  const scrollToBottom = (initialMsgs) => {
+  const scrollToBottom = (initialMsgs, divideIndex) => {
     const index = initialMsgs ? initialMsgs.length - 1 : messages.length - 1;
     if (rowVirtualizer) {
-      rowVirtualizer.scrollToIndex(index, { align: 'end' });
+      if(divideIndex){
+        rowVirtualizer.scrollToIndex(divideIndex, { align: 'start' })
+      } else {
+        rowVirtualizer.scrollToIndex(index, { align: 'end' })
+
+      }
     }
     handleMessageSeen()
   };
@@ -84,9 +104,17 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
   // };
 
 
+
   const sentNewMessageGroupFunc = useCallback(() => {
-    scrollToBottom();
+    const { scrollHeight, scrollTop, clientHeight } = parentRef.current;
+  
+    // Check if the user is within 200px from the bottom
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    if (distanceFromBottom <= 700) {
+      scrollToBottom();
+    }
   }, [messages]);
+  
 
   useEffect(() => {
     subscribeToEvent('sent-new-message-group', sentNewMessageGroupFunc);
@@ -112,7 +140,62 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
       (index) => messages[index].signature,
       [messages]
     ),
+    observeElementOffset: (instance, cb) => {
+      const offsetCheck = () => {
+        isScrollingRef.current = true;
+
+        const { scrollHeight, scrollTop, clientHeight } = instance.scrollElement;
+        const atBottom = scrollHeight - scrollTop - clientHeight <= 300;
+        if(!isScrollingRef.current){
+          setShowScrollDownButton(false)
+        } else
+        if(showScrollButtonRef.current){
+          setShowScrollDownButton(false)
+        } else
+        if(atBottom){
+          setShowScrollDownButton(false)
+
+        } else {
+          setShowScrollDownButton(true)
+
+        }
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current); // Clear the previous timeout
+        }
+        scrollTimeoutRef.current = setTimeout(() => {
+          isScrollingRef.current = false; // Mark scrolling as stopped
+          scrollTimeoutRef.current = null; // Clear the timeout reference
+          setShowScrollDownButton(false)
+        }, 2500);
+        cb(scrollTop); // Pass scroll offset to callback
+        // setShowScrollToBottom(!atBottom);
+      };
+
+      // Initial check and continuous monitoring
+      offsetCheck();
+      instance.scrollElement.addEventListener('scroll', offsetCheck);
+      return () => instance.scrollElement.removeEventListener('scroll', offsetCheck);
+    },
   });
+
+
+
+
+  const goToMessageFunc = useCallback((e)=> {
+    if(e.detail?.index){
+      rowVirtualizer.scrollToIndex(e.detail?.index)
+
+    }
+   }, [])
+
+ 
+
+  useEffect(() => {
+    subscribeToEvent('goToMessage', goToMessageFunc);
+    return () => {
+      unsubscribeFromEvent('goToMessage', goToMessageFunc);
+    };
+  }, [goToMessageFunc]);
 
   return (
 <div style={{
@@ -223,15 +306,38 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
           position: 'absolute',
           bottom: 20,
           right: 20,
-          backgroundColor: '#ff5a5f',
+          backgroundColor: 'var(--unread)',
           color: 'white',
           padding: '10px 20px',
           borderRadius: '20px',
           cursor: 'pointer',
           zIndex: 10,
+          border: 'none',
+          outline: 'none'
         }}
       >
         Scroll to Unread Messages
+      </button>
+    )}
+       {showScrollDownButton &&  (
+      <button
+        onClick={() => scrollToBottom()}
+        style={{
+          bottom:  20,
+          position: 'absolute',
+          right: 20,
+          backgroundColor: 'var(--Mail-Background)',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '20px',
+          cursor: 'pointer',
+          zIndex: 10,
+          border: 'none',
+          outline: 'none',
+          fontSize: '16px'
+        }}
+      >
+        Scroll to bottom
       </button>
     )}
    </div>

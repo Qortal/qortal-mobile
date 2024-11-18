@@ -13,7 +13,8 @@ import {
   sendQortFee,
   sendCoin as sendCoinFunc,
   isUsingLocal,
-  createBuyOrderTx
+  createBuyOrderTx,
+  performPowTask
 } from "../background";
 import { getNameInfo } from "../backgroundFunctions/encryption";
 import { showSaveFilePicker } from "../components/Apps/useQortalMessageListener";
@@ -1062,7 +1063,6 @@ export const sendChatMessage = async (data, isFromExtension) => {
         publicKey: uint8PublicKey,
       };
 
-      const difficulty = 8;
       const tx = await createTransaction(18, keyPair, {
         timestamp: sendTimestamp,
         recipient: recipient,
@@ -1074,15 +1074,9 @@ export const sendChatMessage = async (data, isFromExtension) => {
         isEncrypted: 1,
         isText: 1,
       });
-      const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
-
-
-      const { nonce, chatBytesArray } = await computePow({
-        chatBytes: tx.chatBytes,
-        path,
-        difficulty,
-      });
-
+      const chatBytes = tx.chatBytes;
+      const difficulty = 8;
+      const { nonce, chatBytesArray  } = await performPowTask(chatBytes, difficulty);
       let _response = await signChatFunc(chatBytesArray, nonce, null, keyPair);
       if (_response?.error) {
         throw new Error(_response?.message);
@@ -1102,7 +1096,6 @@ export const sendChatMessage = async (data, isFromExtension) => {
         publicKey: uint8PublicKey,
       };
 
-      const difficulty = 8;
 
       const txBody = {
         timestamp: Date.now(),
@@ -1121,14 +1114,9 @@ export const sendChatMessage = async (data, isFromExtension) => {
       // if (!hasEnoughBalance) {
       //   throw new Error("Must have at least 4 QORT to send a chat message");
       // }
-      const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
-
-
-      const { nonce, chatBytesArray } = await computePow({
-        chatBytes: tx.chatBytes,
-        path,
-        difficulty,
-      });
+      const chatBytes = tx.chatBytes;
+      const difficulty = 8;
+      const { nonce, chatBytesArray  } = await performPowTask(chatBytes, difficulty);
       let _response = await signChatFunc(chatBytesArray, nonce, null, keyPair);
       if (_response?.error) {
         throw new Error(_response?.message);
@@ -1401,6 +1389,10 @@ export const getWalletBalance = async (data, bypassPermission?: boolean, isFromE
     throw new Error(errorMsg);
   }
 
+  const  isGateway =  await isRunningGateway()
+
+    if(data?.coin === 'ARRR' && isGateway) throw new Error('Cannot view ARRR balance through the gateway. Please use your local node.')
+
   const value = (await getPermission(`qAPPAutoWalletBalance-${appInfo?.name}-${data.coin}`)) || false;
   let skip = false;
   if (value) {
@@ -1454,7 +1446,7 @@ export const getWalletBalance = async (data, bypassPermission?: boolean, isFromE
         case "BTC":
           _url = await createEndpoint(`/crosschain/btc/walletbalance`);
 
-          _body = parsedData.derivedMasterPublicKey;
+          _body = parsedData.btcPublicKey;
           break;
         case "LTC":
           _url = await createEndpoint(`/crosschain/ltc/walletbalance`);
@@ -2095,6 +2087,7 @@ export const sendCoin = async (data, isFromExtension) => {
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
+            fee: fee * QORT_DECIMALS
           }, isFromExtension);
           const { accepted } = resPermission;
         
@@ -2119,7 +2112,7 @@ export const sendCoin = async (data, isFromExtension) => {
         const btcWalletBalanceDecimals = Number(btcWalletBalance)
         const btcAmountDecimals = Number(amount) * QORT_DECIMALS
         const fee = feePerByte * 500 // default 0.00050000
-        if (btcAmountDecimals + (fee * QORT_DECIMALS) > btcWalletBalanceDecimals) {
+        if (btcAmountDecimals + fee > btcWalletBalanceDecimals) {
             throw new Error("INSUFFICIENT_FUNDS")
         }
        
@@ -2127,7 +2120,7 @@ export const sendCoin = async (data, isFromExtension) => {
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
-            fee: fee
+            foreignFee: `${fee} BTC`
           }, isFromExtension);
           const { accepted } = resPermission;
         
@@ -2136,7 +2129,7 @@ export const sendCoin = async (data, isFromExtension) => {
                 xprv58: xprv58,
                 receivingAddress: recipient,
                 bitcoinAmount: amount,
-                feePerByte: feePerByte * QORT_DECIMALS
+                feePerByte: feePerByte
             }
             const url = await createEndpoint(`/crosschain/btc/send`);
             
@@ -2177,14 +2170,14 @@ export const sendCoin = async (data, isFromExtension) => {
         const ltcAmountDecimals = Number(amount) * QORT_DECIMALS
         const balance = (Number(ltcWalletBalance) / 1e8).toFixed(8)
         const fee = feePerByte * 1000 // default 0.00030000
-        if (ltcAmountDecimals + (fee * QORT_DECIMALS) > ltcWalletBalanceDecimals) {
+        if (ltcAmountDecimals + fee  > ltcWalletBalanceDecimals) {
             throw new Error("Insufficient Funds!")
         }
         const resPermission = await getUserPermission({
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
-            fee: fee
+            foreignFee: `${fee} LTC`
           }, isFromExtension);
           const { accepted } = resPermission;
         
@@ -2194,7 +2187,7 @@ export const sendCoin = async (data, isFromExtension) => {
                 xprv58: xprv58,
                 receivingAddress: recipient,
                 litecoinAmount: amount,
-                feePerByte: feePerByte * QORT_DECIMALS
+                feePerByte: feePerByte 
             }
             const response = await  fetch(url, {
                  method: 'POST',
@@ -2232,7 +2225,7 @@ export const sendCoin = async (data, isFromExtension) => {
         const dogeAmountDecimals = Number(amount) * QORT_DECIMALS
         const balance = (Number(dogeWalletBalance) / 1e8).toFixed(8)
         const fee = feePerByte * 5000 // default 0.05000000
-        if (dogeAmountDecimals + (fee * QORT_DECIMALS) > dogeWalletBalanceDecimals) {
+        if (dogeAmountDecimals + fee  > dogeWalletBalanceDecimals) {
             let errorMsg = "Insufficient Funds!"
             throw new Error(errorMsg)
         }
@@ -2241,7 +2234,7 @@ export const sendCoin = async (data, isFromExtension) => {
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
-            fee: fee
+            foreignFee: `${fee} DOGE`
           }, isFromExtension);
           const { accepted } = resPermission;
         
@@ -2250,7 +2243,7 @@ export const sendCoin = async (data, isFromExtension) => {
                 xprv58: xprv58,
                 receivingAddress: recipient,
                 dogecoinAmount: amount,
-                feePerByte: feePerByte * QORT_DECIMALS
+                feePerByte: feePerByte
             }
             const url = await createEndpoint(`/crosschain/doge/send`);
             
@@ -2287,7 +2280,7 @@ export const sendCoin = async (data, isFromExtension) => {
         const dgbWalletBalanceDecimals = Number(dgbWalletBalance)
         const dgbAmountDecimals = Number(amount) * QORT_DECIMALS
         const fee = feePerByte * 500 // default 0.00005000
-        if (dgbAmountDecimals + (fee * QORT_DECIMALS) > dgbWalletBalanceDecimals) {
+        if (dgbAmountDecimals + fee  > dgbWalletBalanceDecimals) {
             let errorMsg = "Insufficient Funds!"
             throw new Error(errorMsg)
         }
@@ -2296,7 +2289,7 @@ export const sendCoin = async (data, isFromExtension) => {
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
-            fee: fee
+            foreignFee: `${fee} DGB`
           }, isFromExtension);
           const { accepted } = resPermission;
         
@@ -2305,7 +2298,7 @@ export const sendCoin = async (data, isFromExtension) => {
                 xprv58: xprv58,
                 receivingAddress: recipient,
                 digibyteAmount: amount,
-                feePerByte: feePerByte * QORT_DECIMALS
+                feePerByte: feePerByte
             }
             const url = await createEndpoint(`/crosschain/dgb/send`);
             
@@ -2344,7 +2337,7 @@ export const sendCoin = async (data, isFromExtension) => {
         const rvnAmountDecimals = Number(amount) * QORT_DECIMALS
         const balance = (Number(rvnWalletBalance) / 1e8).toFixed(8)
         const fee = feePerByte * 500 // default 0.00562500
-        if (rvnAmountDecimals + (fee * QORT_DECIMALS) > rvnWalletBalanceDecimals) {
+        if (rvnAmountDecimals + fee  > rvnWalletBalanceDecimals) {
           
             let errorMsg = "Insufficient Funds!"
             throw new Error(errorMsg)
@@ -2354,7 +2347,7 @@ export const sendCoin = async (data, isFromExtension) => {
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
-            fee: fee
+            foreignFee: `${fee} RVN`
           }, isFromExtension);
           const { accepted } = resPermission;
         
@@ -2363,7 +2356,7 @@ export const sendCoin = async (data, isFromExtension) => {
                 xprv58: xprv58,
                 receivingAddress: recipient,
                 ravencoinAmount: amount,
-                feePerByte: feePerByte * QORT_DECIMALS
+                feePerByte: feePerByte
             }
             const url = await createEndpoint(`/crosschain/rvn/send`);
             
@@ -2399,7 +2392,7 @@ export const sendCoin = async (data, isFromExtension) => {
         const arrrWalletBalanceDecimals = Number(arrrWalletBalance)
         const arrrAmountDecimals = Number(amount) * QORT_DECIMALS
         const fee = 0.00010000
-        if (arrrAmountDecimals + (fee * QORT_DECIMALS) > arrrWalletBalanceDecimals) {
+        if (arrrAmountDecimals + fee  > arrrWalletBalanceDecimals) {
             let errorMsg = "Insufficient Funds!"
             throw new Error(errorMsg)
         }
@@ -2408,7 +2401,7 @@ export const sendCoin = async (data, isFromExtension) => {
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
-            fee: fee
+            foreignFee: `${fee} ARRR`
           }, isFromExtension);
           const { accepted } = resPermission;
         

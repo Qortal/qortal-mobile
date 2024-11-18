@@ -1002,7 +1002,7 @@ function App() {
         .sendMessage("decryptWallet", {
           password: walletToBeDownloadedPassword,
           wallet,
-        })
+        },120000)
         .then((response) => {
           if (response && !response.error) {
             setRawWallet(wallet);
@@ -1126,7 +1126,7 @@ function App() {
         .sendMessage("decryptWallet", {
           password: authenticatePassword,
           wallet: rawWallet,
-        })
+        }, 120000)
         .then((response) => {
           if (response && !response.error) {
             setAuthenticatePassword("");

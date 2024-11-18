@@ -1874,17 +1874,17 @@ export const Group = ({
                     // getTimestampEnterChat();
                   }, 200);
 
-                  window.sendMessage("addTimestampEnterChat", {
-                    timestamp: Date.now(),
-                    groupId: group.groupId,
-                  }).catch((error) => {
-                      console.error("Failed to add timestamp:", error.message || "An error occurred");
-                    });
+                  // window.sendMessage("addTimestampEnterChat", {
+                  //   timestamp: Date.now(),
+                  //   groupId: group.groupId,
+                  // }).catch((error) => {
+                  //     console.error("Failed to add timestamp:", error.message || "An error occurred");
+                  //   });
                   
 
-                  setTimeout(() => {
-                    getTimestampEnterChat();
-                  }, 200);
+                  // setTimeout(() => {
+                  //   getTimestampEnterChat();
+                  // }, 200);
 
                   
                 }}
@@ -2308,6 +2308,8 @@ export const Group = ({
                     triedToFetchSecretKey={triedToFetchSecretKey}
                     myName={userInfo?.name}
                     balance={balance}
+                    getTimestampEnterChatParent={getTimestampEnterChat}
+
                   />
                 )}
                 {firstSecretKeyInCreation &&

@@ -45,6 +45,12 @@ export const MessageItem = ({
 
 
   return (
+    <>
+    {message?.divide && (
+     <div className="unread-divider" id="unread-divider-id">
+     Unread messages below
+   </div>
+    )}
     <div
       ref={lastSignature === message?.signature ? ref : null}
       style={{
@@ -305,6 +311,7 @@ export const MessageItem = ({
     ></Message> */}
       {/* {!message.unread && <span style={{ color: 'green' }}> Seen</span>} */}
     </div>
+    </>
   );
 };
 

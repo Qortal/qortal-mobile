@@ -66,6 +66,9 @@ import {
   inviteToGroupCase,
   joinGroupCase,
   kickFromGroupCase,
+  addTimestampMentionCase,
+  getTimestampMentionCase,
+
   leaveGroupCase,
   ltcBalanceCase,
   makeAdminCase,
@@ -95,6 +98,8 @@ import {
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import ChatComputePowWorker from './chatComputePow.worker.js?worker';
+
 const uid = new ShortUniqueId({ length: 9, dictionary: 'number'  });
 
 const generateId = ()=> {
@@ -376,6 +381,31 @@ async function checkWebviewFocus() {
 
 function playNotificationSound() {
   // chrome.runtime.sendMessage({ action: "PLAY_NOTIFICATION_SOUND" });
+}
+
+const worker = new ChatComputePowWorker()
+
+export async function performPowTask(chatBytes, difficulty) {
+  return new Promise((resolve, reject) => {
+    worker.onmessage = (e) => {
+      if (e.data.error) {
+        reject(new Error(e.data.error));
+      } else {
+        resolve(e.data);
+      }
+    };
+
+    worker.onerror = (err) => {
+      reject(err);
+    };
+
+    // Send the task to the worker
+    worker.postMessage({
+      chatBytes,
+      path: `${import.meta.env.BASE_URL}memory-pow.wasm.full`,
+      difficulty,
+    });
+  });
 }
 
 const handleNotificationDirect = async (directs) => {
@@ -1352,7 +1382,6 @@ async function sendChatForBuyOrder({ qortAddress, recipientPublicKey, message })
   };
   const balance = await getBalanceInfo();
   const hasEnoughBalance = +balance < 4 ? false : true;
-  const difficulty = 8;
   const jsonData = {
     addresses: message.addresses,
     foreignKey: message.foreignKey,
@@ -1378,13 +1407,9 @@ async function sendChatForBuyOrder({ qortAddress, recipientPublicKey, message })
   if (!hasEnoughBalance) {
     throw new Error('You must have at least 4 QORT to trade using the gateway.')
   }
-  const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
-
-  const { nonce, chatBytesArray } = await computePow({
-    chatBytes: tx.chatBytes,
-    path,
-    difficulty,
-  });
+  const chatBytes = tx.chatBytes;
+  const difficulty = 8;
+  const { nonce, chatBytesArray  } = await performPowTask(chatBytes, difficulty);
   let _response = await signChatFunc(
     chatBytesArray,
     nonce,
@@ -1417,7 +1442,6 @@ export async function sendChatGroup({
   };
   // const balance = await getBalanceInfo();
   // const hasEnoughBalance = +balance < 4 ? false : true;
-  const difficulty = 8;
 
   const txBody = {
     timestamp: Date.now(),
@@ -1440,13 +1464,9 @@ export async function sendChatGroup({
   // if (!hasEnoughBalance) {
   //   throw new Error("Must have at least 4 QORT to send a chat message");
   // }
-  const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
-
-  const { nonce, chatBytesArray } = await computePow({
-    chatBytes: tx.chatBytes,
-    path,
-    difficulty,
-  });
+  const chatBytes = tx.chatBytes;
+  const difficulty = 8;
+  const { nonce, chatBytesArray  } = await performPowTask(chatBytes, difficulty);
   let _response = await signChatFunc(chatBytesArray, nonce, null, keyPair);
   if (_response?.error) {
     throw new Error(_response?.message);
@@ -1492,7 +1512,6 @@ export async function sendChatDirect({
   // const balance = await getBalanceInfo();
   // const hasEnoughBalance = +balance < 4 ? false : true;
 
-  const difficulty = 8;
 
   const finalJson = {
     message: messageText,
@@ -1520,13 +1539,9 @@ export async function sendChatDirect({
   // if (!hasEnoughBalance) {
   //   throw new Error("Must have at least 4 QORT to send a chat message");
   // }
-  const path = `${import.meta.env.BASE_URL}memory-pow.wasm.full`;
-
-  const { nonce, chatBytesArray } = await computePow({
-    chatBytes: tx.chatBytes,
-    path,
-    difficulty,
-  });
+  const chatBytes = tx.chatBytes;
+  const difficulty = 8;
+  const { nonce, chatBytesArray  } = await performPowTask(chatBytes, difficulty);
 
   let _response = await signChatFunc(chatBytesArray, nonce, null, keyPair);
   if (_response?.error) {
@@ -2448,6 +2463,31 @@ async function setChatHeadsDirect(data) {
 
   });
 }
+export async function getTimestampMention() {
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  const key = `enter-mention-timestamp-${address}`;
+  const res = await getData<any>(key).catch(() => null);
+  if (res) {
+    const parsedData = res;
+    return parsedData;
+  } else {
+    return {};
+  }
+}
+export async function addTimestampMention({ groupId, timestamp }) {
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  const data = await getTimestampMention();
+  data[groupId] = timestamp;
+  return await new Promise((resolve, reject) => {
+    storeData(`enter-mention-timestamp-${address}`, data)
+      .then(() => resolve(true))
+      .catch((error) => {
+        reject(new Error(error.message || "Error saving data"));
+      });
+  });
+}
 
 export async function getTimestampEnterChat() {
   const wallet = await getSaveWallet();
@@ -2720,7 +2760,12 @@ function setupMessageListener() {
       case "registerName":
         registerNameCase(request, event);
         break;
-
+      case "addTimestampMention":
+        addTimestampMentionCase(request, event);
+        break;
+      case "getTimestampMention":
+        getTimestampMentionCase(request, event);
+        break;
       case "makeAdmin":
         makeAdminCase(request, event);
         break;
