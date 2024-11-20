@@ -273,8 +273,10 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
                 width: '100%', // Control width (90% of the parent)
                 padding: '10px 0',
                 display: 'flex',
-                justifyContent: 'center',
+                alignItems: 'center',
                 overscrollBehavior: 'none',
+                flexDirection: 'column',
+                gap: '5px'
               }}
             >
               <MessageItem

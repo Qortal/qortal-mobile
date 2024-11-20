@@ -342,7 +342,7 @@ const clearEditorContent = () => {
           repliedTo
         }
         const sendMessageFunc = async () => {
-          await sendChatDirect({ chatReference: undefined, messageText: htmlContent, otherData}, selectedDirect?.address, publicKeyOfRecipient, false)
+          return await sendChatDirect({ chatReference: undefined, messageText: htmlContent, otherData}, selectedDirect?.address, publicKeyOfRecipient, false)
         };
 
         

@@ -562,7 +562,7 @@ const clearEditorContent = () => {
         // const res = await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle})
        
         const sendMessageFunc = async () => {
-          await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle})
+          return await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle})
         };
   
         // Add the function to the queue
@@ -641,7 +641,7 @@ const clearEditorContent = () => {
       // const res = await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle})
      
       const sendMessageFunc = async () => {
-        await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle, chatReference: chatMessage.signature})
+       return await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle, chatReference: chatMessage.signature})
       };
 
       // Add the function to the queue
@@ -745,9 +745,12 @@ const clearEditorContent = () => {
       
     
       <Tiptap enableMentions setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} isFocusedParent={isFocusedParent} setIsFocusedParent={setIsFocusedParent} membersWithNames={members} />
-      {!isFocusedParent && (
+        <div style={{
+          display: isFocusedParent ? 'none' : 'block'
+        }}>
+
         <ChatOptions messages={messages} goToMessage={()=> {}} members={members} myName={myName} selectedGroup={selectedGroup}/>
-)}
+        </div>
       </Box>
       </div>
       <Box sx={{
@@ -780,7 +783,7 @@ const clearEditorContent = () => {
              </CustomButton>
            
             )}
-            {!isMobile && !isFocusedParent && (
+            {isFocusedParent && (
                   <CustomButton
                   onClick={()=> {
                     if(isSending) return
