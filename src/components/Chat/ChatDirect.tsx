@@ -46,6 +46,8 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
   const setEditorRef = (editorInstance) => {
     editorRef.current = editorInstance;
   };
+  const [messageSize, setMessageSize] = useState(0)
+
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   const triggerRerender = () => {
@@ -299,6 +301,7 @@ const sendChatDirect = async ({ chatReference = undefined, messageText, otherDat
 const clearEditorContent = () => {
   if (editorRef.current) {
     editorRef.current.chain().focus().clearContent().run();
+    setMessageSize(0)
     if(isMobile){
       setTimeout(() => {
         editorRef.current?.chain().blur().run(); 
@@ -311,6 +314,24 @@ const clearEditorContent = () => {
     }
   }
 };
+
+useEffect(() => {
+  if (!editorRef?.current) return;
+  const handleUpdate = () => {
+    const htmlContent = editorRef?.current.getHTML();
+    const stringified = JSON.stringify(htmlContent);
+    const size = new Blob([stringified]).size;
+    setMessageSize(size + 100);
+  };
+
+  // Add a listener for the editorRef?.current's content updates
+  editorRef?.current.on('update', handleUpdate);
+
+  // Cleanup the listener on unmount
+  return () => {
+    editorRef?.current.off('update', handleUpdate);
+  };
+}, [editorRef?.current]);
 
 
     const sendMessage = async ()=> {
@@ -574,6 +595,7 @@ const clearEditorContent = () => {
             )}
       <CustomButton
               onClick={()=> {
+                if(messageSize > 4000) return
                 if(isSending) return
                 sendMessage()
               }}
@@ -603,6 +625,21 @@ const clearEditorContent = () => {
             </CustomButton>
            
               </Box>
+              {isFocusedParent && messageSize > 750 && (
+        <Box sx={{
+          display: 'flex',
+          width: '100%',
+          justifyContent: 'flex-end',
+          position: 'relative',
+          marginTop: '5px'
+        }}>
+                <Typography sx={{
+                  fontSize: '12px',
+                  color: messageSize > 4000 ? 'var(--unread)' : 'unset'
+                }}>{`size ${messageSize} of 4000`}</Typography>
+
+          </Box>
+      )}
       </div>
       <LoadingSnackbar open={isLoading} info={{
         message: "Loading chat... please wait."

@@ -15,7 +15,7 @@ import { CustomizedSnackbars } from '../Snackbar/Snackbar'
 import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from '../../constants/codes'
 import { useMessageQueue } from '../../MessageQueueContext'
 import { executeEvent } from '../../utils/events'
-import { Box, ButtonBase } from '@mui/material'
+import { Box, ButtonBase, Typography } from '@mui/material'
 import ShortUniqueId from "short-unique-id";
 import { ReplyPreview } from './MessageItem'
 import { ExitIcon } from '../../assets/Icons/ExitIcon'
@@ -31,6 +31,8 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
   const [chatReferences, setChatReferences] = useState({})
   const [isSending, setIsSending] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [messageSize, setMessageSize] = useState(0)
+
   const [isMoved, setIsMoved] = useState(false);
   const [openSnack, setOpenSnack] = React.useState(false);
   const [infoSnack, setInfoSnack] = React.useState(null);
@@ -450,6 +452,24 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
         hasInitializedWebsocket.current = true
     }, [secretKey])
 
+    useEffect(() => {
+      if (!editorRef?.current) return;
+      const handleUpdate = () => {
+        const htmlContent = editorRef?.current.getHTML();
+        const stringified = JSON.stringify(htmlContent);
+        const size = new Blob([stringified]).size;
+        setMessageSize(size + 100);
+      };
+  
+      // Add a listener for the editorRef?.current's content updates
+      editorRef?.current.on('update', handleUpdate);
+  
+      // Cleanup the listener on unmount
+      return () => {
+        editorRef?.current.off('update', handleUpdate);
+      };
+    }, [editorRef?.current]);
+
   
     useEffect(()=> {
       const notifications = messages.filter((message)=> message?.decryptedData
@@ -516,6 +536,7 @@ const sendChatGroup = async ({groupId, typeMessage = undefined, chatReference = 
 const clearEditorContent = () => {
   if (editorRef.current) {
     editorRef.current.chain().focus().clearContent().run();
+    setMessageSize(0)
     if(isMobile){
       setTimeout(() => {
         editorRef.current?.chain().blur().run(); 
@@ -743,19 +764,22 @@ const clearEditorContent = () => {
       width: '100%'
      }}>
       
-    
+   
       <Tiptap enableMentions setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} isFocusedParent={isFocusedParent} setIsFocusedParent={setIsFocusedParent} membersWithNames={members} />
-        <div style={{
+     
+
+
+<div style={{
           display: isFocusedParent ? 'none' : 'block'
         }}>
-
         <ChatOptions messages={messages} goToMessage={()=> {}} members={members} myName={myName} selectedGroup={selectedGroup}/>
         </div>
       </Box>
+     
       </div>
       <Box sx={{
         display: 'flex',
-        width: '100&',
+        width: '100%',
         gap: '10px',
         justifyContent: 'center',
         flexShrink: 0,
@@ -767,6 +791,7 @@ const clearEditorContent = () => {
                  if(isSending) return
                  setIsFocusedParent(false)
                  clearEditorContent()
+
                  // Unfocus the editor
                }}
                style={{
@@ -786,6 +811,7 @@ const clearEditorContent = () => {
             {isFocusedParent && (
                   <CustomButton
                   onClick={()=> {
+                    if(messageSize > 4000) return
                     if(isSending) return
                     sendMessage()
                   }}
@@ -818,6 +844,21 @@ const clearEditorContent = () => {
   
            
               </Box>
+              {isFocusedParent && messageSize > 750 && (
+        <Box sx={{
+          display: 'flex',
+          width: '100%',
+          justifyContent: 'flex-end',
+          position: 'relative',
+          marginTop: '5px'
+        }}>
+                <Typography sx={{
+                  fontSize: '12px',
+                  color: messageSize > 4000 ? 'var(--unread)' : 'unset'
+                }}>{`size ${messageSize} of 4000`}</Typography>
+
+          </Box>
+      )}
       {/* <button onClick={sendMessage}>send</button> */}
       </div>
       {/* <ChatContainerComp messages={formatMessages} /> */}
