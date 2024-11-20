@@ -176,7 +176,7 @@ export const ChatOptions = ({ messages, goToMessage, members, myName, selectedGr
       <Box
         sx={{
           width: isMobile ? '100%' : "300px",
-          height: isMobile ? '60svh' : "100%",
+          height: isMobile ? '90svh' : "100%",
           display: "flex",
           flexDirection: "column",
           // alignItems: 'center',
@@ -393,7 +393,7 @@ export const ChatOptions = ({ messages, goToMessage, members, myName, selectedGr
       <Box
         sx={{
           width: isMobile ? '100%' : "300px",
-          height: isMobile ? '60svh' : "100%",
+          height: isMobile ? '90svh' : "100%",
           display: "flex",
           flexDirection: "column",
           // alignItems: 'center',
