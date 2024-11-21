@@ -1,6 +1,6 @@
 import { Sha256 } from 'asmcrypto.js';
 import wasmInit from './memory-pow.wasm?init';
-
+import NativePOW from './utils/nativepow'
 let compute; // Exported compute function from Wasm
 let memory;  // WebAssembly.Memory instance
 let heap;    // Uint8Array view of the memory buffer
@@ -58,24 +58,26 @@ function sbrk(size) {
 
 // Proof-of-Work computation function
 async function computePow(chatBytes, difficulty) {
-  if (!compute) {
-    throw new Error('WebAssembly module not initialized. Call loadWasm first.');
-  }
+  // if (!compute) {
+  //   throw new Error('WebAssembly module not initialized. Call loadWasm first.');
+  // }
 
-  const chatBytesArray = Uint8Array.from(Object.values(chatBytes));
-  const chatBytesHash = new Sha256().process(chatBytesArray).finish().result;
+  // const chatBytesArray = Uint8Array.from(Object.values(chatBytes));
+  // const chatBytesHash = new Sha256().process(chatBytesArray).finish().result;
 
-  // Allocate memory for the hash
-  const hashPtr = sbrk(32);
-  const hashAry = new Uint8Array(memory.buffer, hashPtr, 32);
-  hashAry.set(chatBytesHash);
-
-  // Reuse the work buffer if already allocated
-  if (!workBufferPtr) {
-    workBufferPtr = sbrk(workBufferLength);
-  }
-
-  const nonce = compute(hashPtr, workBufferPtr, workBufferLength, difficulty);
+  // // Allocate memory for the hash
+  // const hashPtr = sbrk(32);
+  // const hashAry = new Uint8Array(memory.buffer, hashPtr, 32);
+  // hashAry.set(chatBytesHash);
+  
+  // // Reuse the work buffer if already allocated
+  // if (!workBufferPtr) {
+  //   workBufferPtr = sbrk(workBufferLength);
+  // }
+  console.log('native')
+  const nonce =  await NativePOW.computeProofOfWork({ chatBytes, difficulty });
+  console.log('nonce', nonce)
+  (hashPtr, workBufferPtr, workBufferLength, difficulty);
 
   return { nonce, chatBytesArray };
 }
@@ -86,9 +88,9 @@ self.addEventListener('message', async (e) => {
 
   try {
     // Initialize Wasm if not already done
-    if (!compute) {
-      await loadWasm();
-    }
+    // if (!compute) {
+    //   await loadWasm();
+    // }
 
     // Perform the POW computation
     const result = await computePow(chatBytes, difficulty);

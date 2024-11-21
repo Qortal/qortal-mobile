@@ -7,6 +7,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { MessageQueueProvider } from './MessageQueueContext.tsx';
 import { RecoilRoot } from 'recoil';
+import './utils/nativepow.ts'
 const theme = createTheme({
   palette: {
     primary: {

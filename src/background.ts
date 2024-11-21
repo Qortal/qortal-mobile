@@ -29,6 +29,8 @@ import PhraseWallet from "./utils/generateWallet/phrase-wallet";
 import { RequestQueueWithPromise } from "./utils/queue/queue";
 import { validateAddress } from "./utils/validateAddress";
 import { Sha256 } from "asmcrypto.js";
+import NativePOW from './utils/nativepow'
+
 import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMultipleRequest";
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
 import {
@@ -98,7 +100,7 @@ import {
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import ChatComputePowWorker from './chatComputePow.worker.js?worker';
+// import ChatComputePowWorker from './chatComputePow.worker.js?worker';
 
 const uid = new ShortUniqueId({ length: 9, dictionary: 'number'  });
 
@@ -383,29 +385,13 @@ function playNotificationSound() {
   // chrome.runtime.sendMessage({ action: "PLAY_NOTIFICATION_SOUND" });
 }
 
-const worker = new ChatComputePowWorker()
+// const worker = new ChatComputePowWorker()
 
 export async function performPowTask(chatBytes, difficulty) {
-  return new Promise((resolve, reject) => {
-    worker.onmessage = (e) => {
-      if (e.data.error) {
-        reject(new Error(e.data.error));
-      } else {
-        resolve(e.data);
-      }
-    };
-
-    worker.onerror = (err) => {
-      reject(err);
-    };
-
-    // Send the task to the worker
-    worker.postMessage({
-      chatBytes,
-      path: `${import.meta.env.BASE_URL}memory-pow.wasm.full`,
-      difficulty,
-    });
-  });
+  const chatBytesArray = Uint8Array.from(Object.values(chatBytes));
+  const result = await NativePOW.computeProofOfWork({ chatBytes, difficulty });
+  return  {nonce: result.nonce, chatBytesArray}
+  
 }
 
 const handleNotificationDirect = async (directs) => {
