@@ -819,7 +819,7 @@ const clearEditorContent = () => {
                     marginTop: 'auto',
                     alignSelf: 'center',
                     cursor: isSending ? 'default' : 'pointer',
-                    background: isSending && 'rgba(0, 0, 0, 0.8)',
+                    background: isSending ? 'rgba(0, 0, 0, 0.8)' : 'var(--green)',
                     flexShrink: 0,
                     padding: isMobile && '5px',
                     

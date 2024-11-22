@@ -35,7 +35,8 @@
   --bg-2: #27282c;
   --bg-3: rgba(0, 0, 0, 0.1);
   --unread: #B14646;
-  --apps-circle: #1F2023
+  --apps-circle: #1F2023;
+  --green: #5EB049;
 }
 
 body {
@@ -58,6 +59,8 @@ body {
 
 .image-container .hover-image {
   opacity: 0;
+  height: 100px !important;
+  width: auto !important;
 
 }
 
