@@ -11,25 +11,55 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
   const hasLoadedInitialRef = useRef(false);
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
 
-  const showScrollButtonRef = useRef(showScrollButton);
-  const isScrollingRef = useRef(false);
-  const scrollTimeoutRef = useRef(null);
+  const scrollingIntervalRef = useRef(null);
 
-  // Update the ref whenever the state changes
+  // Initialize the virtualizer
+  const rowVirtualizer = useVirtualizer({
+    count: messages.length,
+    getItemKey: (index) => messages[index].signature,
+    getScrollElement: () => parentRef?.current,
+    estimateSize: () => 80, // Provide an estimated height of items, adjust this as needed
+    overscan: 10, // Number of items to render outside the visible area to improve smoothness
+  });
+
+  const isAtBottom = useMemo(()=> {
+    if (parentRef.current && rowVirtualizer?.isScrolling !== undefined) {
+      const { scrollTop, scrollHeight, clientHeight } = parentRef.current;
+    const atBottom = scrollTop + clientHeight >= scrollHeight - 10; // Adjust threshold as needed
+   return atBottom
+  }
+
+  return false
+
+  }, [rowVirtualizer?.isScrolling])
+
   useEffect(() => {
-    showScrollButtonRef.current = showScrollButton;
-  }, [showScrollButton]);
-
-
-  // const [ref, inView] = useInView({
-  //   threshold: 0.7
-  // })
-
-  // useEffect(() => {
-  //   if (inView) {
-      
-  //   }
-  // }, [inView])
+    if (!parentRef.current || rowVirtualizer?.isScrolling === undefined) return;
+    if(isAtBottom){
+      if (scrollingIntervalRef.current) {
+        clearTimeout(scrollingIntervalRef.current);
+      }
+      setShowScrollDownButton(false);
+      return;
+    } else
+    if (rowVirtualizer?.isScrolling) {
+      if (scrollingIntervalRef.current) {
+        clearTimeout(scrollingIntervalRef.current);
+      }
+      setShowScrollDownButton(false);
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = parentRef.current;
+    const atBottom = scrollHeight - scrollTop - clientHeight <= 300;
+    if (!atBottom) {
+      scrollingIntervalRef.current = setTimeout(() => {
+        setShowScrollDownButton(true);
+      }, 250);
+    } else {
+      setShowScrollDownButton(false);
+    }
+  }, [rowVirtualizer?.isScrolling, isAtBottom]);
+  
   // Update message list with unique signatures and tempMessages
   useEffect(() => {
     let uniqueInitialMessagesMap = new Map();
@@ -130,53 +160,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
   }, [messages])
 
 
-  // Initialize the virtualizer
-  const rowVirtualizer = useVirtualizer({
-    count: messages.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 80, // Provide an estimated height of items, adjust this as needed
-    overscan: 10, // Number of items to render outside the visible area to improve smoothness
-    getItemKey: React.useCallback(
-      (index) => messages[index].signature,
-      [messages]
-    ),
-    observeElementOffset: (instance, cb) => {
-      const offsetCheck = () => {
-        isScrollingRef.current = true;
 
-        const { scrollHeight, scrollTop, clientHeight } = instance.scrollElement;
-        const atBottom = scrollHeight - scrollTop - clientHeight <= 300;
-        if(!isScrollingRef.current){
-          setShowScrollDownButton(false)
-        } else
-        if(showScrollButtonRef.current){
-          setShowScrollDownButton(false)
-        } else
-        if(atBottom){
-          setShowScrollDownButton(false)
-
-        } else {
-          setShowScrollDownButton(true)
-
-        }
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current); // Clear the previous timeout
-        }
-        scrollTimeoutRef.current = setTimeout(() => {
-          isScrollingRef.current = false; // Mark scrolling as stopped
-          scrollTimeoutRef.current = null; // Clear the timeout reference
-          setShowScrollDownButton(false)
-        }, 2500);
-        cb(scrollTop); // Pass scroll offset to callback
-        // setShowScrollToBottom(!atBottom);
-      };
-
-      // Initial check and continuous monitoring
-      offsetCheck();
-      instance.scrollElement.addEventListener('scroll', offsetCheck);
-      return () => instance.scrollElement.removeEventListener('scroll', offsetCheck);
-    },
-  });
 
 
 
