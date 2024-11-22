@@ -635,9 +635,7 @@ export const publishQDNResource = async (data: any, sender, isFromExtension) => 
   }, isFromExtension);
   const { accepted } = resPermission;
   if (accepted) {
-    if (data.fileId && !data.encrypt) {
-      data64 = await getFileFromContentScript(data.fileId);
-    }
+
     try {
       const resPublish = await publishData({
         registeredName: encodeURIComponent(name),
