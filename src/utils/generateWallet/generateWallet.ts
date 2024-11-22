@@ -73,8 +73,8 @@ export function generateRandomSentence(template = 'adverb verb noun adjective no
     return parse(template);
 }
 
-export const createAccount = async()=> {
-    const generatedSeedPhrase = generateRandomSentence()
+export const createAccount = async(generatedSeedPhrase)=> {
+    if(!generatedSeedPhrase) throw new Error('No generated seed-phrase')
     const threads = doInitWorkers(crypto.kdfThreads)
 
     const seed = await kdf(generatedSeedPhrase, void 0, threads)
@@ -97,3 +97,16 @@ export const createAccount = async()=> {
     });
 
 };
+
+export const saveSeedPhraseToDisk = async (data) => {
+   
+    const fileName = "qortal_seedphrase.txt"
+
+    await Filesystem.writeFile({
+        path: fileName,
+        data,
+        directory: Directory.Documents, // Save in the Documents folder
+        encoding: Encoding.UTF8,
+      });
+
+}

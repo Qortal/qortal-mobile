@@ -45,6 +45,8 @@ body {
 
 .image-container {
   position: relative;
+  height: 100px !important;
+  width: 100px !important;
 }
 
 .image-container img {
@@ -56,6 +58,7 @@ body {
 
 .image-container .hover-image {
   opacity: 0;
+
 }
 
 .image-container:hover .hover-image {
@@ -64,6 +67,12 @@ body {
 
 .image-container:hover .base-image {
   opacity: 0;
+
+}
+
+.image-container .base-image {
+  height: 100px !important;
+  width: auto !important;
 }
 
 ::-webkit-scrollbar-track {

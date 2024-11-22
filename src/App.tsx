@@ -43,10 +43,13 @@ import Success from "./assets/svgs/Success.svg";
 import Info from "./assets/svgs/Info.svg";
 import CloseIcon from "@mui/icons-material/Close";
 import { FilePicker } from '@capawesome/capacitor-file-picker';
+import './utils/seedPhrase/RandomSentenceGenerator';
+
 import {
   createAccount,
   generateRandomSentence,
   saveFileToDisk,
+  saveSeedPhraseToDisk,
 } from "./utils/generateWallet/generateWallet";
 import { kdf } from "./deps/kdf";
 import { generateSaveWalletData } from "./utils/generateWallet/storeWallet";
@@ -116,6 +119,7 @@ import { NotAuthenticated, manifestData } from "./ExtStates/NotAuthenticated";
 import {  openIndexedDB, showSaveFilePicker } from "./components/Apps/useQortalMessageListener";
 import { fileToBase64 } from "./utils/fileReading";
 import { handleGetFileFromIndexedDB } from "./utils/indexedDB";
+import { Wallets } from "./Wallets";
 
 
 type extStates =
@@ -132,7 +136,8 @@ type extStates =
   | "wallet-dropped"
   | "web-app-request-buy-order"
   | "buy-order-submitted"
-  | "group";
+  | "group"
+  | "wallets";
 
 interface MyContextInterface {
   txList: any[];
@@ -436,7 +441,19 @@ function App() {
   const [fullScreen, setFullScreen] = useRecoilState(fullScreenAtom);
 
   const { toggleFullScreen } = useAppFullScreen(setFullScreen);
-
+  const generatorRef = useRef(null)
+  const exportSeedphrase = async ()=> {
+    try {
+      const seedPhrase = generatorRef.current.parsedString
+      saveSeedPhraseToDisk(seedPhrase)
+      await showInfo({
+        message: `Your seed phrase was saved to INTERNAL storage, in the document folder. Keep that file secure.`,
+       })
+    } catch (error) {
+      
+    }
+  
+  }
   useEffect(() => {
     // Attach a global event listener for double-click
     const handleDoubleClick = () => {
@@ -992,7 +1009,7 @@ function App() {
           res();
         }, 250);
       });
-      const res = await createAccount();
+      const res = await createAccount(generatorRef.current.parsedString);
       const wallet = await res.generateSaveWalletData(
         walletToBeDownloadedPassword,
         crypto.kdfThreads,
@@ -2282,7 +2299,35 @@ function App() {
           </CustomButton>
         </>
       )}
-      {rawWallet && extState === "wallet-dropped" && (
+       {extState === "wallets" && (
+        <>
+         <Spacer height="22px" />
+          <Box
+            sx={{
+              display: "flex",
+              width: "100%",
+              justifyContent: "flex-start",
+              paddingLeft: "22px",
+              boxSizing: "border-box",
+            }}
+          >
+            <img
+              style={{
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                setRawWallet(null);
+                setExtstate("not-authenticated");
+                logoutFunc();
+              }}
+              src={Return}
+            />
+          </Box>
+         <Wallets setRawWallet={setRawWallet} setExtState={setExtstate} rawWallet={rawWallet} />
+
+        </>
+      )}
+       {rawWallet && extState === "wallet-dropped" && (
         <>
           <Spacer height="22px" />
           <Box
@@ -2300,8 +2345,8 @@ function App() {
               }}
               onClick={() => {
                 setRawWallet(null);
-                setExtstate("not-authenticated");
-                logoutFunc()
+                setExtstate("wallets");
+                logoutFunc();
               }}
               src={Return}
             />
@@ -2322,9 +2367,11 @@ function App() {
             sx={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "flex-start",
+              alignItems: "center",
             }}
           >
+            <Typography>{rawWallet?.name ? rawWallet?.name : rawWallet?.address0}</Typography>
+            <Spacer height="10px" />
             <TextP
               sx={{
                 textAlign: "start",
@@ -2491,6 +2538,40 @@ await showInfo({
               >
                 Set up your Qortal account
               </TextP>
+              <Spacer height="14px" />
+              <Box sx={{
+                display: 'flex',
+                maxWidth: '100%',
+                justifyContent: 'center',
+                padding: '10px'
+              }}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                maxWidth: '400px',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <Typography sx={{
+                  fontSize: '14px'
+                }}>Your seedphrase</Typography>
+                <Typography sx={{
+                  fontSize: '12px'
+                }}>Only shown once! Please copy and keep safe!</Typography>
+
+              <random-sentence-generator
+              ref={generatorRef}
+											template="adverb verb noun adjective noun adverb verb noun adjective noun adjective verbed adjective noun"
+									
+										></random-sentence-generator>
+                </Box>
+                </Box>
+              <CustomButton sx={{
+                padding: '7px',
+                fontSize: '12px'
+              }} onClick={exportSeedphrase}>
+                Export Seedphrase
+              </CustomButton>
               <Spacer height="14px" />
               <CustomLabel htmlFor="standard-adornment-password">
                 Wallet Password

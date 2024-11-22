@@ -261,15 +261,12 @@ export const NotAuthenticated = ({
           display: "flex",
           gap: "10px",
           alignItems: "center",
-          marginLeft: "28px",
         }}
       >
-        <CustomButton onClick={handleFilePick}>
-          Authenticate
+           <CustomButton onClick={()=> setExtstate('wallets')}>
+          Wallets
         </CustomButton>
-        <Tooltip title="Authenticate by importing your Qortal JSON file" arrow>
-          <img src={Info} />
-        </Tooltip>
+        
       </Box>
 
       <Spacer height="6px" />
@@ -277,8 +274,7 @@ export const NotAuthenticated = ({
         sx={{
           display: "flex",
           gap: "10px",
-          alignItems: "center",
-          marginLeft: "28px",
+          alignItems: "center"
         }}
       >
         <CustomButton
@@ -289,12 +285,7 @@ export const NotAuthenticated = ({
           Create account
         </CustomButton>
 
-        <img
-          src={Info}
-          style={{
-            visibility: "hidden",
-          }}
-        />
+      
       </Box>
         <Spacer height="15px" />
         

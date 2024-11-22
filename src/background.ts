@@ -782,6 +782,23 @@ export async function getSaveWallet() {
   }
 }
 
+export async function getWallets() {
+  const res = await getData<any>("wallets").catch(() => null);
+  if (res) {
+    return res;
+  } else {
+    return null
+  }
+}
+
+export async function storeWallets(wallets) {
+  storeData("wallets", wallets)
+        .catch((error) => {
+         console.error(error)
+        });
+}
+
+
 
 export async function clearAllNotifications() {
   try {
