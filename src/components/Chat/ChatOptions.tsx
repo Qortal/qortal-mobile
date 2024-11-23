@@ -190,6 +190,7 @@ export const ChatOptions = ({ messages, goToMessage, members, myName, selectedGr
           left: isMobile ?  0 : 'unset',
           right: isMobile ?  0 : 'unset',
           bottom: isMobile ?  0 : 'unset',
+          zIndex: 11
         }}
       >
         <Box
@@ -407,6 +408,7 @@ export const ChatOptions = ({ messages, goToMessage, members, myName, selectedGr
           left: isMobile ?  0 : 'unset',
           right: isMobile ?  0 : 'unset',
           bottom: isMobile ?  0 : 'unset',
+          zIndex: 11
         }}
       >
         <Box
