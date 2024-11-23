@@ -127,7 +127,6 @@ export const ManageMembers = ({
   const getMembers = async (groupId) => {
     try {
       const res = await getGroupMembers(groupId);
-      console.log('res', res)
       setMembersWithNames(res?.members || []);
     } catch (error) {}
   };

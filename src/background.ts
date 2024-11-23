@@ -100,7 +100,6 @@ import {
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
 import { LocalNotifications } from '@capacitor/local-notifications';
-// import ChatComputePowWorker from './chatComputePow.worker.js?worker';
 
 const uid = new ShortUniqueId({ length: 9, dictionary: 'number'  });
 
