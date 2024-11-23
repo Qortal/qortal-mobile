@@ -82,9 +82,9 @@ export const MessageItem = ({
               color: "white",
             }}
             alt={message?.senderName}
-            src={`${getBaseApiReact()}/arbitrary/THUMBNAIL/${
+            src={message?.senderName ? `${getBaseApiReact()}/arbitrary/THUMBNAIL/${
               message?.senderName
-            }/qortal_avatar?async=true`}
+            }/qortal_avatar?async=true` : ''}
           >
             {message?.senderName?.charAt(0)}
           </Avatar>

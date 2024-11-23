@@ -18,7 +18,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
     count: messages.length,
     getItemKey: (index) => messages[index].signature,
     getScrollElement: () => parentRef?.current,
-    estimateSize: () => 80, // Provide an estimated height of items, adjust this as needed
+    estimateSize: useCallback(() => 80, []), // Provide an estimated height of items, adjust this as needed
     overscan: 10, // Number of items to render outside the visible area to improve smoothness
   });
 
