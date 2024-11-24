@@ -100,6 +100,7 @@ import {
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { executeEvent } from "./utils/events";
 
 const uid = new ShortUniqueId({ length: 9, dictionary: 'number'  });
 
@@ -3255,7 +3256,10 @@ LocalNotifications.addListener('localNotificationActionPerformed', async (event)
 const initializeBackButton = () => {
 
     CapacitorApp.addListener('backButton', (event) => {
+      console.log('event', event)
       // Prevent the app from closing on back button press
+      executeEvent("handleMobileNativeBack", {
+      });
       event.preventDefault();
       
     });

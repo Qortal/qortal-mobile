@@ -92,6 +92,7 @@ import { Apps } from "../Apps/Apps";
 import { AppsNavBar } from "../Apps/AppsNavBar";
 import { AppsDesktop } from "../Apps/AppsDesktop";
 import { formatEmailDate } from "./QMailMessages";
+import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack";
 
 // let touchStartY = 0;
 // let disablePullToRefresh = false;
@@ -380,7 +381,6 @@ export const Group = ({
   desktopViewMode
 }: GroupProps) => {
   const [desktopSideView, setDesktopSideView] = useState('groups')
-
   const [secretKey, setSecretKey] = useState(null);
   const [secretKeyPublishDate, setSecretKeyPublishDate] = useState(null);
   const lastFetchedSecretKey = useRef(null);
@@ -1534,6 +1534,10 @@ export const Group = ({
     setIsOpenSideViewDirects(false)
     setIsOpenSideViewGroups(false)
   };
+
+
+  useHandleMobileNativeBack({mobileViewMode, goToHome, setMobileViewMode})
+
 
   const goToAnnouncements = async () => {
     setGroupSection("default");
