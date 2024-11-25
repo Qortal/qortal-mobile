@@ -38,6 +38,9 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
   const [infoSnack, setInfoSnack] = React.useState(null);
   const [publicKeyOfRecipient, setPublicKeyOfRecipient] = React.useState("")
   const hasInitializedWebsocket = useRef(false)
+  const [onEditMessage, setOnEditMessage] = useState(null)
+  const [chatReferences, setChatReferences] = useState({})
+
   const editorRef = useRef(null);
   const socketRef = useRef(null);
   const timeoutIdRef = useRef(null);
@@ -67,7 +70,15 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
   const tempMessages = useMemo(()=> {
     if(!selectedDirect?.address) return []
     if(queueChats[selectedDirect?.address]){
-      return queueChats[selectedDirect?.address]
+      return queueChats[selectedDirect?.address]?.filter((item)=> !item?.chatReference)
+    }
+    return []
+  }, [selectedDirect?.address, queueChats])
+
+  const tempChatReferences = useMemo(()=> {
+    if(!selectedDirect?.address) return []
+    if(queueChats[selectedDirect?.address]){
+      return queueChats[selectedDirect?.address]?.filter((item)=> !!item?.chatReference)
     }
     return []
   }, [selectedDirect?.address, queueChats])
@@ -99,50 +110,81 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
       console.error(error);
     }
  }
+ const decryptMessages = (encryptedMessages: any[], isInitiated: boolean)=> {
+  try {
+    return new Promise((res, rej)=> {
+      window.sendMessage("decryptDirect", {
+        data: encryptedMessages,
+        involvingAddress: selectedDirect?.address,
+      })
+        .then((response) => {
+          if (!response?.error) {
+            processWithNewMessages(response, selectedDirect?.address);
+            res(response);
+      
+            if (isInitiated) {
+              const formatted = response.filter((rawItem) => !rawItem?.chatReference).map((item) => ({
+                ...item,
+                id: item.signature,
+                text: item.message,
+                unread: item?.sender === myAddress ? false : true,
+              }));
+              setMessages((prev) => [...prev, ...formatted]);
+              setChatReferences((prev) => {
+                const organizedChatReferences = { ...prev };
 
-    const decryptMessages = (encryptedMessages: any[], isInitiated: boolean)=> {
-      try {
-        return new Promise((res, rej)=> {
-          window.sendMessage("decryptDirect", {
-            data: encryptedMessages,
-            involvingAddress: selectedDirect?.address,
-          })
-            .then((response) => {
-              if (!response?.error) {
-                processWithNewMessages(response, selectedDirect?.address);
-                res(response);
-          
-                if (isInitiated) {
-                  const formatted = response.map((item) => ({
-                    ...item,
-                    id: item.signature,
-                    text: item.message,
-                    unread: item?.sender === myAddress ? false : true,
-                  }));
-                  setMessages((prev) => [...prev, ...formatted]);
-                } else {
-                  const formatted = response.map((item) => ({
-                    ...item,
-                    id: item.signature,
-                    text: item.message,
-                    unread: false,
-                  }));
-                  setMessages(formatted);
-                  hasInitialized.current = true;
+              response.filter((rawItem) => !!rawItem?.chatReference && rawItem?.type === 'edit').forEach((item) => {
+                try {
+                  organizedChatReferences[item.chatReference] = {
+                    ...(organizedChatReferences[item.chatReference] || {}),
+                    edit: item
+                  };
+                } catch(error){
+
                 }
-                return;
-              }
-              rej(response.error);
-            })
-            .catch((error) => {
-              rej(error.message || "An error occurred");
-            });
-          
-        })  
-      } catch (error) {
-          
-      }
-    }
+              })
+               return  organizedChatReferences
+              })
+            } else {
+              hasInitialized.current = true;
+              const formatted = response.filter((rawItem) => !rawItem?.chatReference)
+              .map((item) => ({
+                ...item,
+                id: item.signature,
+                text: item.message,
+                unread: false,
+              }));
+              setMessages(formatted);
+
+              setChatReferences((prev) => {
+                const organizedChatReferences = { ...prev };
+
+              response.filter((rawItem) => !!rawItem?.chatReference && rawItem?.type === 'edit').forEach((item) => {
+                try {
+                  organizedChatReferences[item.chatReference] = {
+                    ...(organizedChatReferences[item.chatReference] || {}),
+                    edit: item
+                  };
+                } catch(error){
+
+                }
+              })
+               return  organizedChatReferences
+              })
+            }
+            return;
+          }
+          rej(response.error);
+        })
+        .catch((error) => {
+          rej(error.message || "An error occurred");
+        });
+      
+    })  
+  } catch (error) {
+      
+  }
+}
 
     const forceCloseWebSocket = () => {
       if (socketRef.current) {
@@ -334,80 +376,107 @@ useEffect(() => {
 }, [editorRef?.current]);
 
 
-    const sendMessage = async ()=> {
-      try {
+const sendMessage = async ()=> {
+  try {
 
-        
-        if(+balance < 4) throw new Error('You need at least 4 QORT to send a message')
-        if(isSending) return
-        if (editorRef.current) {
-          const htmlContent = editorRef.current.getHTML();
-     
-          if(!htmlContent?.trim() || htmlContent?.trim() === '<p></p>') return
-          setIsSending(true)
-          pauseAllQueues()
-        const message = JSON.stringify(htmlContent)
-       
-      
-        if(isNewChat){
-          await sendChatDirect({ messageText: htmlContent}, null, null, true)
-          return
-        }
-        let repliedTo = replyMessage?.signature
-
-				if (replyMessage?.chatReference) {
-					repliedTo = replyMessage?.chatReference
-				}
-        const otherData = {
-          specialId: uid.rnd(),
-          repliedTo
-        }
-        const sendMessageFunc = async () => {
-          return await sendChatDirect({ chatReference: undefined, messageText: htmlContent, otherData}, selectedDirect?.address, publicKeyOfRecipient, false)
-        };
-
-        
+    
+    if(+balance < 4) throw new Error('You need at least 4 QORT to send a message')
+    if(isSending) return
+    if (editorRef.current) {
+      const htmlContent = editorRef.current.getHTML();
+ 
+      if(!htmlContent?.trim() || htmlContent?.trim() === '<p></p>') return
+      setIsSending(true)
+      pauseAllQueues()
+    const message = JSON.stringify(htmlContent)
+   
   
-        // Add the function to the queue
-        const messageObj = {
-          message: {
-            text: htmlContent,
-            timestamp: Date.now(),
-          senderName: myName,
-          sender: myAddress,
-          ...(otherData || {})
-          },
-         
-        }
-        addToQueue(sendMessageFunc, messageObj, 'chat-direct',
-        selectedDirect?.address );
-        setTimeout(() => {
-          executeEvent("sent-new-message-group", {})
-        }, 150);
-        clearEditorContent()
-        setReplyMessage(null)
-        }
-        // send chat message
-      } catch (error) {
-        const errorMsg = error?.message || error
-        setInfoSnack({
-          type: "error",
-          message: errorMsg === 'invalid signature' ? 'You need at least 4 QORT to send a message' :  errorMsg,
-        });
-        setOpenSnack(true);
-        console.error(error)
-      } finally {
-        setIsSending(false)
-        resumeAllQueues()
-      }
+    if(isNewChat){
+      await sendChatDirect({ messageText: htmlContent}, null, null, true)
+      return
     }
+    let repliedTo = replyMessage?.signature
 
-  const onReply = useCallback((message)=> {
-    setReplyMessage(message)
-    editorRef?.current?.chain().focus()
+    if (replyMessage?.chatReference) {
+      repliedTo = replyMessage?.chatReference
+    }
+    let chatReference = onEditMessage?.signature
 
-  }, [])
+    const otherData = {
+      ...(onEditMessage?.decryptedData || {}),
+      specialId: uid.rnd(),
+      repliedTo: onEditMessage ? onEditMessage?.repliedTo : repliedTo,
+      type: chatReference ? 'edit' : ''
+    }
+    const sendMessageFunc = async () => {
+      return await sendChatDirect({ chatReference, messageText: htmlContent, otherData}, selectedDirect?.address, publicKeyOfRecipient, false)
+    };
 
+    
+
+    // Add the function to the queue
+    const messageObj = {
+      message: {
+        timestamp: Date.now(),
+      senderName: myName,
+      sender: myAddress,
+      ...(otherData || {}),
+      text: htmlContent,
+      },
+      chatReference
+    }
+    addToQueue(sendMessageFunc, messageObj, 'chat-direct',
+    selectedDirect?.address );
+    setTimeout(() => {
+      executeEvent("sent-new-message-group", {})
+    }, 150);
+    clearEditorContent()
+    setReplyMessage(null)
+    setOnEditMessage(null)
+
+    }
+    // send chat message
+  } catch (error) {
+    const errorMsg = error?.message || error
+    setInfoSnack({
+      type: "error",
+      message: errorMsg === 'invalid signature' ? 'You need at least 4 QORT to send a message' :  errorMsg,
+    });
+    setOpenSnack(true);
+    console.error(error)
+  } finally {
+    setIsSending(false)
+    resumeAllQueues()
+  }
+}
+
+
+    const onReply = useCallback((message)=> {
+      if(onEditMessage){
+        editorRef.current.chain().focus().clearContent().run()
+      }
+      setReplyMessage(message)
+      setOnEditMessage(null)
+      setIsFocusedParent(true);
+
+      setTimeout(() => {
+        editorRef?.current?.chain().focus()
+  
+      }, 250);
+    }, [onEditMessage])
+  
+  
+    const onEdit = useCallback((message)=> {
+      setOnEditMessage(message)
+      setReplyMessage(null)
+      setIsFocusedParent(true);
+      setTimeout(() => {
+        editorRef.current.chain().focus().setContent(message?.text).run();
+  
+      }, 250);
+  
+  
+    }, [])
     
   return (
     <div style={{
@@ -514,7 +583,7 @@ useEffect(() => {
         </>
       )}
       
-              <ChatList onReply={onReply} chatId={selectedDirect?.address} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages}/>
+      <ChatList chatReferences={chatReferences} onEdit={onEdit} onReply={onReply} chatId={selectedDirect?.address} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} tempChatReferences={tempChatReferences}/>
 
    
       <div style={{
@@ -554,13 +623,36 @@ useEffect(() => {
            <ButtonBase
                onClick={() => {
                 setReplyMessage(null)
+                setOnEditMessage(null)
+
                }}
              >
              <ExitIcon />
              </ButtonBase>
         </Box>
       )}
-     
+      {onEditMessage && (
+        <Box sx={{
+          display: 'flex',
+          gap: '5px',
+          alignItems: 'flex-start',
+          width: '100%'
+        }}>
+                  <ReplyPreview isEdit message={onEditMessage} />
+
+           <ButtonBase
+               onClick={() => {
+                setReplyMessage(null)
+                setOnEditMessage(null)
+              
+                  editorRef.current.chain().focus().clearContent().run()
+                
+               }}
+             >
+             <ExitIcon />
+             </ButtonBase>
+        </Box>
+      )}
       <Tiptap isFocusedParent={isFocusedParent} setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} setIsFocusedParent={setIsFocusedParent}/>
       </div>
       <Box sx={{
@@ -576,6 +668,8 @@ useEffect(() => {
                onClick={()=> {
                  if(isSending) return
                  setIsFocusedParent(false)
+                 setReplyMessage(null)
+                 setOnEditMessage(null)
                  clearEditorContent()
                  // Unfocus the editor
                }}

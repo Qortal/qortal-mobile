@@ -16,6 +16,8 @@ import ReplyIcon from "@mui/icons-material/Reply";
 import { Spacer } from "../../common/Spacer";
 import { ReactionPicker } from "../ReactionPicker";
 import KeyOffIcon from '@mui/icons-material/KeyOff';
+import EditIcon from '@mui/icons-material/Edit';
+
 export const MessageItem = ({
   message,
   onSeen,
@@ -30,7 +32,8 @@ export const MessageItem = ({
   handleReaction,
   reactions,
   isUpdating,
-  lastSignature
+  lastSignature,
+  onEdit
 }) => {
   const { ref, inView } = useInView({
     threshold: 0.7, // Fully visible
@@ -128,6 +131,15 @@ export const MessageItem = ({
             gap: '10px',
             alignItems: 'center'
           }}>
+             {message?.sender === myAddress && !message?.isNotEncrypted && (
+            <ButtonBase
+              onClick={() => {
+                onEdit(message);
+              }}
+            >
+              <EditIcon />
+            </ButtonBase>
+          )}
           {!isShowingAsReply && (
             <ButtonBase
               onClick={() => {
@@ -285,6 +297,19 @@ export const MessageItem = ({
               {message?.status === 'failed-permanent' ? 'Failed to send' : 'Sending...'}
             </Typography>
           ) : (
+            <>
+            {message?.isEdit && (
+              <Typography
+              sx={{
+                fontSize: "14px",
+                color: "gray",
+                fontFamily: "Inter",
+                fontStyle: 'italic'
+              }}
+            >
+              Edited
+            </Typography>
+            )}
             <Typography
               sx={{
                 fontSize: "14px",
@@ -294,6 +319,7 @@ export const MessageItem = ({
             >
               {formatTimestamp(message.timestamp)}
             </Typography>
+            </>
           )}
              </Box>
         </Box>
@@ -316,7 +342,7 @@ export const MessageItem = ({
 };
 
 
-export const ReplyPreview = ({message})=> {
+export const ReplyPreview = ({message, isEdit})=> {
 
   return (
     <Box
@@ -340,10 +366,18 @@ export const ReplyPreview = ({message})=> {
             <Box sx={{
               padding: '5px'
             }}>
-              <Typography sx={{
-                fontSize: '12px',
-                fontWeight: 600
-              }}>Replied to {message?.senderName || message?.senderAddress}</Typography>
+             {isEdit ? (
+                    <Typography sx={{
+                      fontSize: '12px',
+                      fontWeight: 600
+                    }}>Editing Message</Typography>
+              ) : (
+                    <Typography sx={{
+                      fontSize: '12px',
+                      fontWeight: 600
+                    }}>Replied to {message?.senderName || message?.senderAddress}</Typography>
+              )}
+          
               {message?.messageText && (
                 <MessageDisplay
                   htmlContent={generateHTML(message?.messageText, [
