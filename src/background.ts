@@ -3264,7 +3264,6 @@ LocalNotifications.addListener('localNotificationActionPerformed', async (event)
 const initializeBackButton = () => {
 
     CapacitorApp.addListener('backButton', (event) => {
-      console.log('event', event)
       // Prevent the app from closing on back button press
       executeEvent("handleMobileNativeBack", {
       });

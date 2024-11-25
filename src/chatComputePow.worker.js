@@ -74,9 +74,7 @@ async function computePow(chatBytes, difficulty) {
   // if (!workBufferPtr) {
   //   workBufferPtr = sbrk(workBufferLength);
   // }
-  console.log('native')
   const nonce =  await NativePOW.computeProofOfWork({ chatBytes, difficulty });
-  console.log('nonce', nonce)
   (hashPtr, workBufferPtr, workBufferLength, difficulty);
 
   return { nonce, chatBytesArray };
