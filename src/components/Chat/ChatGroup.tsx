@@ -75,7 +75,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
 
         setTimeout(() => {
           getTimestampEnterChatParent();
-        }, 200);
+        }, 600);
       }
     
       res(response);

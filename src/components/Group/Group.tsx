@@ -925,7 +925,7 @@ export const Group = ({
   
         setTimeout(() => {
           getTimestampEnterChat();
-        }, 200);
+        }, 600);
       }
   
       if (message?.action === "SET_GROUP_ANNOUNCEMENTS") {
