@@ -4,7 +4,7 @@ import './styles.css';
 import { executeEvent } from '../../utils/events';
 import { Browser } from '@capacitor/browser';
 
-const extractComponents = (url) => {
+export const extractComponents = (url) => {
   if (!url || !url.startsWith("qortal://")) { // Check if url exists and starts with "qortal://"
     return null;
   }

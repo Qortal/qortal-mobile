@@ -96,6 +96,8 @@ import {
   userInfoCase,
   validApiCase,
   versionCase,
+  createPollCase,
+  voteOnPollCase,
 } from "./background-cases";
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
@@ -2858,6 +2860,12 @@ function setupMessageListener() {
       case "sendChatGroup":
         sendChatGroupCase(request, event);
         break;
+        case "createPoll":
+          createPollCase(request, event);
+          break;
+        case "voteOnPoll":
+          voteOnPollCase(request, event);
+            break;
       case "sendChatDirect":
         sendChatDirectCase(request, event);
         break;
