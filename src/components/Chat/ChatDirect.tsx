@@ -20,6 +20,8 @@ import ShortUniqueId from "short-unique-id";
 import { ReturnIcon } from '../../assets/Icons/ReturnIcon';
 import { ExitIcon } from '../../assets/Icons/ExitIcon';
 import { MessageItem, ReplyPreview } from './MessageItem';
+import { isFocusedParentDirectAtom } from '../../atoms/global';
+import { useRecoilState } from 'recoil';
 
 
 const uid = new ShortUniqueId({ length: 5 });
@@ -27,8 +29,9 @@ const uid = new ShortUniqueId({ length: 5 });
 
 export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDirect, setNewChat, getTimestampEnterChat, myName, balance, close, setMobileViewModeKeepOpen}) => {
   const { queueChats, addToQueue, processWithNewMessages} = useMessageQueue();
-    const [isFocusedParent, setIsFocusedParent] = useState(false);
-
+    const [isFocusedParent, setIsFocusedParent] =  useRecoilState(
+      isFocusedParentDirectAtom
+    );
   const [messages, setMessages] = useState([])
   const [isSending, setIsSending] = useState(false)
   const [directToValue, setDirectToValue] = useState('')
@@ -51,11 +54,7 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
   };
   const [messageSize, setMessageSize] = useState(0)
 
-  const [, forceUpdate] = useReducer((x) => x + 1, 0);
-
-  const triggerRerender = () => {
-    forceUpdate(); // Trigger re-render by updating the state
-  };
+ 
   const publicKeyOfRecipientRef = useRef(null)
   const getPublicKeyFunc = async (address)=> {
     try {
@@ -340,6 +339,14 @@ const sendChatDirect = async ({ chatReference = undefined, messageText, otherDat
   } finally {
   }
 }
+
+useEffect(()=> {
+  if(isFocusedParent === false){
+    setReplyMessage(null)
+                   setOnEditMessage(null)
+                   clearEditorContent()
+  }
+  }, [isFocusedParent])
 const clearEditorContent = () => {
   if (editorRef.current) {
     editorRef.current.chain().focus().clearContent().run();
@@ -348,10 +355,6 @@ const clearEditorContent = () => {
       setTimeout(() => {
         editorRef.current?.chain().blur().run(); 
         setIsFocusedParent(false)
-        executeEvent("sent-new-message-group", {})
-        setTimeout(() => {
-          triggerRerender();
-         }, 300);
       }, 200);
     }
   }
@@ -650,9 +653,7 @@ const sendMessage = async ()=> {
                onClick={()=> {
                  if(isSending) return
                  setIsFocusedParent(false)
-                 setReplyMessage(null)
-                 setOnEditMessage(null)
-                 clearEditorContent()
+
                  // Unfocus the editor
                }}
                style={{

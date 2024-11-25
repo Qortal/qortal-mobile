@@ -1536,7 +1536,7 @@ export const Group = ({
   };
 
 
-  useHandleMobileNativeBack({mobileViewMode, goToHome, setMobileViewMode})
+  useHandleMobileNativeBack({mobileViewMode, goToHome, setMobileViewMode, mobileViewModeKeepOpen, setMobileViewModeKeepOpen, newChat, selectedDirect, setSelectedDirect, setNewChat })
 
 
   const goToAnnouncements = async () => {

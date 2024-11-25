@@ -23,6 +23,8 @@ import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from '../../constants/resou
 import { isExtMsg } from '../../background'
 import MentionList from './MentionList'
 import { ChatOptions } from './ChatOptions'
+import { isFocusedParentGroupAtom } from '../../atoms/global'
+import { useRecoilState } from 'recoil'
 
 const uid = new ShortUniqueId({ length: 5 });
 
@@ -38,7 +40,9 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
   const [openSnack, setOpenSnack] = React.useState(false);
   const [infoSnack, setInfoSnack] = React.useState(null);
   const hasInitialized = useRef(false)
-  const [isFocusedParent, setIsFocusedParent] = useState(false);
+  const [isFocusedParent, setIsFocusedParent] =  useRecoilState(
+    isFocusedParentGroupAtom
+  );
   const [replyMessage, setReplyMessage] = useState(null)
 
   const hasInitializedWebsocket = useRef(false)
@@ -47,7 +51,6 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
   const groupSocketTimeoutRef = useRef(null); // Group Socket Timeout reference
   const editorRef = useRef(null);
   const { queueChats, addToQueue, processWithNewMessages } = useMessageQueue();
-  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
 
   const lastReadTimestamp = useRef(null)
@@ -106,9 +109,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
     return Array.from(uniqueMembers);
   }, [messages]);
 
-  const triggerRerender = () => {
-    forceUpdate(); // Trigger re-render by updating the state
-  };
+
   const setEditorRef = (editorInstance) => {
     editorRef.current = editorInstance;
   };
@@ -552,6 +553,13 @@ const sendChatGroup = async ({groupId, typeMessage = undefined, chatReference = 
       throw new Error(error)
   }
 }
+useEffect(()=> {
+if(isFocusedParent === false){
+  setReplyMessage(null)
+                 setOnEditMessage(null)
+                 clearEditorContent()
+}
+}, [isFocusedParent])
 const clearEditorContent = () => {
   if (editorRef.current) {
     editorRef.current.chain().focus().clearContent().run();
@@ -560,10 +568,7 @@ const clearEditorContent = () => {
       setTimeout(() => {
         editorRef.current?.chain().blur().run(); 
         setIsFocusedParent(false)
-        executeEvent("sent-new-message-group", {})
-        setTimeout(() => {
-          triggerRerender();
-         }, 300);
+
       }, 200);
     }
   }
@@ -839,9 +844,9 @@ const sendMessage = async ()=> {
                onClick={()=> {
                  if(isSending) return
                  setIsFocusedParent(false)
-                 setReplyMessage(null)
-                 setOnEditMessage(null)
-                 clearEditorContent()
+                //  setReplyMessage(null)
+                //  setOnEditMessage(null)
+                //  clearEditorContent()
 
                  // Unfocus the editor
                }}

@@ -90,3 +90,13 @@ export const promotionsAtom = atom({
   key: 'promotionsAtom', 
   default: [], 
 });
+
+export const isFocusedParentGroupAtom = atom({
+  key: 'isFocusedParentGroupAtom', 
+  default: false, 
+});
+
+export const isFocusedParentDirectAtom = atom({
+  key: 'isFocusedParentDirectAtom', 
+  default: false, 
+});
