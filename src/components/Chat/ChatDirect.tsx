@@ -620,15 +620,7 @@ const sendMessage = async ()=> {
         }}>
                   <ReplyPreview message={replyMessage} />
 
-           <ButtonBase
-               onClick={() => {
-                setReplyMessage(null)
-                setOnEditMessage(null)
 
-               }}
-             >
-             <ExitIcon />
-             </ButtonBase>
         </Box>
       )}
       {onEditMessage && (
@@ -640,20 +632,10 @@ const sendMessage = async ()=> {
         }}>
                   <ReplyPreview isEdit message={onEditMessage} />
 
-           <ButtonBase
-               onClick={() => {
-                setReplyMessage(null)
-                setOnEditMessage(null)
-              
-                  editorRef.current.chain().focus().clearContent().run()
-                
-               }}
-             >
-             <ExitIcon />
-             </ButtonBase>
+         
         </Box>
       )}
-      <Tiptap isFocusedParent={isFocusedParent} setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} setIsFocusedParent={setIsFocusedParent}/>
+      <Tiptap isReply={onEditMessage || replyMessage} isFocusedParent={isFocusedParent} setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} setIsFocusedParent={setIsFocusedParent}/>
       </div>
       <Box sx={{
         display: 'flex',

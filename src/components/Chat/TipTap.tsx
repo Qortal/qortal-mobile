@@ -298,7 +298,8 @@ export default ({
   overrideMobile,
   customEditorHeight,
   membersWithNames,
-  enableMentions
+  enableMentions,
+  isReply
 }) => {
 
   const extensionsFiltered = isChat
@@ -446,10 +447,10 @@ export default ({
         attributes: {
           class: "tiptap-prosemirror",
           style:
-            isMobile ?
-            `overflow: auto; min-height: ${
-              customEditorHeight ? "200px" : "0px"
-            }; max-height:calc(100svh - ${customEditorHeight || "140px"})`: `overflow: auto; max-height: 250px`,
+          isMobile ?
+          `overflow: auto; min-height: ${
+            customEditorHeight ? "200px" : "0px"
+          }; max-height:calc(100svh - ${customEditorHeight || isReply ? "230px" : "190px"})`: `overflow: auto; max-height: 250px`,
         },
         handleKeyDown(view, event) {
           if (!disableEnter && event.key === "Enter") {

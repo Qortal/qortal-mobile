@@ -791,16 +791,6 @@ const sendMessage = async ()=> {
           width: '100%'
         }}>
                   <ReplyPreview message={replyMessage} />
-
-           <ButtonBase
-               onClick={() => {
-                setReplyMessage(null)
-                setOnEditMessage(null)
-
-               }}
-             >
-             <ExitIcon />
-             </ButtonBase>
         </Box>
       )}
 
@@ -813,17 +803,6 @@ const sendMessage = async ()=> {
         }}>
                   <ReplyPreview isEdit message={onEditMessage} />
 
-           <ButtonBase
-               onClick={() => {
-                setReplyMessage(null)
-                setOnEditMessage(null)
-              
-                  editorRef.current.chain().focus().clearContent().run()
-                
-               }}
-             >
-             <ExitIcon />
-             </ButtonBase>
         </Box>
       )}
      
@@ -835,7 +814,7 @@ const sendMessage = async ()=> {
      }}>
       
    
-      <Tiptap enableMentions setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} isFocusedParent={isFocusedParent} setIsFocusedParent={setIsFocusedParent} membersWithNames={members} />
+      <Tiptap isReply={onEditMessage || replyMessage} enableMentions setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} isFocusedParent={isFocusedParent} setIsFocusedParent={setIsFocusedParent} membersWithNames={members} />
      
 
 
