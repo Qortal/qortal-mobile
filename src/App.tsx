@@ -1293,6 +1293,24 @@ function App() {
     };
   }, []);
 
+  const openGlobalSnackBarFunc = (e) => {
+    const message = e.detail?.message;
+    const type = e.detail?.type;
+    setOpenSnack(true);
+    setInfoSnack({
+      type,
+      message
+    });
+  };
+
+  useEffect(() => {
+    subscribeToEvent("openGlobalSnackBar", openGlobalSnackBarFunc);
+
+    return () => {
+      unsubscribeFromEvent("openGlobalSnackBar", openGlobalSnackBarFunc);
+    };
+  }, []);
+
   useEffect(()=> {
     checkForUpdate()
   }, [])
