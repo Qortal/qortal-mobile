@@ -1663,7 +1663,8 @@ function App() {
             openSnackGlobal: openSnack, 
             setOpenSnackGlobal: setOpenSnack,
             infoSnackCustom: infoSnack,
-            setInfoSnackCustom: setInfoSnack
+            setInfoSnackCustom: setInfoSnack,
+            userInfo: userInfo
           }}
         >
           <Box
