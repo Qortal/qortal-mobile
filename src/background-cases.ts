@@ -1220,6 +1220,7 @@ export async function encryptAndPublishSymmetricKeyGroupChatCase(
       },
       event.origin
     );
+    if (!previousData) {
     try {
       sendChatGroup({
         groupId,
@@ -1230,6 +1231,7 @@ export async function encryptAndPublishSymmetricKeyGroupChatCase(
     } catch (error) {
       // error in sending chat message
     }
+  }
     try {
       sendChatNotification(data, groupId, previousData, numberOfMembers);
     } catch (error) {

@@ -44,7 +44,7 @@ import Info from "./assets/svgs/Info.svg";
 import CloseIcon from "@mui/icons-material/Close";
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import './utils/seedPhrase/RandomSentenceGenerator';
-
+import { useFetchResources } from "./common/useFetchResources";
 import {
   createAccount,
   generateRandomSentence,
@@ -348,6 +348,7 @@ export const isMainWindow = true;
 function App() {
   const [extState, setExtstate] = useState<extStates>("not-authenticated");
   const [desktopViewMode, setDesktopViewMode] = useState("home");
+  const {downloadResource} = useFetchResources()
 
   const [backupjson, setBackupjson] = useState<any>(null);
   const [rawWallet, setRawWallet] = useState<any>(null);
@@ -1682,7 +1683,8 @@ function App() {
             setOpenSnackGlobal: setOpenSnack,
             infoSnackCustom: infoSnack,
             setInfoSnackCustom: setInfoSnack,
-            userInfo: userInfo
+            userInfo: userInfo,
+            downloadResource
           }}
         >
           <Box

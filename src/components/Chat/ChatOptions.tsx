@@ -32,6 +32,7 @@ import { formatTimestamp } from "../../utils/time";
 import { ContextMenuMentions } from "../ContextMenuMentions";
 import { convert } from 'html-to-text';
 import { executeEvent } from "../../utils/events";
+import InsertLinkIcon from '@mui/icons-material/InsertLink';
 
 const extractTextFromHTML = (htmlString = '') => {
   return convert(htmlString, {
@@ -43,7 +44,7 @@ const cache = new CellMeasurerCache({
   defaultHeight: 50,
 });
 
-export const ChatOptions = ({ messages, goToMessage, members, myName, selectedGroup }) => {
+export const ChatOptions = ({ messages, goToMessage, members, myName, selectedGroup, openQManager }) => {
   const [mode, setMode] = useState("default");
   const [searchValue, setSearchValue] = useState("");
   const [selectedMember, setSelectedMember] = useState(0);
@@ -712,6 +713,16 @@ export const ChatOptions = ({ messages, goToMessage, members, myName, selectedGr
           }} />
         </ButtonBase>
         </ContextMenuMentions>
+        <ButtonBase onClick={() => {
+            setMode("default")
+            setSearchValue('')
+            setSelectedMember(0)
+            openQManager()
+        }}>
+          <InsertLinkIcon sx={{
+            color: 'white'
+          }} />
+        </ButtonBase>
       </Box>
     </Box>
   );

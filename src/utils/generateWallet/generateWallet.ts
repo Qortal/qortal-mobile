@@ -1,7 +1,9 @@
 // @ts-nocheck
 
+import { saveFileInChunks, showSaveFilePicker } from '../../components/Apps/useQortalMessageListener';
 import { crypto, walletVersion } from '../../constants/decryptWallet';
 import { doInitWorkers, kdf } from '../../deps/kdf';
+import { mimeToExtensionMap } from '../memeTypes';
 import PhraseWallet from './phrase-wallet';
 import * as WORDLISTS from './wordlists';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -109,4 +111,21 @@ export const saveSeedPhraseToDisk = async (data) => {
         encoding: Encoding.UTF8,
       });
 
+}
+
+const hasExtension = (filename) => {
+    return filename.includes(".") && filename.split(".").pop().length > 0;
+  };
+
+
+export const saveFileToDiskGeneric = async (blob, filename) => {
+    const timestamp = new Date()
+                        .toISOString()
+                        .replace(/:/g, "-"); // Safe timestamp for filenames
+                
+                        const fileExtension = mimeToExtensionMap[blob.type]
+let fileName = filename ||  "qortal_file_" + timestamp + "." + fileExtension;
+fileName = hasExtension(fileName) ? fileName : fileName  + "." + fileExtension;
+await saveFileInChunks(blob, fileName)
+// await FileSaver.saveAs(blob, fileName);
 }

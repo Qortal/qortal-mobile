@@ -122,6 +122,9 @@ FilePicker.requestPermissions().then(permission => {
 }).catch((error)=> console.error(error));;
 
 
+export let groupSecretkeys = {}
+
+
 
 export function cleanUrl(url) {
   return url?.replace(/^(https?:\/\/)?(www\.)?/, "");
@@ -2888,7 +2891,7 @@ function setupMessageListener() {
                 // for announcement notification
                 clearInterval(interval);
               }
-
+              groupSecretkeys = {}
               const wallet = await getSaveWallet();
               const address = wallet.address0;
               const key1 = `tempPublish-${address}`;

@@ -77,9 +77,8 @@ export const saveFileInChunks = async (
       isFirstChunk = false;
     }
 
-    console.log('File saved successfully in chunks:', fullFileName);
   } catch (error) {
-    console.error('Error saving file in chunks:', error);
+    throw error
   }
 };
 
@@ -184,7 +183,7 @@ const UIQortalRequests = [
   'GET_TX_ACTIVITY_SUMMARY', 'GET_FOREIGN_FEE', 'UPDATE_FOREIGN_FEE',
   'GET_SERVER_CONNECTION_HISTORY', 'SET_CURRENT_FOREIGN_SERVER',
   'ADD_FOREIGN_SERVER', 'REMOVE_FOREIGN_SERVER', 'GET_DAY_SUMMARY', 'CREATE_TRADE_BUY_ORDER',
-  'CREATE_TRADE_SELL_ORDER', 'CANCEL_TRADE_SELL_ORDER', 'IS_USING_GATEWAY',  'ADMIN_ACTION', 'OPEN_NEW_TAB', 'CREATE_AND_COPY_EMBED_LINK'
+  'CREATE_TRADE_SELL_ORDER', 'CANCEL_TRADE_SELL_ORDER', 'IS_USING_GATEWAY',  'ADMIN_ACTION', 'OPEN_NEW_TAB', 'CREATE_AND_COPY_EMBED_LINK', 'DECRYPT_QORTAL_GROUP_DATA'
 ];
 
 
@@ -282,6 +281,7 @@ const UIQortalRequests = [
       setOpenSnackGlobal(true);
       
      await saveFileInChunks(blob, filename)
+    
      setInfoSnackCustom({
       type: "success",
       message:
@@ -479,7 +479,7 @@ isDOMContentLoaded: false
       } else if (
         event?.data?.action === 'PUBLISH_MULTIPLE_QDN_RESOURCES' ||
         event?.data?.action === 'PUBLISH_QDN_RESOURCE' ||
-        event?.data?.action === 'ENCRYPT_DATA' 
+        event?.data?.action === 'ENCRYPT_DATA' || event?.data?.action === 'ENCRYPT_DATA_WITH_SHARING_KEY' || 'ENCRYPT_QORTAL_GROUP_DATA'
         
       ) {
         let data;
