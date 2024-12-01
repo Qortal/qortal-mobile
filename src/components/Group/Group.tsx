@@ -913,6 +913,9 @@ export const Group = ({
           window.sendMessage("addTimestampEnterChat", {
             timestamp: Date.now(),
             groupId: selectedGroupRef.current.groupId,
+          }).then((res)=> {
+            getTimestampEnterChat();
+
           }).catch((error) => {
             console.error("Failed to add timestamp:", error.message || "An error occurred");
           });
@@ -922,14 +925,14 @@ export const Group = ({
           window.sendMessage("addTimestampEnterChat", {
             timestamp: Date.now(),
             groupId: selectedDirectRef.current.address,
+          }).then((res)=> {
+            getTimestampEnterChat();
+
           }).catch((error) => {
             console.error("Failed to add timestamp:", error.message || "An error occurred");
           });
         }
   
-        setTimeout(() => {
-          getTimestampEnterChat();
-        }, 600);
       }
   
       if (message?.action === "SET_GROUP_ANNOUNCEMENTS") {
