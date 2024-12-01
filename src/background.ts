@@ -98,6 +98,7 @@ import {
   versionCase,
   createPollCase,
   voteOnPollCase,
+  encryptAndPublishSymmetricKeyGroupChatForAdminsCase,
 } from "./background-cases";
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
@@ -2821,6 +2822,9 @@ function setupMessageListener() {
         break;
       case "encryptAndPublishSymmetricKeyGroupChat":
         encryptAndPublishSymmetricKeyGroupChatCase(request, event);
+        break;
+        case "encryptAndPublishSymmetricKeyGroupChatForAdmins":
+        encryptAndPublishSymmetricKeyGroupChatForAdminsCase(request, event);
         break;
       case "publishGroupEncryptedResource":
         publishGroupEncryptedResourceCase(request, event);

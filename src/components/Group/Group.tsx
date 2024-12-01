@@ -93,6 +93,7 @@ import { AppsNavBar } from "../Apps/AppsNavBar";
 import { AppsDesktop } from "../Apps/AppsDesktop";
 import { formatEmailDate } from "./QMailMessages";
 import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack";
+import { AdminSpace } from "../Chat/AdminSpace";
 
 // let touchStartY = 0;
 // let disablePullToRefresh = false;
@@ -2308,7 +2309,7 @@ export const Group = ({
                     handleNewEncryptionNotification={
                       setNewEncryptionNotification
                     }
-                    hide={groupSection !== "chat" || !secretKey}
+                    hide={groupSection !== "chat" || !secretKey || selectedDirect || newChat}
                     
                     handleSecretKeyCreationInProgress={
                       handleSecretKeyCreationInProgress
@@ -2422,6 +2423,7 @@ export const Group = ({
                       defaultThread={defaultThread}
                       setDefaultThread={setDefaultThread}
                     />
+                     <AdminSpace adminsWithNames={adminsWithNames} selectedGroup={selectedGroup?.groupId} myAddress={myAddress} userInfo={userInfo} hide={groupSection !== "adminSpace"}  isAdmin={admins.includes(myAddress)} />
                   </>
                 )}
 

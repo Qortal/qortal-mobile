@@ -27,6 +27,7 @@ import { isFocusedParentGroupAtom } from '../../atoms/global'
 import { useRecoilState } from 'recoil'
 import AppViewerContainer from '../Apps/AppViewerContainer'
 import CloseIcon from "@mui/icons-material/Close";
+import { throttle } from 'lodash'
 
 const uid = new ShortUniqueId({ length: 5 });
 
@@ -53,6 +54,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
   const groupSocketTimeoutRef = useRef(null); // Group Socket Timeout reference
   const editorRef = useRef(null);
   const { queueChats, addToQueue, processWithNewMessages } = useMessageQueue();
+  const handleUpdateRef = useRef(null);
 
 
   const lastReadTimestamp = useRef(null)
@@ -476,23 +478,24 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
         hasInitializedWebsocket.current = true
     }, [secretKey])
 
+
     useEffect(() => {
       if (!editorRef?.current) return;
-      const handleUpdate = () => {
-        const htmlContent = editorRef?.current.getHTML();
-        const stringified = JSON.stringify(htmlContent);
-        const size = new Blob([stringified]).size;
+  
+      handleUpdateRef.current = throttle(() => {
+        const htmlContent = editorRef.current.getHTML();
+        const size = new TextEncoder().encode(htmlContent).length; 
         setMessageSize(size + 100);
-      };
+      }, 1200); 
   
-      // Add a listener for the editorRef?.current's content updates
-      editorRef?.current.on('update', handleUpdate);
+      const currentEditor = editorRef.current;
   
-      // Cleanup the listener on unmount
+      currentEditor.on("update", handleUpdateRef.current);
+  
       return () => {
-        editorRef?.current.off('update', handleUpdate);
+        currentEditor.off("update", handleUpdateRef.current);
       };
-    }, [editorRef?.current]);
+    }, [editorRef, setMessageSize]); 
 
   
     useEffect(()=> {
@@ -577,6 +580,9 @@ const clearEditorContent = () => {
     }
   }
 };
+
+
+
 
 
 const sendMessage = async ()=> {

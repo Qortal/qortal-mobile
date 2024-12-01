@@ -15,6 +15,7 @@ import { NotificationIcon2 } from "../../assets/Icons/NotificationIcon2";
 import { ChatIcon } from "../../assets/Icons/ChatIcon";
 import { ThreadsIcon } from "../../assets/Icons/ThreadsIcon";
 import { MembersIcon } from "../../assets/Icons/MembersIcon";
+import { AdminsIcon } from "../../assets/Icons/AdminsIcon";
 
 export const GroupMenu = ({ setGroupSection, groupSection, setOpenManageMembers, goToAnnouncements, goToChat, hasUnreadChat, hasUnreadAnnouncements }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -80,6 +81,9 @@ export const GroupMenu = ({ setGroupSection, groupSection, setOpenManageMembers,
             )}
              {groupSection === "forum" &&(
                  <> <ThreadsIcon color={hasUnreadAnnouncements || hasUnreadChat ? 'var(--unread)' : 'white'} /> {" Threads"}</>
+            )}
+               {groupSection === "adminSpace" &&(
+                 <> <AdminsIcon height={15} width={15} color={hasUnreadAnnouncements || hasUnreadChat ? 'var(--unread)' : 'white'} /> {" Admins"}</>
             )}
           </Box>
           <ArrowDownIcon color="white" />
@@ -195,6 +199,25 @@ export const GroupMenu = ({ setGroupSection, groupSection, setOpenManageMembers,
                     fontWeight: 600,
                   },
                 }} primary="Members" />
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setGroupSection("adminSpace");
+            handleClose();
+          }}
+        >
+          <ListItemIcon sx={{
+            minWidth: '24px !important'
+          }}>
+                     <AdminsIcon  color={"#fff"} height={15} width={15} />
+
+          </ListItemIcon>
+          <ListItemText sx={{
+                  "& .MuiTypography-root": {
+                    fontSize: "12px",
+                    fontWeight: 600,
+                  },
+                }} primary="Admins" />
         </MenuItem>
       </Menu>
     </Box>
