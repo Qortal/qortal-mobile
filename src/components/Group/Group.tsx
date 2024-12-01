@@ -94,6 +94,8 @@ import { AppsDesktop } from "../Apps/AppsDesktop";
 import { formatEmailDate } from "./QMailMessages";
 import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack";
 import { AdminSpace } from "../Chat/AdminSpace";
+import { useSetRecoilState } from "recoil";
+import { selectedGroupIdAtom } from "../../atoms/global";
 
 // let touchStartY = 0;
 // let disablePullToRefresh = false;
@@ -473,6 +475,7 @@ export const Group = ({
   const [appsMode, setAppsMode] = useState('home')
   const [isOpenSideViewDirects, setIsOpenSideViewDirects] = useState(false)
   const [isOpenSideViewGroups, setIsOpenSideViewGroups] = useState(false)
+  const setSelectedGroupId = useSetRecoilState(selectedGroupIdAtom)
   const toggleSideViewDirects = ()=> {
     if(isOpenSideViewGroups){
       setIsOpenSideViewGroups(false)
@@ -498,6 +501,8 @@ export const Group = ({
 
   useEffect(() => {
     selectedGroupRef.current = selectedGroup;
+    setSelectedGroupId(selectedGroup?.groupId)
+
   }, [selectedGroup]);
 
   useEffect(() => {

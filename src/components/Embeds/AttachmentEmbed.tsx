@@ -41,7 +41,8 @@ export const AttachmentCard = ({
     errorMsg,
     encryptionType,
     setInfoSnack,
-    setOpenSnack
+    setOpenSnack,
+    selectedGroupId
   }) => {
 
     const [isOpen, setIsOpen] = useState(true);
@@ -100,7 +101,7 @@ export const AttachmentCard = ({
              
                 {
                   data64: data,
-                groupId: 683,
+                groupId:  selectedGroupId,
                 }
               
             );
