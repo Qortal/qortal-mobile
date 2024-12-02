@@ -64,7 +64,7 @@ export function saveToLocalStorage(key, subKey, newValue) {
   }
 }
 
-export const AppsNavBar = () => {
+export const AppsNavBar = ({appsMode}) => {
   const [tabs, setTabs] = useState([]);
   const [selectedTab, setSelectedTab] = useState(null);
   const [isNewTabWindow, setIsNewTabWindow] = useState(false);
@@ -77,10 +77,11 @@ export const AppsNavBar = () => {
   const [navigationController, setNavigationController] =  useRecoilState(navigationControllerAtom)
 
   const isDisableBackButton = useMemo(()=> {
+    if(isNewTabWindow && appsMode === 'viewer') return true
     if(selectedTab && navigationController[selectedTab?.tabId]?.hasBack) return false
     if(selectedTab && !navigationController[selectedTab?.tabId]?.hasBack) return true
     return false
-  }, [navigationController, selectedTab])
+  }, [navigationController, selectedTab, isNewTabWindow, appsMode])
 
   const setSettingsLocalLastUpdated = useSetRecoilState(
     settingsLocalLastUpdatedAtom

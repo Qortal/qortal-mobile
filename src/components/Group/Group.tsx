@@ -96,6 +96,7 @@ import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack
 import { AdminSpace } from "../Chat/AdminSpace";
 import { useSetRecoilState } from "recoil";
 import { selectedGroupIdAtom } from "../../atoms/global";
+import { sortArrayByTimestampAndGroupName } from "../../utils/time";
 
 // let touchStartY = 0;
 // let disablePullToRefresh = false;
@@ -910,7 +911,7 @@ export const Group = ({
       if (message?.action === "SET_GROUPS") {
 
         // Update the component state with the received 'sendqort' state
-        setGroups(message.payload);
+        setGroups(sortArrayByTimestampAndGroupName(message.payload));
         getLatestRegularChat(message.payload);
         setMemberGroups(message.payload);
   
@@ -2673,7 +2674,7 @@ export const Group = ({
       )}
        {(isMobile &&  mobileViewMode === "apps" && appsMode !== 'home') &&  !mobileViewModeKeepOpen && (
         <>
-          <AppsNavBar />
+          <AppsNavBar appsMode={appsMode} />
         </>
       )}
     </>
