@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DndContext, closestCenter } from '@dnd-kit/core';
+import { DndContext, MouseSensor, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
 import { KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
@@ -36,6 +36,7 @@ const SortableItem = ({ id, name, app, isDesktop }) => {
                 transform: CSS.Transform.toString(transform),
                 transition,
               }}
+             
               onClick={()=> {
                 executeEvent("addTab", {
                   data: app
@@ -83,94 +84,110 @@ const SortableItem = ({ id, name, app, isDesktop }) => {
     );
 };
 
-export const SortablePinnedApps = ({  isDesktop, myWebsite, myApp, availableQapps = [] }) => {
-    const [pinnedApps, setPinnedApps] = useRecoilState(sortablePinnedAppsAtom);
-    const setSettingsLocalLastUpdated = useSetRecoilState(settingsLocalLastUpdatedAtom);
+export const SortablePinnedApps = ({ isDesktop, myWebsite, myApp, availableQapps = [] }) => {
+  const [pinnedApps, setPinnedApps] = useRecoilState(sortablePinnedAppsAtom);
+  const setSettingsLocalLastUpdated = useSetRecoilState(settingsLocalLastUpdatedAtom);
 
-    const transformPinnedApps = useMemo(() => {
+  const transformPinnedApps = useMemo(() => {
   
-      // Clone the existing pinned apps list
-      let pinned = [...pinnedApps];
-  
-      // Function to add or update `isMine` property
-      const addOrUpdateIsMine = (pinnedList, appToCheck) => {
-          if (!appToCheck) return pinnedList;
-  
-          const existingIndex = pinnedList.findIndex(
-              (item) => item?.service === appToCheck?.service && item?.name === appToCheck?.name
-          );
-            
-          if (existingIndex !== -1) {
-              // If the app is already in the list, update it with `isMine: true`
-              pinnedList[existingIndex] = { ...pinnedList[existingIndex], isMine: true };
-          } else {
-              // If not in the list, add it with `isMine: true` at the beginning
-              pinnedList.unshift({ ...appToCheck, isMine: true });
-          }
-  
-          return pinnedList;
-      };
-  
-      // Update or add `myWebsite` and `myApp` while preserving their positions
-      pinned = addOrUpdateIsMine(pinned, myWebsite);
-      pinned = addOrUpdateIsMine(pinned, myApp);
-  
-      // Update pinned list based on availableQapps
-      pinned = pinned.map((pin) => {
-          const findIndex = availableQapps?.findIndex(
-              (item) => item?.service === pin?.service && item?.name === pin?.name
-          );
-          if (findIndex !== -1) return {
-            ...availableQapps[findIndex],
-            ...pin
-          }
-  
-          return pin;
-      });
-  
-      return pinned;
-  }, [myApp, myWebsite, pinnedApps, availableQapps]);
-  
- 
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 10, // Set a distance to avoid triggering drag on small movements
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                distance: 10, // Also apply to touch
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
+    // Clone the existing pinned apps list
+    let pinned = [...pinnedApps];
 
-    const handleDragEnd = (event) => {
-        const { active, over } = event;
+    // Function to add or update `isMine` property
+    const addOrUpdateIsMine = (pinnedList, appToCheck) => {
+        if (!appToCheck) return pinnedList;
 
-        if (!over) return; // Make sure the drop target exists
-
-        if (active.id !== over.id) {
-            const oldIndex = transformPinnedApps.findIndex((item) => `${item?.service}-${item?.name}` === active.id);
-            const newIndex = transformPinnedApps.findIndex((item) => `${item?.service}-${item?.name}` === over.id);
-
-            const newOrder = arrayMove(transformPinnedApps, oldIndex, newIndex);
-            setPinnedApps(newOrder);
-            saveToLocalStorage('ext_saved_settings','sortablePinnedApps',  newOrder)
-            setSettingsLocalLastUpdated(Date.now())
+        const existingIndex = pinnedList.findIndex(
+            (item) => item?.service === appToCheck?.service && item?.name === appToCheck?.name
+        );
+          
+        if (existingIndex !== -1) {
+            // If the app is already in the list, update it with `isMine: true`
+            pinnedList[existingIndex] = { ...pinnedList[existingIndex], isMine: true };
+        } else {
+            // If not in the list, add it with `isMine: true` at the beginning
+            pinnedList.unshift({ ...appToCheck, isMine: true });
         }
+
+        return pinnedList;
     };
-    return (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={transformPinnedApps.map((app) => `${app?.service}-${app?.name}`)}>
-                {transformPinnedApps.map((app) => (
-                    <SortableItem isDesktop={isDesktop} key={`${app?.service}-${app?.name}`} id={`${app?.service}-${app?.name}`} name={app?.name} app={app} />
-                ))}
-            </SortableContext>
-        </DndContext>
-    );
+
+    // Update or add `myWebsite` and `myApp` while preserving their positions
+    pinned = addOrUpdateIsMine(pinned, myWebsite);
+    pinned = addOrUpdateIsMine(pinned, myApp);
+
+    // Update pinned list based on availableQapps
+    pinned = pinned.map((pin) => {
+        const findIndex = availableQapps?.findIndex(
+            (item) => item?.service === pin?.service && item?.name === pin?.name
+        );
+        if (findIndex !== -1) return {
+          ...availableQapps[findIndex],
+          ...pin
+        }
+
+        return pin;
+    });
+
+    return pinned;
+}, [myApp, myWebsite, pinnedApps, availableQapps]);
+
+  const sensors = useSensors(
+      useSensor(MouseSensor, {
+        activationConstraint: {
+          distance: 10,
+        },
+      }),
+      useSensor(TouchSensor, {
+          activationConstraint: {
+              delay: 500,    // Delay in milliseconds before drag activates
+              tolerance: 5,  // Movement tolerance in pixels during the delay
+          },
+      }),
+      useSensor(KeyboardSensor, {
+          coordinateGetter: sortableKeyboardCoordinates,
+      })
+  );
+
+  const handleDragEnd = (event) => {
+      const { active, over } = event;
+
+      if (!over) return;
+
+      if (active.id !== over.id) {
+          const oldIndex = transformPinnedApps.findIndex(
+              (item) => `${item?.service}-${item?.name}` === active.id
+          );
+          const newIndex = transformPinnedApps.findIndex(
+              (item) => `${item?.service}-${item?.name}` === over.id
+          );
+
+          const newOrder = arrayMove(transformPinnedApps, oldIndex, newIndex);
+          setPinnedApps(newOrder);
+          saveToLocalStorage('ext_saved_settings', 'sortablePinnedApps', newOrder);
+          setSettingsLocalLastUpdated(Date.now());
+      }
+  };
+
+  return (
+      <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+      >
+          <SortableContext items={transformPinnedApps.map((app) => `${app?.service}-${app?.name}`)}>
+              {transformPinnedApps.map((app) => (
+                  <SortableItem
+                      isDesktop={isDesktop}
+                      key={`${app?.service}-${app?.name}`}
+                      id={`${app?.service}-${app?.name}`}
+                      name={app?.name}
+                      app={app}
+                  />
+              ))}
+          </SortableContext>
+      </DndContext>
+  );
 };
+
 

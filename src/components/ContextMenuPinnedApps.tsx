@@ -55,12 +55,12 @@ export const ContextMenuPinnedApps = ({ children, app, isMine }) => {
                 mouseX: clientX,
                 mouseY: clientY,
             });
-        }, 500);
+        }, 2000);
 
         // Set a maximum hold duration (e.g., 1.5 seconds)
         maxHoldTimeout.current = setTimeout(() => {
             clearTimeout(longPressTimeout.current);
-        }, 1500);
+        }, 2500);
     };
 
     const handleTouchMove = (event) => {
@@ -75,6 +75,8 @@ export const ContextMenuPinnedApps = ({ children, app, isMine }) => {
         if (movedEnough) {
             clearTimeout(longPressTimeout.current);
             clearTimeout(maxHoldTimeout.current);
+            setMenuPosition(null);
+
         }
     };
 
@@ -104,7 +106,6 @@ export const ContextMenuPinnedApps = ({ children, app, isMine }) => {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'none' }}
         >
             {children}
             <CustomStyledMenu
