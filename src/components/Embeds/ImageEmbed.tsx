@@ -1,4 +1,4 @@
-import React, { useEffect,  useState } from "react";
+import React, { useCallback, useEffect,  useRef,  useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,6 +11,8 @@ import {
   IconButton,
 
 } from "@mui/material";
+import QuickPinchZoom,  { make3dTransformValue } from "react-quick-pinch-zoom";
+
 
 import RefreshIcon from "@mui/icons-material/Refresh";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -179,16 +181,25 @@ export const ImageCard = ({
 
   export function ImageViewer({ src, alt = "" }) {
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const imgRef = useRef(null);
   
     const handleOpenFullscreen = () => setIsFullscreen(true);
     const handleCloseFullscreen = () => setIsFullscreen(false);
   
+    const onUpdate = ({ x, y, scale }) => {
+      const img = imgRef.current;
+      if (img) {
+        const transformValue = make3dTransformValue({ x, y, scale });
+        img.style.transform = transformValue;
+      }
+    };
+  
+  
     return (
       <>
-        {/* Image in container */}
         <Box
           sx={{
-            maxWidth: "100%", // Prevent horizontal overflow
+            maxWidth: "100%",
             display: "flex",
             justifyContent: "center",
             cursor: "pointer",
@@ -200,7 +211,7 @@ export const ImageCard = ({
             alt={alt}
             style={{
               maxWidth: "100%",
-              maxHeight: "450px", // Adjust max height for small containers
+              maxHeight: "450px", 
               objectFit: "contain", // Preserve aspect ratio
             }}
           />
@@ -219,7 +230,7 @@ export const ImageCard = ({
               maxWidth: "100%",
               width: "100%",
               height: "100vh",
-              overflow: "hidden", // Prevent scrollbars
+              overflow: "hidden", 
             },
           }}
         >
@@ -228,10 +239,7 @@ export const ImageCard = ({
               position: "relative",
               width: "100%",
               height: "100%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "#000", // Optional: dark background for fullscreen mode
+              backgroundColor: "#000", 
             }}
           >
             {/* Close Button */}
@@ -243,21 +251,28 @@ export const ImageCard = ({
                 right: 8,
                 zIndex: 10,
                 color: "white",
+                background: 'rgb(29, 29, 29)',
+                borderRadius: '50%',
+                padding: '5px'
               }}
             >
               <CloseIcon />
             </IconButton>
   
-            {/* Fullscreen Image */}
-            <img
-              src={src}
-              alt={alt}
-              style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                objectFit: "contain", // Preserve aspect ratio
-              }}
-            />
+            {/* Fullscreen Image with Pinch-Zoom */}
+            <QuickPinchZoom onUpdate={onUpdate}>
+              <img
+                ref={imgRef}
+                src={src}
+                alt={alt}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                  touchAction: "none", // Allow gestures directly on the image
+                }}
+              />
+            </QuickPinchZoom>
           </Box>
         </Dialog>
       </>
