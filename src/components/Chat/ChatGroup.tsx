@@ -75,7 +75,9 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
           timestamp: Date.now(),
           groupId: selectedGroup
         }).then((res)=> {
-          getTimestampEnterChatParent();
+          setTimeout(() => {
+            getTimestampEnterChatParent();
+          }, 200);
         }).catch((error) => {
             console.error("Failed to add timestamp:", error.message || "An error occurred");
           });

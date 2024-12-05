@@ -13,6 +13,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
   const [showScrollButton, setShowScrollButton] = useState(false);
   const hasLoadedInitialRef = useRef(false);
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
+  const lastSeenUnreadMessageTimestamp = useRef(null);
 
   const scrollingIntervalRef = useRef(null);
 
@@ -84,7 +85,9 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
     setMessages(totalMessages);
 
     setTimeout(() => {
-      const hasUnreadMessages = totalMessages.some((msg) => msg.unread && !msg?.chatReference && !msg?.isTemp);
+      const hasUnreadMessages = totalMessages.some(
+        (msg) => msg.unread && !msg?.chatReference && !msg?.isTemp && (!msg?.chatReference && msg?.timestamp > lastSeenUnreadMessageTimestamp.current || 0)
+      );
       if (parentRef.current) {
         const { scrollTop, scrollHeight, clientHeight } = parentRef.current;
       const atBottom = scrollTop + clientHeight >= scrollHeight - 10; // Adjust threshold as needed
@@ -127,6 +130,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
       }))
     );
     setShowScrollButton(false)
+    lastSeenUnreadMessageTimestamp.current = Date.now()
   }, []);
 
   // const scrollToBottom = (initialMsgs) => {
@@ -353,7 +357,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
       </div>
       
     </div>
-    {showScrollButton && (
+    {showScrollButton &&  (
       <button
         onClick={() => scrollToBottom()}
         style={{
@@ -373,7 +377,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
         Scroll to Unread Messages
       </button>
     )}
-       {showScrollDownButton &&  (
+       {showScrollDownButton && !showScrollButton && (
       <button
         onClick={() => scrollToBottom()}
         style={{
