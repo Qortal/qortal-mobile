@@ -97,7 +97,6 @@ export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps  }) => {
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && qortalUrl) {
-                  console.log('hello')
                   openQortalUrl();
                 }
               }}
