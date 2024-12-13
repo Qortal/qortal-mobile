@@ -745,7 +745,7 @@ export const Group = ({
         secretKeyToPublish &&
         secretKey &&
         lastFetchedSecretKey.current &&
-        Date.now() - lastFetchedSecretKey.current < 1800000
+        Date.now() - lastFetchedSecretKey.current < 600000
       )
         return secretKey;
       if (loadingGroupParam) {
@@ -2337,7 +2337,7 @@ export const Group = ({
                       style={{
                         display: "flex",
                         width: "100%",
-                        height: "100$",
+                        height: "100%",
                         flexDirection: "column",
                         alignItems: "flex-start",
                         padding: "20px",
