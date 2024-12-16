@@ -17,6 +17,7 @@ import { Spacer } from "../../common/Spacer";
 import { ReactionPicker } from "../ReactionPicker";
 import KeyOffIcon from '@mui/icons-material/KeyOff';
 import EditIcon from '@mui/icons-material/Edit';
+import Mention from "@tiptap/extension-mention";
 
 export const MessageItem = ({
   message,
@@ -33,7 +34,8 @@ export const MessageItem = ({
   reactions,
   isUpdating,
   lastSignature,
-  onEdit
+  onEdit,
+  isPrivate
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedReaction, setSelectedReaction] = useState(null);
@@ -133,7 +135,7 @@ export const MessageItem = ({
             gap: '10px',
             alignItems: 'center'
           }}>
-             {message?.sender === myAddress && !message?.isNotEncrypted && (
+              {message?.sender === myAddress && (!message?.isNotEncrypted || isPrivate === false) && (
             <ButtonBase
               onClick={() => {
                 onEdit(message);
@@ -202,6 +204,7 @@ export const MessageItem = ({
                     StarterKit,
                     Underline,
                     Highlight,
+                    Mention
                   ])}
                 />
               )}
@@ -220,6 +223,7 @@ export const MessageItem = ({
               StarterKit,
               Underline,
               Highlight,
+              Mention
             ])}
           />
         )}
@@ -336,7 +340,7 @@ export const MessageItem = ({
             alignItems: 'center',
             gap: '15px'
           }}>
-          {message?.isNotEncrypted && (
+           {message?.isNotEncrypted && isPrivate && (
               <KeyOffIcon sx={{
                 color: 'white',
                 marginLeft: '10px'
@@ -451,6 +455,7 @@ export const ReplyPreview = ({message, isEdit})=> {
                     StarterKit,
                     Underline,
                     Highlight,
+                    Mention
                   ])}
                 />
               )}

@@ -31,7 +31,7 @@ import { throttle } from 'lodash'
 
 const uid = new ShortUniqueId({ length: 5 });
 
-export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey, myAddress, handleNewEncryptionNotification, hide, handleSecretKeyCreationInProgress, triedToFetchSecretKey, myName, balance,  getTimestampEnterChatParent}) => {
+export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey, myAddress, handleNewEncryptionNotification, hide, handleSecretKeyCreationInProgress, triedToFetchSecretKey, myName, balance,  getTimestampEnterChatParent, isPrivate}) => {
   const [messages, setMessages] = useState([])
   const [chatReferences, setChatReferences] = useState({})
   const [isSending, setIsSending] = useState(false)
@@ -191,7 +191,6 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
   try {
     if(!secretKeyRef.current){
       checkForFirstSecretKeyNotification(encryptedMessages)
-      return
     }
     return new Promise((res, rej)=> {
       window.sendMessage("decryptSingle", {
@@ -203,9 +202,9 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
             const filterUIMessages = encryptedMessages.filter((item) => !isExtMsg(item.data));
             const decodedUIMessages = decodeBase64ForUIChatMessages(filterUIMessages);
       
-            const combineUIAndExtensionMsgs = [...decodedUIMessages, ...response];
-            processWithNewMessages(
-              combineUIAndExtensionMsgs.map((item) => ({
+            const combineUIAndExtensionMsgsBefore = [...decodedUIMessages, ...response];
+            const combineUIAndExtensionMsgs = processWithNewMessages(
+              combineUIAndExtensionMsgsBefore.map((item) => ({
                 ...item,
                 ...(item?.decryptedData || {}),
               })),
@@ -233,7 +232,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
               setChatReferences((prev) => {
                 const organizedChatReferences = { ...prev };
                 combineUIAndExtensionMsgs
-                  .filter((rawItem) => rawItem && rawItem.chatReference && (rawItem.decryptedData?.type === "reaction" || rawItem.decryptedData?.type === "edit"))
+                  .filter((rawItem) => rawItem && rawItem.chatReference && (rawItem.decryptedData?.type === "reaction" || rawItem.decryptedData?.type === "edit" || rawItem?.type === "edit" || rawItem?.type === "reaction"))
                   .forEach((item) => {
                     try {
                       if(item.decryptedData?.type === "edit"){
@@ -241,11 +240,16 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
                           ...(organizedChatReferences[item.chatReference] || {}),
                           edit: item.decryptedData,
                         };
+                      } else if(item?.type === "edit"){
+                        organizedChatReferences[item.chatReference] = {
+                          ...(organizedChatReferences[item.chatReference] || {}),
+                          edit: item,
+                        };
                       } else {
-                        const content = item.decryptedData?.content;
+                        const content = item?.content ||  item.decryptedData?.content;
                         const sender = item.sender;
                         const newTimestamp = item.timestamp;
-                        const contentState = item.decryptedData?.contentState;
+                        const contentState = item?.contentState || item.decryptedData?.contentState;
         
                         if (!content || typeof content !== "string" || !sender || typeof sender !== "string" || !newTimestamp) {
                           console.warn("Invalid content, sender, or timestamp in reaction data", item);
@@ -316,7 +320,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
                 const organizedChatReferences = { ...prev };
       
                 combineUIAndExtensionMsgs
-                  .filter((rawItem) => rawItem && rawItem.chatReference && (rawItem.decryptedData?.type === "reaction" || rawItem.decryptedData?.type === "edit"))
+                  .filter((rawItem) => rawItem && rawItem.chatReference && (rawItem.decryptedData?.type === "reaction" || rawItem.decryptedData?.type === "edit" || rawItem?.type === "edit" || rawItem?.type === "reaction"))
                   .forEach((item) => {
                     try {
                       if(item.decryptedData?.type === "edit"){
@@ -324,11 +328,16 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
                           ...(organizedChatReferences[item.chatReference] || {}),
                           edit: item.decryptedData,
                         };
+                      } else if(item?.type === "edit"){
+                        organizedChatReferences[item.chatReference] = {
+                          ...(organizedChatReferences[item.chatReference] || {}),
+                          edit: item,
+                        };
                       } else {
-                      const content = item.decryptedData?.content;
+                      const content = item?.content || item.decryptedData?.content;
                       const sender = item.sender;
                       const newTimestamp = item.timestamp;
-                      const contentState = item.decryptedData?.contentState;
+                      const contentState = item?.contentState ||  item.decryptedData?.contentState;
       
                       if (!content || typeof content !== "string" || !sender || typeof sender !== "string" || !newTimestamp) {
                         console.warn("Invalid content, sender, or timestamp in reaction data", item);
@@ -463,10 +472,11 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
         setIsLoading(true)
         initWebsocketMessageGroup()
       }  
-    }, [triedToFetchSecretKey, secretKey])
+    }, [triedToFetchSecretKey, secretKey, isPrivate])
 
     useEffect(()=> {
-      if(!secretKey || hasInitializedWebsocket.current) return
+      if(isPrivate === null) return
+      if(isPrivate === false || !secretKey || hasInitializedWebsocket.current) return
       forceCloseWebSocket()
       setMessages([])
       setIsLoading(true)
@@ -476,17 +486,32 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
       }, 6000);
         initWebsocketMessageGroup()
         hasInitializedWebsocket.current = true
-    }, [secretKey])
+    }, [secretKey, isPrivate])
 
 
     useEffect(() => {
       if (!editorRef?.current) return;
   
-      handleUpdateRef.current = throttle(() => {
-        const htmlContent = editorRef.current.getHTML();
-        const size = new TextEncoder().encode(htmlContent).length; 
-        setMessageSize(size + 100);
+      handleUpdateRef.current = throttle(async () => {
+       try {
+        if(isPrivate){
+          const htmlContent = editorRef.current.getHTML();
+          const message64 =  await objectToBase64(JSON.stringify(htmlContent))
+          const secretKeyObject = await getSecretKey(false, true)
+          const encryptSingle = await encryptChatMessage(message64, secretKeyObject)
+          setMessageSize((encryptSingle?.length || 0) + 200);
+        } else {
+          const htmlContent = editorRef.current.getJSON();
+          const message =  JSON.stringify(htmlContent)
+          const size = new Blob([message]).size
+          setMessageSize(size + 300);
+        }
+       
+       } catch (error) {
+        // calc size error
+       }
       }, 1200); 
+
   
       const currentEditor = editorRef.current;
   
@@ -495,7 +520,9 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
       return () => {
         currentEditor.off("update", handleUpdateRef.current);
       };
-    }, [editorRef, setMessageSize]); 
+    }, [editorRef, setMessageSize, isFocusedParent, isPrivate]); 
+
+
 
   
     useEffect(()=> {
@@ -587,6 +614,8 @@ const clearEditorContent = () => {
 
 const sendMessage = async ()=> {
   try {
+    if(messageSize > 4000) return
+    if(isPrivate === null) throw new Error('Unable to determine if group is private')
     if(isSending) return
     if(+balance < 4) throw new Error('You need at least 4 QORT to send a message')
     pauseAllQueues()
@@ -594,8 +623,10 @@ const sendMessage = async ()=> {
       const htmlContent = editorRef.current.getHTML();
    
       if(!htmlContent?.trim() || htmlContent?.trim() === '<p></p>') return
+      
+
       setIsSending(true)
-    const message = htmlContent
+    const message = isPrivate === false ? editorRef.current.getJSON() : htmlContent
     const secretKeyObject = await getSecretKey(false, true)
 
     let repliedTo = replyMessage?.signature
@@ -605,19 +636,24 @@ const sendMessage = async ()=> {
     }
     let chatReference = onEditMessage?.signature
 
+    const publicData = isPrivate ? {} : {
+      isEdited : chatReference ? true : false,
+    }
     const otherData = {
       repliedTo,
       ...(onEditMessage?.decryptedData || {}),
       type: chatReference ? 'edit' : '',
       specialId: uid.rnd(),
+      ...publicData
     }
     const objectMessage = {
       ...(otherData || {}),
-      message
+      [isPrivate ? 'message' : 'messageText']: message,
+      version: 3
     }
     const message64: any = await objectToBase64(objectMessage)
  
-    const encryptSingle = await encryptChatMessage(message64, secretKeyObject)
+    const encryptSingle = isPrivate === false ? JSON.stringify(objectMessage) : await encryptChatMessage(message64, secretKeyObject)
     // const res = await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle})
    
     const sendMessageFunc = async () => {
@@ -627,7 +663,7 @@ const sendMessage = async ()=> {
     // Add the function to the queue
     const messageObj = {
       message: {
-        text: message,
+        text: htmlContent,
         timestamp: Date.now(),
       senderName: myName,
       sender: myAddress,
@@ -687,10 +723,8 @@ const sendMessage = async ()=> {
     setReplyMessage(null)
     setIsFocusedParent(true);
     setTimeout(() => {
-      editorRef.current.chain().focus().setContent(message?.text).run();
-
-    }, 250);
-
+    editorRef.current.chain().focus().setContent(message?.messageText || message?.text).run();
+  }, 250);
   }, [])
 
   const handleReaction = useCallback(async (reaction, chatMessage, reactionState = true)=> {
@@ -718,7 +752,7 @@ const sendMessage = async ()=> {
       }
       const message64: any = await objectToBase64(objectMessage)
       const reactiontypeNumber = RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS
-      const encryptSingle = await encryptChatMessage(message64, secretKeyObject, reactiontypeNumber)
+      const encryptSingle = isPrivate === false ? JSON.stringify(objectMessage) : await encryptChatMessage(message64, secretKeyObject, reactiontypeNumber)
       // const res = await sendChatGroup({groupId: selectedGroup,messageText: encryptSingle})
      
       const sendMessageFunc = async () => {
@@ -770,7 +804,7 @@ const sendMessage = async ()=> {
     left: hide && '-100000px',
     }}>
  
-              <ChatList enableMentions onReply={onReply} onEdit={onEdit}  chatId={selectedGroup} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} handleReaction={handleReaction} chatReferences={chatReferences} tempChatReferences={tempChatReferences} members={members} myName={myName} selectedGroup={selectedGroup}/>
+              <ChatList isPrivate={isPrivate} enableMentions onReply={onReply} onEdit={onEdit}  chatId={selectedGroup} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} handleReaction={handleReaction} chatReferences={chatReferences} tempChatReferences={tempChatReferences} members={members} myName={myName} selectedGroup={selectedGroup}/>
 
    
       <div style={{
@@ -836,7 +870,7 @@ const sendMessage = async ()=> {
 <div style={{
           display: isFocusedParent ? 'none' : 'block'
         }}>
-        <ChatOptions         openQManager={openQManager}
+        <ChatOptions  isPrivate={isPrivate}       openQManager={openQManager}
  messages={messages} goToMessage={()=> {}} members={members} myName={myName} selectedGroup={selectedGroup}/>
         </div>
       </Box>
@@ -878,7 +912,6 @@ const sendMessage = async ()=> {
             {isFocusedParent && (
                   <CustomButton
                   onClick={()=> {
-                    if(messageSize > 4000) return
                     if(isSending) return
                     sendMessage()
                   }}

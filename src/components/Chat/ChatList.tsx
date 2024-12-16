@@ -6,7 +6,7 @@ import { useInView } from 'react-intersection-observer'
 import { Typography } from '@mui/material';
 import ErrorBoundary from '../../common/ErrorBoundary';
 
-export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onReply, handleReaction, chatReferences, tempChatReferences,   onEdit
+export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onReply, handleReaction, chatReferences, tempChatReferences, isPrivate,   onEdit
 }) => {
   const parentRef = useRef();
   const [messages, setMessages] = useState(initialMessages);
@@ -20,7 +20,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
   // Initialize the virtualizer
   const rowVirtualizer = useVirtualizer({
     count: messages.length,
-    getItemKey: (index) => messages[index].signature,
+    getItemKey: (index) => messages[index]?.tempSignature || messages[index].signature,
     getScrollElement: () => parentRef?.current,
     estimateSize: useCallback(() => 80, []), // Provide an estimated height of items, adjust this as needed
     overscan: 10, // Number of items to render outside the visible area to improve smoothness
@@ -264,7 +264,10 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
                    message.text = chatReferences[message.signature]?.edit?.message;
                    message.isEdit = true
                  }
-
+                 if (chatReferences[message.signature]?.edit?.messageText && message?.messageText) {
+                  message.messageText = chatReferences[message.signature]?.edit?.messageText;
+                  message.isEdit = true
+                }
                
                }
          
@@ -348,6 +351,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
                 handleReaction={handleReaction}
                 reactions={reactions}
                 isUpdating={isUpdating}
+                isPrivate={isPrivate}
               />
               </ErrorBoundary>
             </div>

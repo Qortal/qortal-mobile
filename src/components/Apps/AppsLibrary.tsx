@@ -17,7 +17,7 @@ import {
   PublishQAppCTARight,
   PublishQAppDotsBG,
 } from "./Apps-styles";
-import { Avatar, Box, ButtonBase, InputBase, styled } from "@mui/material";
+import { Avatar, Box, ButtonBase, InputBase, Typography, styled } from "@mui/material";
 import { Add } from "@mui/icons-material";
 import { MyContext, getBaseApiReact } from "../../App";
 import LogoSelected from "../../assets/svgs/LogoSelected.svg";
@@ -101,7 +101,11 @@ export const AppsLibrary = ({  availableQapps, setMode, myName, hasPublishApp, i
     const handler = setTimeout(() => {
       setDebouncedValue(searchValue);
     }, 350);
-
+    setTimeout(() => {
+      virtuosoRef.current.scrollToIndex({
+        index: 0
+      });
+    }, 500);
     // Cleanup timeout if searchValue changes before the timeout completes
     return () => {
       clearTimeout(handler);
@@ -113,7 +117,7 @@ export const AppsLibrary = ({  availableQapps, setMode, myName, hasPublishApp, i
   const searchedList = useMemo(() => {
     if (!debouncedValue) return [];
     return availableQapps.filter((app) =>
-      app.name.toLowerCase().includes(debouncedValue.toLowerCase())
+    app.name.toLowerCase().includes(debouncedValue.toLowerCase()) || (app?.metadata?.title && app?.metadata?.title?.toLowerCase().includes(debouncedValue.toLowerCase()))
     );
   }, [debouncedValue]);
 
@@ -214,6 +218,10 @@ export const AppsLibrary = ({  availableQapps, setMode, myName, hasPublishApp, i
             />
           </StyledVirtuosoContainer>
           </AppsWidthLimiter>
+        ) : searchedList?.length === 0 && debouncedValue ? (
+          <AppsWidthLimiter>
+            <Typography>No results</Typography>
+          </AppsWidthLimiter>
         ) : (
           <>
             <AppsWidthLimiter>
@@ -313,6 +321,33 @@ export const AppsLibrary = ({  availableQapps, setMode, myName, hasPublishApp, i
               // Hide scrollbar for IE and older Edge
               "-ms-overflow-style": "none",
             }}>
+              <ButtonBase
+                        
+                        onClick={() => {
+                          executeEvent("selectedCategory", {
+                            data: {
+                              id: 'all',
+                              name: 'All'
+                            },
+                          });
+                        }}
+                      >
+                         <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '110px',
+                  width: '110px',
+                  background: 'linear-gradient(163.47deg, #4BBCFE 27.55%, #1386C9 86.56%)',
+                  color: '#1D1D1E',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  flexShrink: 0,
+                  borderRadius: '11px'
+                }}>
+                          All
+                        </Box>
+                      </ButtonBase>
             {categories?.map((category)=> {
               return (
                 <ButtonBase key={category?.id} onClick={()=> {

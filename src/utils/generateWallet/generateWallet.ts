@@ -7,6 +7,9 @@ import { mimeToExtensionMap } from '../memeTypes';
 import PhraseWallet from './phrase-wallet';
 import * as WORDLISTS from './wordlists';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import ShortUniqueId from "short-unique-id";
+const uid = new ShortUniqueId({ length: 8 });
+
 export function generateRandomSentence(template = 'adverb verb noun adjective noun adverb verb noun adjective noun adjective verbed adjective noun', maxWordLength = 0, capitalize = true) {
     const partsOfSpeechMap = {
         'noun': 'nouns',
@@ -88,7 +91,7 @@ export const createAccount = async(generatedSeedPhrase)=> {
  export const saveFileToDisk = async (data: any, qortAddress: string) => {
 
     const dataString = JSON.stringify(data);
-    const fileName = `qortal_backup_${qortAddress}.json`;
+    const fileName = `qortal_backup_${qortAddress}_${uid.rnd()}.json`;
 
     // Write the file to the Filesystem
     await Filesystem.writeFile({
@@ -102,7 +105,7 @@ export const createAccount = async(generatedSeedPhrase)=> {
 
 export const saveSeedPhraseToDisk = async (data) => {
    
-    const fileName = "qortal_seedphrase.txt"
+    const fileName = `qortal_seedphrase_${uid.rnd()}.txt`
 
     await Filesystem.writeFile({
         path: fileName,

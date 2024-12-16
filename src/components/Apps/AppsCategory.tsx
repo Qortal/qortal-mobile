@@ -86,6 +86,8 @@ export const AppsCategory = ({  availableQapps,  myName, category, isShow }) => 
 
   
   const categoryList = useMemo(() => {
+    if(category?.id === 'all') return availableQapps
+
     return availableQapps.filter(
       (app) =>
         app?.metadata?.category === category?.id
@@ -99,7 +101,11 @@ export const AppsCategory = ({  availableQapps,  myName, category, isShow }) => 
     const handler = setTimeout(() => {
       setDebouncedValue(searchValue);
     }, 350);
-
+    setTimeout(() => {
+      virtuosoRef.current.scrollToIndex({
+        index: 0
+      });
+    }, 500);
     // Cleanup timeout if searchValue changes before the timeout completes
     return () => {
       clearTimeout(handler);
@@ -111,14 +117,14 @@ export const AppsCategory = ({  availableQapps,  myName, category, isShow }) => 
   const searchedList = useMemo(() => {
     if (!debouncedValue) return categoryList
     return categoryList.filter((app) =>
-      app.name.toLowerCase().includes(debouncedValue.toLowerCase())
+    app.name.toLowerCase().includes(debouncedValue.toLowerCase()) || (app?.metadata?.title && app?.metadata?.title?.toLowerCase().includes(debouncedValue.toLowerCase()))
     );
   }, [debouncedValue, categoryList]);
 
   const rowRenderer = (index) => {
    
     let app = searchedList[index];
-    return <AppInfoSnippet key={`${app?.service}-${app?.name}`} app={app} myName={myName} isFromCategory={true} />;
+    return <AppInfoSnippet  key={`${app?.service}-${app?.name}`} app={app} myName={myName} isFromCategory={true} />;
   };
 
 
