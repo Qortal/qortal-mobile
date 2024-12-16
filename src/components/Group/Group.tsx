@@ -2521,6 +2521,7 @@ export const Group = ({
                       hide={groupSection !== "forum"}
                       defaultThread={defaultThread}
                       setDefaultThread={setDefaultThread}
+                      isPrivate={isPrivate}
                     />
                      <AdminSpace adminsWithNames={adminsWithNames} selectedGroup={selectedGroup?.groupId} myAddress={myAddress} userInfo={userInfo} hide={groupSection !== "adminSpace"}  isAdmin={admins.includes(myAddress)} />
                   </>
