@@ -2874,6 +2874,9 @@ function setupMessageListener() {
       case "sendChatDirect":
         sendChatDirectCase(request, event);
         break;
+      case "getUserSettings":
+        getUserSettingsCase(request, event);
+        break;
       case "setupGroupWebsocket":
         setupGroupWebsocketCase(request, event);
         break;
