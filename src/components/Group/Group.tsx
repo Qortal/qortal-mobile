@@ -492,7 +492,7 @@ export const Group = ({
   const [appsMode, setAppsMode] = useState('home')
   const [isOpenSideViewDirects, setIsOpenSideViewDirects] = useState(false)
   const [isOpenSideViewGroups, setIsOpenSideViewGroups] = useState(false)
-
+  const [isForceShowCreationKeyPopup, setIsForceShowCreationKeyPopup] = useState(false)
   const [groupsProperties, setGroupsProperties] = useState({})
 
   const isPrivate = useMemo(()=> {
@@ -2535,7 +2535,10 @@ export const Group = ({
                       setDefaultThread={setDefaultThread}
                       isPrivate={isPrivate}
                     />
-                     <AdminSpace adminsWithNames={adminsWithNames} selectedGroup={selectedGroup?.groupId} myAddress={myAddress} userInfo={userInfo} hide={groupSection !== "adminSpace"}  isAdmin={admins.includes(myAddress)} />
+                    {groupSection === "adminSpace" && (
+                       <AdminSpace setIsForceShowCreationKeyPopup={setIsForceShowCreationKeyPopup} adminsWithNames={adminsWithNames} selectedGroup={selectedGroup?.groupId} myAddress={myAddress} userInfo={userInfo} hide={groupSection !== "adminSpace"}  isAdmin={admins.includes(myAddress)}
+                       />
+                    )}
                   </>
                 )}
 
@@ -2548,11 +2551,11 @@ export const Group = ({
                     zIndex: 100,
                   }}
                 >
-                   {isPrivate && admins.includes(myAddress) &&
+                   {(isPrivate && admins.includes(myAddress) &&
                     shouldReEncrypt &&
                     triedToFetchSecretKey &&
                     !firstSecretKeyInCreation &&
-                    !hideCommonKeyPopup && (
+                    !hideCommonKeyPopup) || isForceShowCreationKeyPopup && (
                       <CreateCommonSecret
                         setHideCommonKeyPopup={setHideCommonKeyPopup}
                         groupId={selectedGroup?.groupId}
@@ -2561,6 +2564,7 @@ export const Group = ({
                         myAddress={myAddress}
                         isOwner={groupOwner?.owner === myAddress}
                         userInfo={userInfo}
+                        setIsForceShowCreationKeyPopup={setIsForceShowCreationKeyPopup}
                         noSecretKey={
                           admins.includes(myAddress) &&
                           !secretKey &&

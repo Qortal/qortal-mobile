@@ -27,7 +27,8 @@ export const AdminSpace = ({
   myAddress,
   hide,
   defaultThread, 
-  setDefaultThread
+  setDefaultThread,
+  setIsForceShowCreationKeyPopup
 }) => {
   const {  rootHeight } = useContext(MyContext);
   const [isMoved, setIsMoved] = useState(false);
@@ -50,7 +51,8 @@ export const AdminSpace = ({
       opacity: hide ? 0 : 1,
       visibility: hide && 'hidden',
       position: hide ? 'fixed' : 'relative',
-    left: hide && '-1000px'
+    left: hide && '-1000px',
+    overflow: 'auto'
     }}
   >
     {!isAdmin && <Box sx={{
@@ -59,7 +61,7 @@ export const AdminSpace = ({
       justifyContent: 'center',
       paddingTop: '25px'
     }}><Typography>Sorry, this space is only for Admins.</Typography></Box>}
-    {isAdmin && <AdminSpaceInner adminsWithNames={adminsWithNames} selectedGroup={selectedGroup} />}
+    {isAdmin && <AdminSpaceInner setIsForceShowCreationKeyPopup={setIsForceShowCreationKeyPopup} adminsWithNames={adminsWithNames} selectedGroup={selectedGroup} />}
 
    </div>
   );
