@@ -94,18 +94,7 @@ export const decryptPublishes = async (encryptedMessages: any[], secretKey) => {
         .then((response) => {
           if (!response?.error) {
             res(response);
-            // if(hasInitialized.current){
-            //   setMessages((prev) => [...prev, ...formatted]);
-            // } else {
-            //   const formatted = response.map((item) => ({
-            //     ...item,
-            //     id: item.signature,
-            //     text: item.text,
-            //     unread: false
-            //   }));
-            //   setMessages(formatted);
-            //   hasInitialized.current = true;
-            // }
+            
             return;
           }
           rej(response.error);
@@ -117,6 +106,20 @@ export const decryptPublishes = async (encryptedMessages: any[], secretKey) => {
     });
   } catch (error) {}
 };
+export const handleUnencryptedPublishes =  (publishes) => {
+  let publishesData = []
+  publishes.forEach((pub)=> {
+    try {
+      const decodedData = JSON.parse(atob(pub))
+      if(decodedData){
+        publishesData.push({decryptedData: decodedData})
+      }
+    } catch (error) {
+      
+    }
+  })
+  return publishesData
+};
 export const GroupAnnouncements = ({
   selectedGroup,
   secretKey,
@@ -127,6 +130,7 @@ export const GroupAnnouncements = ({
   isAdmin,
   hide,
   myName,
+  isPrivate
 }) => {
   const [messages, setMessages] = useState([]);
   const [isSending, setIsSending] = useState(false);
@@ -160,7 +164,7 @@ export const GroupAnnouncements = ({
     })();
   }, [selectedGroup]);
 
-  const getAnnouncementData = async ({ identifier, name, resource }) => {
+  const getAnnouncementData = async ({ identifier, name, resource }, isPrivate) => {
     try {
       let data = dataPublishes.current[`${name}-${identifier}`];
       if (
@@ -180,9 +184,9 @@ export const GroupAnnouncements = ({
         data = data.data;
       }
 
-      const response = await decryptPublishes([{ data }], secretKey);
-
+      const response = isPrivate === false ? handleUnencryptedPublishes([data]) :  await decryptPublishes([{ data }], secretKey);
       const messageData = response[0];
+      if(!messageData) return
       setAnnouncementData((prev) => {
         return {
           ...prev,
@@ -195,11 +199,11 @@ export const GroupAnnouncements = ({
   };
 
   useEffect(() => {
-    if (!secretKey || hasInitializedWebsocket.current) return;
+    if ((!secretKey && isPrivate) || hasInitializedWebsocket.current || isPrivate === null) return;
     setIsLoading(true);
     // initWebsocketMessageGroup()
     hasInitializedWebsocket.current = true;
-  }, [secretKey]);
+  }, [secretKey, isPrivate]);
 
   const encryptChatMessage = async (data: string, secretKeyObject: any) => {
     try {
@@ -257,12 +261,12 @@ export const GroupAnnouncements = ({
     }
   };
 
-  const setTempData = async () => {
+  const setTempData = async (selectedGroup) => {
     try {
       const getTempAnnouncements = await getTempPublish();
       if (getTempAnnouncements?.announcement) {
         let tempData = [];
-        Object.keys(getTempAnnouncements?.announcement || {}).map((key) => {
+        Object.keys(getTempAnnouncements?.announcement || {}).filter((annKey)=> annKey?.startsWith(`grp-${selectedGroup}-anc`)).map((key) => {
           const value = getTempAnnouncements?.announcement[key];
           tempData.push(value.data);
         });
@@ -289,9 +293,9 @@ export const GroupAnnouncements = ({
           extra: {},
           message: htmlContent,
         };
-        const secretKeyObject = await getSecretKey(false, true);
-        const message64: any = await objectToBase64(message);
-        const encryptSingle = await encryptChatMessage(
+        const secretKeyObject = isPrivate === false ? null : await getSecretKey(false, true);
+        const message64: any =  await objectToBase64(message);
+        const encryptSingle =  isPrivate === false ? message64 : await encryptChatMessage(
           message64,
           secretKeyObject
         );
@@ -313,7 +317,7 @@ export const GroupAnnouncements = ({
           data: dataToSaveToStorage,
           key: "announcement",
         });
-        setTempData();
+        setTempData(selectedGroup);
         clearEditorContent();
       }
       // send chat message
@@ -331,7 +335,7 @@ export const GroupAnnouncements = ({
   };
 
   const getAnnouncements = React.useCallback(
-    async (selectedGroup) => {
+    async (selectedGroup, isPrivate) => {
       try {
         const offset = 0;
 
@@ -346,7 +350,7 @@ export const GroupAnnouncements = ({
         });
         const responseData = await response.json();
 
-        setTempData();
+        setTempData(selectedGroup);
         setAnnouncements(responseData);
         setIsLoading(false);
         for (const data of responseData) {
@@ -354,7 +358,7 @@ export const GroupAnnouncements = ({
             name: data.name,
             identifier: data.identifier,
             resource: data,
-          });
+          }, isPrivate);
         }
       } catch (error) {
       } finally {
@@ -365,11 +369,12 @@ export const GroupAnnouncements = ({
   );
 
   React.useEffect(() => {
-    if (selectedGroup && secretKey && !hasInitialized.current && !hide) {
-      getAnnouncements(selectedGroup);
+    if(!secretKey && isPrivate) return
+    if (selectedGroup && !hasInitialized.current && !hide && isPrivate !== null) {
+      getAnnouncements(selectedGroup, isPrivate);
       hasInitialized.current = true;
     }
-  }, [selectedGroup, secretKey, hide]);
+  }, [selectedGroup, secretKey, hide, isPrivate]);
 
   const loadMore = async () => {
     try {
@@ -389,7 +394,7 @@ export const GroupAnnouncements = ({
       setAnnouncements((prev) => [...prev, ...responseData]);
       setIsLoading(false);
       for (const data of responseData) {
-        getAnnouncementData({ name: data.name, identifier: data.identifier });
+        getAnnouncementData({ name: data.name, identifier: data.identifier }, isPrivate);
       }
     } catch (error) {}
   };
@@ -414,7 +419,7 @@ export const GroupAnnouncements = ({
             getAnnouncementData({
               name: data.name,
               identifier: data.identifier,
-            });
+            }, isPrivate);
           } catch (error) {}
         }
         setAnnouncements(responseData);
@@ -429,7 +434,7 @@ export const GroupAnnouncements = ({
 
       for (const data of newArray) {
         try {
-          getAnnouncementData({ name: data.name, identifier: data.identifier });
+          getAnnouncementData({ name: data.name, identifier: data.identifier }, isPrivate);
         } catch (error) {}
       }
       setAnnouncements((prev) => [...newArray, ...prev]);
@@ -449,14 +454,14 @@ export const GroupAnnouncements = ({
   }, [checkNewMessages]);
 
   useEffect(() => {
-    if (!secretKey || hide) return;
+    if ((!secretKey && isPrivate) || hide || isPrivate === null) return;
     checkNewMessagesFunc();
     return () => {
       if (interval?.current) {
         clearInterval(interval.current);
       }
     };
-  }, [checkNewMessagesFunc, hide]);
+  }, [checkNewMessagesFunc, hide, isPrivate]);
 
   const combinedListTempAndReal = useMemo(() => {
     // Combine the two lists
@@ -475,7 +480,6 @@ export const GroupAnnouncements = ({
 
     return sortedList;
   }, [tempPublishedList, announcements]);
-
   if (selectedAnnouncement) {
     return (
       <div
@@ -498,6 +502,7 @@ export const GroupAnnouncements = ({
           setSelectedAnnouncement={setSelectedAnnouncement}
           encryptChatMessage={encryptChatMessage}
           getSecretKey={getSecretKey}
+          isPrivate={isPrivate}
         />
       </div>
     );

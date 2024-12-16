@@ -866,6 +866,17 @@ export const Group = ({
 
 
 
+  const getAdminsForPublic = async(selectedGroup)=> {
+    try {
+      const { names, addresses, both } =
+      await getGroupAdmins(selectedGroup?.groupId)
+    setAdmins(addresses);
+    setAdminsWithNames(both);
+    } catch (error) {
+      //error
+    }
+  }
+
   useEffect(() => {
     if (selectedGroup && isPrivate !== null) {
       if(isPrivate){
@@ -877,6 +888,7 @@ export const Group = ({
     }
     if(isPrivate === false){
       setTriedToFetchSecretKey(true);
+      getAdminsForPublic(selectedGroup)
 
     }
   }, [selectedGroup, isPrivate]);
@@ -2496,6 +2508,7 @@ export const Group = ({
                       }
                       myName={userInfo?.name}
                       hide={groupSection !== "announcement"}
+                      isPrivate={isPrivate}
                     />
                     <GroupForum
                       myAddress={myAddress}
