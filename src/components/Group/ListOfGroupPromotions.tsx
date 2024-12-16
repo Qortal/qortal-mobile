@@ -49,7 +49,8 @@ import ShortUniqueId from "short-unique-id";
 import { CustomizedSnackbars } from "../Snackbar/Snackbar";
 import { getGroupNames } from "./UserListOfInvites";
 import { WrapperUserAction } from "../WrapperUserAction";
-
+import LockIcon from '@mui/icons-material/Lock';
+import NoEncryptionGmailerrorredIcon from '@mui/icons-material/NoEncryptionGmailerrorred';
 export const requestQueuePromos = new RequestQueueWithPromise(20);
 
 export function utf8ToBase64(inputString: string): string {
@@ -530,7 +531,10 @@ export const ListOfGroupPromotions = () => {
                     {promotion?.name}
                   </Typography>
                 </Box>
-                <Typography
+               
+              </Box>
+              <Spacer height="20px"/>
+              <Typography
                   sx={{
                     fontWight: 600,
                     fontFamily: "Inter",
@@ -539,7 +543,31 @@ export const ListOfGroupPromotions = () => {
                 >
                   {promotion?.groupName}
                 </Typography>
-              </Box>
+              <Spacer height="20px" />
+                <Box sx={{
+                  display: 'flex',
+                  gap: '20px',
+                  alignItems: 'center'
+                }}>
+                {promotion?.isOpen === false && (
+          <LockIcon sx={{
+            color: 'var(--green)'
+          }} />
+        )}
+        {promotion?.isOpen === true && (
+          <NoEncryptionGmailerrorredIcon sx={{
+            color: 'var(--unread)'
+          }} />
+        )}
+         <Typography
+                      sx={{
+                        fontSize: "15px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {promotion?.isOpen ? 'Public group' : 'Private group' }
+                    </Typography>
+                </Box>
               <Spacer height="20px" />
               <Typography
                 sx={{

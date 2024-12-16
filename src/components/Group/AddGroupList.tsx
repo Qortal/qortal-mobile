@@ -26,7 +26,9 @@ import _ from "lodash";
 import { MyContext, getBaseApiReact } from "../../App";
 import { LoadingButton } from "@mui/lab";
 import { getBaseApi, getFee } from "../../background";
-
+import LockIcon from '@mui/icons-material/Lock';
+import NoEncryptionGmailerrorredIcon from '@mui/icons-material/NoEncryptionGmailerrorred';
+import { Spacer } from "../../common/Spacer";
 const cache = new CellMeasurerCache({
   fixedWidth: true,
   defaultHeight: 50,
@@ -231,7 +233,17 @@ export const AddGroupList = ({ setInfoSnack, setOpenSnack }) => {
               <ListItemButton
                 onClick={(event) => handlePopoverOpen(event, index)}
               >
-    
+                 {group?.isOpen === false && (
+          <LockIcon sx={{
+            color: 'var(--green)'
+          }} />
+        )}
+        {group?.isOpen === true && (
+          <NoEncryptionGmailerrorredIcon sx={{
+            color: 'var(--unread)'
+          }} />
+        )}
+        <Spacer width="15px" />
                 <ListItemText
                   primary={group?.groupName}
                   secondary={group?.description}
