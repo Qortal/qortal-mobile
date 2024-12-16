@@ -139,7 +139,7 @@ const Header = ({
                 
               />
             </ButtonBase>
-            <Save />
+            <Save myName={myName} />
             <ButtonBase
               onClick={logoutFunc}
             >
@@ -295,7 +295,7 @@ const Header = ({
             }}
           >
           {/* Right Logout Icon */}
-           <Save />
+           <Save myName={myName} />
           <ButtonBase
             onClick={logoutFunc}
 
