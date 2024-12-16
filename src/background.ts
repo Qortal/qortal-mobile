@@ -2093,8 +2093,7 @@ export async function createGroup({
   const signedBytes = Base58.encode(tx.signedBytes);
 
   const res = await processTransactionVersion2(signedBytes);
-  if (!res?.signature)
-    throw new Error("Transaction was not able to be processed");
+  if (!res?.signature) throw new Error(res?.message || "Transaction was not able to be processed");
   return res;
 }
 export async function inviteToGroup({ groupId, qortalAddress, inviteTime }) {
