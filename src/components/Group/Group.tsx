@@ -1322,6 +1322,7 @@ export const Group = ({
     setSecretKeyDetails(null);
     setNewEncryptionNotification(null);
     setMemberCountFromSecretKeyData(null);
+    setIsForceShowCreationKeyPopup(false)
     setSelectedGroup(null);
     setSelectedDirect(null);
     setGroups([]);
@@ -1388,6 +1389,7 @@ export const Group = ({
     setAdminsWithNames([]);
     setMembers([]);
     setMemberCountFromSecretKeyData(null);
+    setIsForceShowCreationKeyPopup(false)
     setTriedToFetchSecretKey(false);
     setFirstSecretKeyInCreation(false);
     setIsOpenSideViewDirects(false)
@@ -1442,6 +1444,7 @@ export const Group = ({
       setAdminsWithNames([]);
       setMembers([]);
       setMemberCountFromSecretKeyData(null);
+      setIsForceShowCreationKeyPopup(false)
       setTriedToFetchSecretKey(false);
       setFirstSecretKeyInCreation(false);
       setGroupSection("chat");
@@ -1493,6 +1496,7 @@ export const Group = ({
       setAdminsWithNames([]);
       setMembers([]);
       setMemberCountFromSecretKeyData(null);
+      setIsForceShowCreationKeyPopup(false)
       setTriedToFetchSecretKey(false);
       setFirstSecretKeyInCreation(false);
       setGroupSection("announcement");
@@ -1554,6 +1558,7 @@ export const Group = ({
       setAdminsWithNames([]);
       setMembers([]);
       setMemberCountFromSecretKeyData(null);
+      setIsForceShowCreationKeyPopup(false)
       setTriedToFetchSecretKey(false);
       setFirstSecretKeyInCreation(false);
       setGroupSection("forum");
@@ -1610,6 +1615,7 @@ export const Group = ({
     setAdminsWithNames([]);
     setMembers([]);
     setMemberCountFromSecretKeyData(null);
+    setIsForceShowCreationKeyPopup(false)
     setTriedToFetchSecretKey(false);
     setFirstSecretKeyInCreation(false);
     setIsOpenSideViewDirects(false)
@@ -2551,12 +2557,13 @@ export const Group = ({
                     zIndex: 100,
                   }}
                 >
-                   {(isPrivate && admins.includes(myAddress) &&
+                   {((isPrivate && admins.includes(myAddress) &&
                     shouldReEncrypt &&
                     triedToFetchSecretKey &&
                     !firstSecretKeyInCreation &&
-                    !hideCommonKeyPopup) || isForceShowCreationKeyPopup && (
+                    !hideCommonKeyPopup) || isForceShowCreationKeyPopup) && (
                       <CreateCommonSecret
+                        isForceShowCreationKeyPopup={isForceShowCreationKeyPopup}
                         setHideCommonKeyPopup={setHideCommonKeyPopup}
                         groupId={selectedGroup?.groupId}
                         secretKey={secretKey}
