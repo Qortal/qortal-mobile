@@ -1068,6 +1068,11 @@ function App() {
           message:
             "Your settings have changed. If you logout you will lose your changes. Click on the save button in the header to keep your changed settings.",
         });
+      } else {
+        await showUnsavedChanges({
+          message:
+            "Are you sure you would like to logout?",
+        });
       }
       window
         .sendMessage("logout", {})
@@ -2933,10 +2938,10 @@ await showInfo({
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={onCancelUnsavedChanges}>
+            <Button size="small" variant="contained" onClick={onCancelUnsavedChanges}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={onOkUnsavedChanges} autoFocus>
+            <Button size="small" variant="contained" onClick={onOkUnsavedChanges} autoFocus>
               Continue to Logout
             </Button>
           </DialogActions>
