@@ -718,7 +718,7 @@ export const Group = ({
       }
     });
     return hasUnread;
-  }, [timestampEnterData, groups, myAddress]);
+  }, [timestampEnterData, groups, myAddress, groupChatTimestamps]);
 
   const groupsAnnHasUnread = useMemo(() => {
     let hasUnread = false;
@@ -1851,7 +1851,7 @@ export const Group = ({
                         direct?.timestamp) && (
                       <MarkChatUnreadIcon
                         sx={{
-                          color: "red",
+                          color: "var(--unread)",
                         }}
                       />
                     )}
@@ -2023,7 +2023,7 @@ export const Group = ({
                           justifyContent: 'center'
                         }}>
                         <NoEncryptionGmailerrorredIcon sx={{
-                          color: 'var(--unread)'
+                          color: 'var(--danger)'
                         }} />
                         </Box>
                     
@@ -2058,7 +2058,7 @@ export const Group = ({
                       !groupAnnouncements[group?.groupId]?.seentimestamp && (
                         <CampaignIcon
                           sx={{
-                            color: "red",
+                            color: "var(--unread)",
                             marginRight: "5px",
                           }}
                         />
@@ -2074,7 +2074,7 @@ export const Group = ({
                           group?.timestamp) && (
                         <MarkChatUnreadIcon
                           sx={{
-                            color: "red",
+                            color: "var(--unread)",
                           }}
                         />
                       )}
@@ -2377,7 +2377,7 @@ export const Group = ({
         )}
         {isPrivate === false && (
           <NoEncryptionGmailerrorredIcon sx={{
-            color: 'var(--unread)'
+            color: 'var(--danger)'
           }} />
         )}
                    {/* <ExitIcon /> */}

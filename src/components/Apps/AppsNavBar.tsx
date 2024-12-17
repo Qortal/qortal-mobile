@@ -297,7 +297,7 @@ export const AppsNavBar = ({appsMode}) => {
             <PushPinIcon
               height={20}
               sx={{
-                color: isSelectedAppPinned ? "red" : "rgba(250, 250, 250, 0.5)",
+                color: isSelectedAppPinned ? "var(--danger)" : "rgba(250, 250, 250, 0.5)",
               }}
             />
           </ListItemIcon>
@@ -306,7 +306,7 @@ export const AppsNavBar = ({appsMode}) => {
               "& .MuiTypography-root": {
                 fontSize: "12px",
                 fontWeight: 600,
-                color: isSelectedAppPinned ? "red" : "rgba(250, 250, 250, 0.5)",
+                color: isSelectedAppPinned ? "var(--danger)" : "rgba(250, 250, 250, 0.5)",
               },
             }}
             primary={`${isSelectedAppPinned ? "Unpin app" : "Pin app"}`}

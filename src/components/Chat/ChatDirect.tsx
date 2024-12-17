@@ -712,7 +712,7 @@ const sendMessage = async ()=> {
         }}>
                 <Typography sx={{
                   fontSize: '12px',
-                  color: messageSize > 4000 ? 'var(--unread)' : 'unset'
+                  color: messageSize > 4000 ? 'var(--danger)' : 'unset'
                 }}>{`size ${messageSize} of 4000`}</Typography>
 
           </Box>

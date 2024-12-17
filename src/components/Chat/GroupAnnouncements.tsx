@@ -646,7 +646,7 @@ export const GroupAnnouncements = ({
                   marginTop: "auto",
                   alignSelf: "center",
                   cursor: isSending ? "default" : "pointer",
-                  background: "red",
+                  background: "var(--danger)",
                   flexShrink: 0,
                   padding: isMobile && "5px",
                   fontSize: isMobile && "14px",

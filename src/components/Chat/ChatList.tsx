@@ -369,7 +369,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
           bottom: 20,
           right: 20,
           backgroundColor: 'var(--unread)',
-          color: 'white',
+          color: 'black',
           padding: '10px 20px',
           borderRadius: '20px',
           cursor: 'pointer',

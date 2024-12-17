@@ -2874,6 +2874,7 @@ await showInfo({
                   backgroundColor: 'var(--green)',
                   color: 'black',
                   opacity: 0.7,
+                  fontWeight: 'bold',
                   '&:hover': {
                     backgroundColor: 'var(--green)',
                   color: 'black',
@@ -2883,11 +2884,12 @@ await showInfo({
               accept
             </Button>
             <Button sx={{
-                  backgroundColor: 'var(--unread)',
+                  backgroundColor: 'var(--danger)',
                   color: 'black',
                   opacity: 0.7,
+                  fontWeight: 'bold',
                   '&:hover': {
-                    backgroundColor: 'var(--unread)',
+                    backgroundColor: 'var(--danger)',
                   color: 'black',
                   opacity: 1
                   },
@@ -3175,7 +3177,7 @@ await showInfo({
               </CustomButtonAccept>
               <CustomButtonAccept
                color="black"
-               bgColor="var(--unread)"
+               bgColor="var(--danger)"
                 sx={{
                   minWidth: "102px",
                 }}

@@ -253,7 +253,7 @@ export const AttachmentCard = ({
               <Typography
                 sx={{
                   fontSize: "14px",
-                  color: "var(--unread)",
+                  color: "var(--danger)",
                 }}
               >
                 {errorMsg}
