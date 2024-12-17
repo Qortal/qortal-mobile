@@ -3048,46 +3048,102 @@ export const cancelSellOrder = async (data, isFromExtension) => {
 };
 
 export const adminAction = async (data, isFromExtension) => {
-  const requiredFields = [
-    "type",
-  ];
+  const requiredFields = ["type"];
   const missingFields: string[] = [];
   requiredFields.forEach((field) => {
     if (!data[field]) {
       missingFields.push(field);
     }
   });
+  // For actions that require a value, check for 'value' field
+  const actionsRequiringValue = [
+    "addpeer",
+    "removepeer",
+    "forcesync",
+    "addmintingaccount",
+    "removemintingaccount",
+  ];
+  if (
+    actionsRequiringValue.includes(data.type.toLowerCase()) &&
+    !data.value
+  ) {
+    missingFields.push("value");
+  }
   if (missingFields.length > 0) {
     const missingFieldsString = missingFields.join(", ");
     const errorMsg = `Missing fields: ${missingFieldsString}`;
     throw new Error(errorMsg);
   }
-  const  isGateway =  await isRunningGateway()
-  if(isGateway){
-    throw new Error('This action cannot be done through a gateway')
+  const isGateway = await isRunningGateway();
+  if (isGateway) {
+    throw new Error("This action cannot be done through a gateway");
   }
 
-    let apiEndpoint = '';
-    switch (data.type.toLowerCase()) {
-      case 'stop':
-        apiEndpoint = await createEndpoint('/admin/stop');
-        break;
-      case 'restart':
-        apiEndpoint = await createEndpoint('/admin/restart');
-        break;
-      case 'bootstrap':
-        apiEndpoint = await createEndpoint('/admin/bootstrap');
-        break;
-      default:
-        throw new Error(`Unknown admin action type: ${data.type}`);
-    }
+  let apiEndpoint = "";
+  let method = "GET"; // Default method
+  let includeValueInBody = false;
+  switch (data.type.toLowerCase()) {
+    case "stop":
+      apiEndpoint = await createEndpoint("/admin/stop");
+      break;
+    case "restart":
+      apiEndpoint = await createEndpoint("/admin/restart");
+      break;
+    case "bootstrap":
+      apiEndpoint = await createEndpoint("/admin/bootstrap");
+      break;
+    case "addmintingaccount":
+      apiEndpoint = await createEndpoint("/admin/mintingaccounts");
+      method = "POST";
+      includeValueInBody = true;
+      break;
+    case "removemintingaccount":
+      apiEndpoint = await createEndpoint("/admin/mintingaccounts");
+      method = "DELETE";
+      includeValueInBody = true;
+      break;
+    case "forcesync":
+      apiEndpoint = await createEndpoint("/admin/forcesync");
+      method = "POST";
+      includeValueInBody = true;
+      break;
+    case "addpeer":
+      apiEndpoint = await createEndpoint("/peers");
+      method = "POST";
+      includeValueInBody = true;
+      break;
+    case "removepeer":
+      apiEndpoint = await createEndpoint("/peers");
+      method = "DELETE";
+      includeValueInBody = true;
+      break;
+    default:
+      throw new Error(`Unknown admin action type: ${data.type}`);
+  }
+  // Prepare the permission prompt text
+  let permissionText = `Do you give this application permission to perform the admin action: ${data.type}`;
+  if (data.value) {
+    permissionText += ` with value: ${data.value}`;
+  }
 
-    const resPermission = await getUserPermission({
-      text1: `Do you give this application permission to perform a node ${data.type}?`,
-    }, isFromExtension);
-    const { accepted } = resPermission;
-    if (accepted) {
-      const response = await fetch(apiEndpoint);
+  const resPermission = await getUserPermission(
+    {
+      text1: permissionText,
+    },
+    isFromExtension
+  );
+  const { accepted } = resPermission;
+  if (accepted) {
+    // Set up options for the API call
+    const options: RequestInit = {
+      method: method,
+      headers: {},
+    };
+    if (includeValueInBody) {
+      options.headers["Content-Type"] = "text/plain";
+      options.body = data.value;
+    }
+    const response = await fetch(apiEndpoint, options);
     if (!response.ok) throw new Error("Failed to perform request");
 
     let res;
@@ -3100,7 +3156,6 @@ export const adminAction = async (data, isFromExtension) => {
   } else {
     throw new Error("User declined request");
   }
- 
 };
 
 export const openNewTab = async (data, isFromExtension) => {
