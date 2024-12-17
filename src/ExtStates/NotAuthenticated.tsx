@@ -23,20 +23,19 @@ import { set } from "lodash";
 import { cleanUrl, isUsingLocal } from "../background";
 
 export const manifestData = {
-  version: '0.3.8'
-}
+  version: "0.3.8",
+};
 
 export const NotAuthenticated = ({
   getRootProps,
   getInputProps,
   setExtstate,
 
-
   apiKey,
   setApiKey,
   globalApiKey,
   handleSetGlobalApikey,
-  handleFilePick
+  handleFilePick,
 }) => {
   const [isValidApiKey, setIsValidApiKey] = useState<boolean | null>(null);
   const [hasLocalNode, setHasLocalNode] = useState<boolean | null>(null);
@@ -55,9 +54,9 @@ export const NotAuthenticated = ({
   const [customApikey, setCustomApiKey] = React.useState("");
   const [customNodeToSaveIndex, setCustomNodeToSaveIndex] =
     React.useState(null);
-    const importedApiKeyRef = useRef(null)
-    const currentNodeRef = useRef(null)
-  const hasLocalNodeRef = useRef(null)
+  const importedApiKeyRef = useRef(null);
+  const currentNodeRef = useRef(null);
+  const hasLocalNodeRef = useRef(null);
   const isLocal = cleanUrl(currentNode?.url) === "127.0.0.1:12391";
   const handleFileChangeApiKey = (event) => {
     const file = event.target.files[0]; // Get the selected file
@@ -72,7 +71,6 @@ export const NotAuthenticated = ({
     }
   };
 
-
   const checkIfUserHasLocalNode = useCallback(async () => {
     try {
       const url = `http://127.0.0.1:12391/admin/status`;
@@ -85,8 +83,12 @@ export const NotAuthenticated = ({
       const data = await response.json();
       if (data?.height) {
         setHasLocalNode(true);
+        return true;
       }
-    } catch (error) {}
+      return false;
+    } catch (error) {
+      return false;
+    }
   }, []);
 
   useEffect(() => {
@@ -94,43 +96,47 @@ export const NotAuthenticated = ({
   }, []);
 
   useEffect(() => {
-    window.sendMessage("getCustomNodesFromStorage")
-    .then((response) => {
-      if (response) {
-        setCustomNodes(response || []);
-      }
-    })
-    .catch((error) => {
-      console.error("Failed to get custom nodes from storage:", error.message || "An error occurred");
-    });
-  
+    window
+      .sendMessage("getCustomNodesFromStorage")
+      .then((response) => {
+        if (response) {
+          setCustomNodes(response || []);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Failed to get custom nodes from storage:",
+          error.message || "An error occurred"
+        );
+      });
   }, []);
 
-  useEffect(()=> {
-    importedApiKeyRef.current = importedApiKey
-  }, [importedApiKey])
-  useEffect(()=> {
-    currentNodeRef.current = currentNode
-  }, [currentNode])
+  useEffect(() => {
+    importedApiKeyRef.current = importedApiKey;
+  }, [importedApiKey]);
+  useEffect(() => {
+    currentNodeRef.current = currentNode;
+  }, [currentNode]);
 
-  useEffect(()=> {
-    hasLocalNodeRef.current = hasLocalNode
-  }, [hasLocalNode])
+  useEffect(() => {
+    hasLocalNodeRef.current = hasLocalNode;
+  }, [hasLocalNode]);
 
   const validateApiKey = useCallback(async (key, fromStartUp) => {
     try {
-        if(!currentNodeRef.current) return
-        const isLocalKey = cleanUrl(key?.url) === "127.0.0.1:12391";
-        if(isLocalKey && !hasLocalNodeRef.current && !fromStartUp){
-          throw new Error('Please turn on your local node')
-          
-        }
-        const isCurrentNodeLocal = cleanUrl(currentNodeRef.current?.url) === "127.0.0.1:12391";
-        if(isLocalKey && !isCurrentNodeLocal) {
-            setIsValidApiKey(false);
-            setUseLocalNode(false);
-            return
-        }
+      if (!currentNodeRef.current) return;
+      const stillHasLocal = await checkIfUserHasLocalNode();
+      const isLocalKey = cleanUrl(key?.url) === "127.0.0.1:12391";
+      if (isLocalKey && !stillHasLocal && !fromStartUp) {
+        throw new Error("Please turn on your local node");
+      }
+      const isCurrentNodeLocal =
+        cleanUrl(currentNodeRef.current?.url) === "127.0.0.1:12391";
+      if (isLocalKey && !isCurrentNodeLocal) {
+        setIsValidApiKey(false);
+        setUseLocalNode(false);
+        return;
+      }
       let payload = {};
 
       if (currentNodeRef.current?.url === "http://127.0.0.1:12391") {
@@ -138,7 +144,7 @@ export const NotAuthenticated = ({
           apikey: importedApiKeyRef.current || key?.apikey,
           url: currentNodeRef.current?.url,
         };
-      } else if(currentNodeRef.current) {
+      } else if (currentNodeRef.current) {
         payload = currentNodeRef.current;
       }
       const url = `${payload?.url}/admin/apikey/test`;
@@ -153,21 +159,24 @@ export const NotAuthenticated = ({
       // Assuming the response is in plain text and will be 'true' or 'false'
       const data = await response.text();
       if (data === "true") {
-        window.sendMessage("setApiKey", payload)
-        .then((response) => {
-          if (response) {
-            handleSetGlobalApikey(payload);
-            setIsValidApiKey(true);
-            setUseLocalNode(true);
-            if (!fromStartUp) {
-              setApiKey(payload);
+        window
+          .sendMessage("setApiKey", payload)
+          .then((response) => {
+            if (response) {
+              handleSetGlobalApikey(payload);
+              setIsValidApiKey(true);
+              setUseLocalNode(true);
+              if (!fromStartUp) {
+                setApiKey(payload);
+              }
             }
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to set API key:", error.message || "An error occurred");
-        });
-      
+          })
+          .catch((error) => {
+            console.error(
+              "Failed to set API key:",
+              error.message || "An error occurred"
+            );
+          });
       } else {
         setIsValidApiKey(false);
         setUseLocalNode(false);
@@ -180,6 +189,26 @@ export const NotAuthenticated = ({
     } catch (error) {
       setIsValidApiKey(false);
       setUseLocalNode(false);
+      if(fromStartUp){
+        setCurrentNode({
+          url: "http://127.0.0.1:12391",
+        });
+        window
+          .sendMessage("setApiKey", null)
+          .then((response) => {
+            if (response) {
+              setApiKey(null);
+              handleSetGlobalApikey(null);
+            }
+          })
+          .catch((error) => {
+            console.error(
+              "Failed to set API key:",
+              error.message || "An error occurred"
+            );
+          });
+        return
+      }
       setInfoSnack({
         type: "error",
         message: error?.message || "Select a valid apikey",
@@ -216,21 +245,23 @@ export const NotAuthenticated = ({
     setCustomNodes(nodes);
     setCustomNodeToSaveIndex(null);
     if (!nodes) return;
-    window.sendMessage("setCustomNodes", nodes)
-  .then((response) => {
-    if (response) {
-      setMode("list");
-      setUrl("http://");
-      setCustomApiKey("");
-      // add alert if needed
-    }
-  })
-  .catch((error) => {
-    console.error("Failed to set custom nodes:", error.message || "An error occurred");
-  });
-
+    window
+      .sendMessage("setCustomNodes", nodes)
+      .then((response) => {
+        if (response) {
+          setMode("list");
+          setUrl("http://");
+          setCustomApiKey("");
+          // add alert if needed
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Failed to set custom nodes:",
+          error.message || "An error occurred"
+        );
+      });
   };
-
 
   return (
     <>
@@ -263,10 +294,9 @@ export const NotAuthenticated = ({
           alignItems: "center",
         }}
       >
-           <CustomButton onClick={()=> setExtstate('wallets')}>
+        <CustomButton onClick={() => setExtstate("wallets")}>
           Wallets
         </CustomButton>
-        
       </Box>
 
       <Spacer height="6px" />
@@ -274,7 +304,7 @@ export const NotAuthenticated = ({
         sx={{
           display: "flex",
           gap: "10px",
-          alignItems: "center"
+          alignItems: "center",
         }}
       >
         <CustomButton
@@ -284,19 +314,17 @@ export const NotAuthenticated = ({
         >
           Create account
         </CustomButton>
-
-      
       </Box>
-        <Spacer height="15px" />
-        
-        <Typography
-                      sx={{
-                        fontSize: "12px",
-                        visibility: !useLocalNode && 'hidden'
-                      }}
-                    >
-                      {"Using node: "} {currentNode?.url}
-                    </Typography>
+      <Spacer height="15px" />
+
+      <Typography
+        sx={{
+          fontSize: "12px",
+          visibility: !useLocalNode && "hidden",
+        }}
+      >
+        {"Using node: "} {currentNode?.url}
+      </Typography>
       <>
         <Spacer height="15px" />
         <Box
@@ -335,28 +363,30 @@ export const NotAuthenticated = ({
                         validateApiKey(currentNode);
                       } else {
                         setCurrentNode({
-                            url: "http://127.0.0.1:12391",
+                          url: "http://127.0.0.1:12391",
+                        });
+                        setUseLocalNode(false);
+                        window
+                          .sendMessage("setApiKey", null)
+                          .then((response) => {
+                            if (response) {
+                              setApiKey(null);
+                              handleSetGlobalApikey(null);
+                            }
                           })
-                          setUseLocalNode(false)
-                          window.sendMessage("setApiKey", null)
-  .then((response) => {
-    if (response) {
-      setApiKey(null);
-      handleSetGlobalApikey(null);
-    }
-  })
-  .catch((error) => {
-    console.error("Failed to set API key:", error.message || "An error occurred");
-  });
-
+                          .catch((error) => {
+                            console.error(
+                              "Failed to set API key:",
+                              error.message || "An error occurred"
+                            );
+                          });
                       }
-                       
                     }}
                     disabled={false}
                     defaultChecked
                   />
                 }
-                label={`Use ${isLocal ? 'Local' : 'Custom'} Node`}
+                label={`Use ${isLocal ? "Local" : "Custom"} Node`}
               />
             </Box>
             {currentNode?.url === "http://127.0.0.1:12391" && (
@@ -370,31 +400,33 @@ export const NotAuthenticated = ({
                     onChange={handleFileChangeApiKey} // File input handler
                   />
                 </Button>
-                <Typography sx={{
-                  fontSize: '12px',
-                  visibility: importedApiKey ? 'visible' : 'hidden'
-                }}>{`api key : ${importedApiKey}`}</Typography>
-           
-
-             
-               
+                <Typography
+                  sx={{
+                    fontSize: "12px",
+                    visibility: importedApiKey ? "visible" : "hidden",
+                  }}
+                >{`api key : ${importedApiKey}`}</Typography>
               </>
             )}
-             <Button
-             size="small"
-                  onClick={() => {
-                    setShow(true);
-                  }}
-                  variant="contained"
-                  component="label"
-                >
-                  Choose custom node
-                </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                setShow(true);
+              }}
+              variant="contained"
+              component="label"
+            >
+              Choose custom node
+            </Button>
           </>
-          <Typography sx={{
-                  color: "white",
-              fontSize: '12px'
-            }}>Build version: {manifestData?.version}</Typography>
+          <Typography
+            sx={{
+              color: "white",
+              fontSize: "12px",
+            }}
+          >
+            Build version: {manifestData?.version}
+          </Typography>
         </Box>
       </>
       <CustomizedSnackbars
@@ -421,7 +453,6 @@ export const NotAuthenticated = ({
                 flexDirection: "column",
               }}
             >
-               
               {mode === "list" && (
                 <Box
                   sx={{
@@ -463,17 +494,20 @@ export const NotAuthenticated = ({
                           setMode("list");
                           setShow(false);
                           setUseLocalNode(false);
-                          window.sendMessage("setApiKey", null)
-                          .then((response) => {
-                            if (response) {
-                              setApiKey(null);
-                              handleSetGlobalApikey(null);
-                            }
-                          })
-                          .catch((error) => {
-                            console.error("Failed to set API key:", error.message || "An error occurred");
-                          });
-                        
+                          window
+                            .sendMessage("setApiKey", null)
+                            .then((response) => {
+                              if (response) {
+                                setApiKey(null);
+                                handleSetGlobalApikey(null);
+                              }
+                            })
+                            .catch((error) => {
+                              console.error(
+                                "Failed to set API key:",
+                                error.message || "An error occurred"
+                              );
+                            });
                         }}
                         variant="contained"
                       >
@@ -518,18 +552,21 @@ export const NotAuthenticated = ({
                               setMode("list");
                               setShow(false);
                               setIsValidApiKey(false);
-                             setUseLocalNode(false);
-                             window.sendMessage("setApiKey", null)
-                             .then((response) => {
-                               if (response) {
-                                 setApiKey(null);
-                                 handleSetGlobalApikey(null);
-                               }
-                             })
-                             .catch((error) => {
-                               console.error("Failed to set API key:", error.message || "An error occurred");
-                             });
-                           
+                              setUseLocalNode(false);
+                              window
+                                .sendMessage("setApiKey", null)
+                                .then((response) => {
+                                  if (response) {
+                                    setApiKey(null);
+                                    handleSetGlobalApikey(null);
+                                  }
+                                })
+                                .catch((error) => {
+                                  console.error(
+                                    "Failed to set API key:",
+                                    error.message || "An error occurred"
+                                  );
+                                });
                             }}
                             variant="contained"
                           >
@@ -553,7 +590,6 @@ export const NotAuthenticated = ({
                               const nodesToSave = [
                                 ...(customNodes || []),
                               ].filter((item) => item?.url !== node?.url);
-                         
 
                               saveCustomNodes(nodesToSave);
                             }}
@@ -592,9 +628,7 @@ export const NotAuthenticated = ({
                   />
                 </Box>
               )}
-              
             </Box>
-         
           </DialogContent>
           <DialogActions>
             {mode === "list" && (
