@@ -306,7 +306,26 @@ const UIQortalRequests = [
 
   declare var cordova: any;
 
+  function isFileLargerThan50MB(file) {
+    const fiftyMBInBytes = 50 * 1024 * 1024; // 50MB in bytes
+    return file?.size > fiftyMBInBytes;
+}
 
+  function checkMobileSizeConstraints(data){
+    if(data?.file || data?.blob){
+      if(isFileLargerThan50MB(data?.file || data?.blob)){
+        throw new Error('On mobile publish size is currently limited to 50mb. Please use Qortal Hub for larger sizes.')
+      }
+    }
+
+    for (let resource of (data?.resources || [])) {
+      if (resource?.file) {
+        if(isFileLargerThan50MB(resource?.file)){
+          throw new Error('On mobile publish size is currently limited to 50mb. Please use Qortal Hub for larger sizes.')
+        }
+      }
+    }
+  }
 
   async function storeFilesInIndexedDB(obj) {
     // First delete any existing files in IndexedDB with '_qortalfile' in their ID
@@ -482,6 +501,22 @@ isDOMContentLoaded: false
         event?.data?.action === 'ENCRYPT_DATA' || event?.data?.action === 'ENCRYPT_DATA_WITH_SHARING_KEY' || event?.data?.action ===  'ENCRYPT_QORTAL_GROUP_DATA'
         
       ) {
+        if (
+          event?.data?.action === 'PUBLISH_MULTIPLE_QDN_RESOURCES' ||
+          event?.data?.action === 'PUBLISH_QDN_RESOURCE' 
+          
+        ){
+          try {
+            checkMobileSizeConstraints(event.data)
+          } catch (error) {
+            event.ports[0].postMessage({
+              result: null,
+              error: error?.message,
+            });
+            return;
+          }
+        }
+       
         let data;
         try {
           data = await storeFilesInIndexedDB(event.data);
