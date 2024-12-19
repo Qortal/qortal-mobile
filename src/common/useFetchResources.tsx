@@ -22,7 +22,7 @@ export const useFetchResources = () => {
       let isCalling = false;
       let percentLoaded = 0;
       let timer = 24;
-      let tries = 26;
+      let tries = 0;
       let calledFirstTime = false
 
       const callFunction = async ()=> {
