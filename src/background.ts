@@ -2147,7 +2147,7 @@ export async function sendCoin(
       };
     } else {
       const response = await decryptStoredWallet(password, wallet);
-      const wallet2 = new PhraseWallet(response, walletVersion);
+      const wallet2 = new PhraseWallet(response, wallet?.version || walletVersion);
 
       keyPair = wallet2._addresses[0].keyPair;
     }

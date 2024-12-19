@@ -232,7 +232,7 @@ export async function userInfoCase(request, event) {
 export async function decryptWalletCase(request, event) {
   try { 
     const { password, wallet } = request.payload;
-    const response = await decryptWallet({password, wallet, walletVersion});
+    const response = await decryptWallet({password, wallet, walletVersion: wallet?.version || walletVersion});
     event.source.postMessage(
       {
         requestId: request.requestId,
