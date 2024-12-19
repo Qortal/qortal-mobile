@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Spacer } from "../common/Spacer";
 import { CustomButton, TextItalic, TextP, TextSpan } from "../App-styles";
 import {
   Box,
   Button,
+  ButtonBase,
   Checkbox,
   Dialog,
   DialogActions,
@@ -21,6 +22,8 @@ import Info from "../assets/svgs/Info.svg";
 import { CustomizedSnackbars } from "../components/Snackbar/Snackbar";
 import { set } from "lodash";
 import { cleanUrl, isUsingLocal } from "../background";
+import HelpIcon from '@mui/icons-material/Help';
+import { GlobalContext } from "../App";
 
 export const manifestData = {
   version: "0.3.8",
@@ -48,6 +51,8 @@ export const NotAuthenticated = ({
   const [currentNode, setCurrentNode] = React.useState({
     url: "http://127.0.0.1:12391",
   });
+  const { showTutorial  } = useContext(GlobalContext);
+
   const [importedApiKey, setImportedApiKey] = React.useState(null);
   //add and edit states
   const [url, setUrl] = React.useState("http://");
@@ -675,6 +680,17 @@ export const NotAuthenticated = ({
           </DialogActions>
         </Dialog>
       )}
+       <ButtonBase onClick={()=> {
+     showTutorial('create-account', true)
+      }} sx={{
+        position: 'fixed',
+        bottom: '25px',
+        right: '25px'
+      }}>
+        <HelpIcon sx={{
+          color: 'var(--unread)'
+        }} />
+        </ButtonBase>
     </>
   );
 };

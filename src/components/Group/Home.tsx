@@ -1,5 +1,5 @@
-import { Box, Button, Typography } from "@mui/material";
-import React from "react";
+import { Box, Button, ButtonBase, Typography } from "@mui/material";
+import React, { useContext } from "react";
 import { Spacer } from "../../common/Spacer";
 import { ListOfThreadPostsWatched } from "./ListOfThreadPostsWatched";
 import { ThingsToDoInitial } from "./ThingsToDoInitial";
@@ -7,6 +7,9 @@ import { GroupJoinRequests } from "./GroupJoinRequests";
 import { GroupInvites } from "./GroupInvites";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { ListOfGroupPromotions } from "./ListOfGroupPromotions";
+import HelpIcon from '@mui/icons-material/Help';
+import { useHandleTutorials } from "../Tutorials/useHandleTutorials";
+import { GlobalContext } from "../../App";
 
 export const Home = ({
   refreshHomeDataFunc,
@@ -22,6 +25,8 @@ export const Home = ({
   setOpenAddGroup,
   setMobileViewMode,
 }) => {
+  const { showTutorial } = useContext(GlobalContext);
+
   return (
     <Box
       sx={{
@@ -31,8 +36,27 @@ export const Home = ({
         height: "100%",
         overflow: "auto",
         alignItems: "center",
+        position: 'relative'
       }}
     >
+   
+               <ButtonBase sx={{
+                position: 'absolute',
+                top: '5px',
+                right: '5px'
+               }} onClick={()=> {
+               
+                  showTutorial('getting-started', true)
+  
+              
+                }} >
+                  <HelpIcon sx={{
+                color: 'var(--unread)',
+                fontSize: '18px'
+                 }} />
+                </ButtonBase>
+          
+            
       <Spacer height="20px" />
       <Typography
         sx={{

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import {
   AppCircle,
   AppCircleContainer,
@@ -9,16 +9,20 @@ import {
 } from "./Apps-styles";
 import { Avatar, Box, ButtonBase, Input } from "@mui/material";
 import { Add } from "@mui/icons-material";
-import { getBaseApiReact, isMobile } from "../../App";
+import { GlobalContext, getBaseApiReact, isMobile } from "../../App";
 import LogoSelected from "../../assets/svgs/LogoSelected.svg";
 import { executeEvent } from "../../utils/events";
 import { SortablePinnedApps } from "./SortablePinnedApps";
 import { Spacer } from "../../common/Spacer";
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
 import { extractComponents } from "../Chat/MessageDisplay";
+import HelpIcon from '@mui/icons-material/Help';
+import { useHandleTutorials } from "../Tutorials/useHandleTutorials";
 
 export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps  }) => {
   const [qortalUrl, setQortalUrl] = useState('')
+  const { showTutorial } = useContext(GlobalContext);
+
 
   const openQortalUrl = ()=> {
     try {
@@ -40,8 +44,24 @@ export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps  }) => {
         sx={{
         
           justifyContent: "flex-start",
+          position: 'relative'
         }}
       >
+        <ButtonBase sx={{
+                position: 'absolute',
+                top: '0px',
+                right: '0px'
+               }} onClick={()=> {
+               
+                  showTutorial('qapps', true)
+  
+              
+                }} >
+                  <HelpIcon sx={{
+                color: 'var(--unread)',
+                fontSize: '18px'
+                 }} />
+                </ButtonBase>
     <AppLibrarySubTitle
    
   >

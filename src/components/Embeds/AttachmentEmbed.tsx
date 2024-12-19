@@ -297,7 +297,7 @@ export const AttachmentCard = ({
   
               </>
             )}
-            {resourceDetails && resourceDetails?.status?.status !== 'READY' && (
+             {resourceDetails && resourceDetails?.status?.status !== 'READY' && resourceDetails?.status?.status !== 'FAILED_TO_DOWNLOAD' && (
               <>
                         <CircularProgress sx={{
                           color: 'white'

@@ -45,6 +45,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import './utils/seedPhrase/RandomSentenceGenerator';
 import { useFetchResources } from "./common/useFetchResources";
+import HelpIcon from '@mui/icons-material/Help';
+
 import {
   createAccount,
   generateRandomSentence,
@@ -121,6 +123,8 @@ import {  openIndexedDB, showSaveFilePicker } from "./components/Apps/useQortalM
 import { fileToBase64 } from "./utils/fileReading";
 import { handleGetFileFromIndexedDB } from "./utils/indexedDB";
 import { Wallets } from "./Wallets";
+import { useHandleTutorials } from "./components/Tutorials/useHandleTutorials";
+import { Tutorials } from "./components/Tutorials/Tutorials";
 
 
 type extStates =
@@ -302,7 +306,12 @@ export const resumeAllQueues = () => {
   });
 };
 
+const defaultValuesGlobal = {
+  openTutorialModal: null,
+  setOpenTutorialModal: ()=> {}
+}
 export const MyContext = createContext<MyContextInterface>(defaultValues);
+export const GlobalContext = createContext<any>(defaultValuesGlobal);
 
 export let globalApiKey: string | null = null;
 
@@ -391,6 +400,7 @@ function App() {
   const [hasSettingsChanged, setHasSettingsChanged] = useRecoilState(
     hasSettingsChangedAtom
   );
+  const {showTutorial, openTutorialModal, shownTutorialsInitiated, setOpenTutorialModal} = useHandleTutorials()
   const holdRefExtState = useRef<extStates>("not-authenticated");
   const isFocusedRef = useRef<boolean>(true);
   const { isShow, onCancel, onOk, show, message } = useModal();
@@ -458,6 +468,16 @@ function App() {
     }
   
   }
+  useEffect(()=> {
+    if(!shownTutorialsInitiated) return
+    if(extState === 'not-authenticated'){
+      showTutorial('create-account')
+    } else if(extState === "create-wallet" && walletToBeDownloaded){
+      showTutorial('important-information')
+    } else if(extState === "authenticated"){
+      showTutorial('getting-started')
+    }
+  }, [extState, walletToBeDownloaded, shownTutorialsInitiated])
   useEffect(() => {
     // Attach a global event listener for double-click
     const handleDoubleClick = () => {
@@ -1651,7 +1671,7 @@ function App() {
       </AuthenticatedContainer>
     );
   };
-
+console.log('openTutorialModal3', openTutorialModal)
   return (
     <AppContainer
       sx={{
@@ -1662,6 +1682,13 @@ function App() {
         backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
       }}
     >
+       <GlobalContext.Provider value={{
+            showTutorial,
+            openTutorialModal,
+            setOpenTutorialModal,
+            downloadResource
+      }}>
+            <Tutorials />
       {extState === "not-authenticated" && (
         <NotAuthenticated
           getRootProps={getRootProps}
@@ -3256,6 +3283,20 @@ await showInfo({
       >
         {renderProfile()}
       </DrawerComponent>
+     </GlobalContext.Provider>
+     {extState === "create-wallet" && walletToBeDownloaded && (
+         <ButtonBase onClick={()=> {
+          showTutorial('important-information', true)
+       }} sx={{
+         position: 'fixed',
+         bottom: '25px',
+         right: '25px'
+       }}>
+         <HelpIcon sx={{
+           color: 'var(--unread)'
+         }} />
+         </ButtonBase>
+      )}
     </AppContainer>
   );
 }

@@ -1,10 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useRecoilState } from 'recoil';
 import { resourceDownloadControllerAtom } from '../atoms/global';
 import { getBaseApiReact } from '../App';
 
 export const useFetchResources = () => {
   const [resources, setResources] = useRecoilState(resourceDownloadControllerAtom);
+  const intervalId = useRef(null)
 
   const downloadResource = useCallback(({ service, name, identifier }, build) => {
     setResources((prev) => ({
@@ -21,9 +22,10 @@ export const useFetchResources = () => {
       let isCalling = false;
       let percentLoaded = 0;
       let timer = 24;
+      let tries = 26;
       let calledFirstTime = false
 
-      const intervalId = setInterval(async () => {
+      const callFunction = async ()=> {
         if (isCalling) return;
         isCalling = true;
 
@@ -40,6 +42,24 @@ export const useFetchResources = () => {
                 },
               });
                res = await resCall.json()
+               if(tries > 18 ){
+                if(intervalId?.current){
+                  clearInterval(intervalId?.current)
+                }
+                setResources((prev) => ({
+                  ...prev,
+                  [`${service}-${name}-${identifier}`]: {
+                    ...(prev[`${service}-${name}-${identifier}`] || {}),
+                    status: {
+                      ...res,
+                      status: 'FAILED_TO_DOWNLOAD',
+                    },
+                  },
+                }));
+                return
+               }
+               tries = tries + 1
+
         }
       
         
@@ -103,7 +123,10 @@ export const useFetchResources = () => {
 
         // Check if progress is 100% and clear interval if true
         if (res?.status === 'READY') {
-          clearInterval(intervalId);
+          if(intervalId.current){
+            clearInterval(intervalId.current);
+
+          }
 
           // Update Recoil state for completion
           setResources((prev) => ({
@@ -114,7 +137,12 @@ export const useFetchResources = () => {
             },
           }));
         }
-      }, !calledFirstTime ? 100 :5000);
+      }
+      callFunction()
+       intervalId.current = setInterval(async () => {
+        callFunction()
+      }, 5000);
+     
     } catch (error) {
       console.error('Error during resource fetch:', error);
     }

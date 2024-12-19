@@ -1,7 +1,7 @@
-import React, {  useEffect, useMemo, useRef, useState } from "react";
+import React, {  useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppsHome } from "./AppsHome";
 import { Spacer } from "../../common/Spacer";
-import {  getBaseApiReact } from "../../App";
+import {  GlobalContext, getBaseApiReact } from "../../App";
 import { AppInfo } from "./AppInfo";
 import {
   executeEvent,
@@ -25,9 +25,15 @@ export const Apps = ({ mode, setMode, show , myName}) => {
   const [selectedTab, setSelectedTab] = useState(null);
   const [isNewTabWindow, setIsNewTabWindow] = useState(false);
   const [categories, setCategories] = useState([])
+  const { showTutorial } = useContext(GlobalContext);
+
   const iframeRefs = useRef({});
 
-
+  useEffect(()=> {
+    if(show){
+      showTutorial('qapps')
+    }
+  }, [show])
   const myApp = useMemo(()=> {
    
    return availableQapps.find((app)=> app.name === myName && app.service === 'APP')
