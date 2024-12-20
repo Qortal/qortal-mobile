@@ -136,3 +136,8 @@ export const selectedGroupIdAtom = atom({
   key: 'selectedGroupIdAtom', 
   default: null, 
 });
+
+export const isUsingImportExportSettingsAtom = atom({
+  key: 'isUsingImportExportSettingsAtom', 
+  default: null, 
+});

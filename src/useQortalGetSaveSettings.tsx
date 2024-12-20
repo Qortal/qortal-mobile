@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react'
 import { useRecoilState, useSetRecoilState } from 'recoil';
-import { canSaveSettingToQdnAtom, oldPinnedAppsAtom, settingsLocalLastUpdatedAtom, settingsQDNLastUpdatedAtom, sortablePinnedAppsAtom } from './atoms/global';
+import { canSaveSettingToQdnAtom, isUsingImportExportSettingsAtom, oldPinnedAppsAtom, settingsLocalLastUpdatedAtom, settingsQDNLastUpdatedAtom, sortablePinnedAppsAtom } from './atoms/global';
 import { getArbitraryEndpointReact, getBaseApiReact } from './App';
 import { decryptResource } from './components/Group/Group';
 import { base64ToUint8Array, uint8ArrayToObject } from './backgroundFunctions/encryption';
@@ -59,7 +59,7 @@ export const useQortalGetSaveSettings = (myName, isAuthenticated) => {
     const setSettingsQDNLastUpdated = useSetRecoilState(settingsQDNLastUpdatedAtom);
     const [settingsLocalLastUpdated] = useRecoilState(settingsLocalLastUpdatedAtom);
     const [oldPinnedApps, setOldPinnedApps] =  useRecoilState(oldPinnedAppsAtom)
-
+    const [isUsingImportExportSettings] = useRecoilState(isUsingImportExportSettingsAtom);
     const getSavedSettings = useCallback(async (myName, settingsLocalLastUpdated)=> {
         try {
          const {hasPublishRecord, timestamp} =    await getPublishRecord(myName)
@@ -87,8 +87,9 @@ export const useQortalGetSaveSettings = (myName, isAuthenticated) => {
         }
     }, [])
     useEffect(()=> {
-        if(!myName || !settingsLocalLastUpdated || !isAuthenticated) return
+        if(!myName || !settingsLocalLastUpdated || !isAuthenticated || isUsingImportExportSettings === null) return
+        if(isUsingImportExportSettings) return
         getSavedSettings(myName, settingsLocalLastUpdated)
-    }, [getSavedSettings, myName, settingsLocalLastUpdated, isAuthenticated])
+    }, [getSavedSettings, myName, settingsLocalLastUpdated, isAuthenticated, isUsingImportExportSettings])
  
 }

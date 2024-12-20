@@ -266,9 +266,7 @@ export const AttachmentCard = ({
           <CardContent>
           {resourceData?.fileName && (
                 <>
-                <Typography sx={{
-                  fontSize: '14px'
-                }}>{resourceData?.fileName}</Typography>
+                <Typography>{resourceDetails?.status?.status === 'DOWNLOADED' ? 'BUILDING' : resourceDetails?.status?.status}</Typography>
                 <Spacer height="10px" />
                 </>
               )}
