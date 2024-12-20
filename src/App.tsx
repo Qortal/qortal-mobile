@@ -126,6 +126,7 @@ import { handleGetFileFromIndexedDB } from "./utils/indexedDB";
 import { Wallets } from "./Wallets";
 import { useHandleTutorials } from "./components/Tutorials/useHandleTutorials";
 import { Tutorials } from "./components/Tutorials/Tutorials";
+import BoundedNumericTextField from "./common/BoundedNumericTextField";
 
 
 type extStates =
@@ -745,41 +746,52 @@ function App() {
         setLtcBalanceLoading(false);
       });
   };
-  const sendCoinFunc = () => {
-    setSendPaymentError("");
-    setSendPaymentSuccess("");
-    if (!paymentTo) {
-      setSendPaymentError("Please enter a recipient");
-      return;
-    }
-    if (!paymentAmount) {
-      setSendPaymentError("Please enter an amount greater than 0");
-      return;
-    }
-    if (!paymentPassword) {
-      setSendPaymentError("Please enter your wallet password");
-      return;
-    }
-    setIsLoading(true);
-    window
-      .sendMessage("sendCoin", {
-        amount: Number(paymentAmount),
-        receiver: paymentTo.trim(),
-        password: paymentPassword,
+  const sendCoinFunc = async() => {
+    try {
+      setSendPaymentError("");
+      setSendPaymentSuccess("");
+      if (!paymentTo) {
+        setSendPaymentError("Please enter a recipient");
+        return;
+      }
+      if (!paymentAmount) {
+        setSendPaymentError("Please enter an amount greater than 0");
+        return;
+      }
+      if (!paymentPassword) {
+        setSendPaymentError("Please enter your wallet password");
+        return;
+      }
+      const fee = await getFee('PAYMENT')
+  
+      await show({
+        message: `Would you like to transfer ${Number(paymentAmount)} QORT?` ,
+        paymentFee: fee.fee + ' QORT'
       })
-      .then((response) => {
-        if (response?.error) {
-          setSendPaymentError(response.error);
-        } else {
-          setIsOpenSendQort(false);
-          setIsOpenSendQortSuccess(true);
-        }
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Failed to send coin:", error);
-        setIsLoading(false);
-      });
+      setIsLoading(true);
+      window
+        .sendMessage("sendCoin", {
+          amount: Number(paymentAmount),
+          receiver: paymentTo.trim(),
+          password: paymentPassword,
+        })
+        .then((response) => {
+          if (response?.error) {
+            setSendPaymentError(response.error);
+          } else {
+            setIsOpenSendQort(false);
+            setIsOpenSendQortSuccess(true);
+          }
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Failed to send coin:", error);
+          setIsLoading(false);
+        });
+    } catch (error) {
+      //error
+    }
+   
   };
 
   const clearAllStates = () => {
@@ -1854,12 +1866,14 @@ console.log('openTutorialModal3', openTutorialModal)
               Amount
             </CustomLabel>
             <Spacer height="5px" />
-            <CustomInput
-              id="standard-adornment-amount"
-              type="number"
+            <BoundedNumericTextField
               value={paymentAmount}
-              onChange={(e) => setPaymentAmount(+e.target.value)}
-              autoComplete="off"
+              minValue={0}
+               maxValue={+balance}
+                allowDecimals={true}
+                initialValue={'0'}
+                allowNegatives={false}
+                afterChange={(e: string) => setPaymentAmount(+e)}
             />
             <Spacer height="6px" />
             <CustomLabel htmlFor="standard-adornment-password">
@@ -2895,14 +2909,21 @@ await showInfo({
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle id="alert-dialog-title">{"Publish"}</DialogTitle>
+          <DialogTitle id="alert-dialog-title">{message.paymentFee ? "Payment"  : "Publish"}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
               {message.message}
             </DialogContentText>
-            <DialogContentText id="alert-dialog-description2">
-              publish fee: {message.publishFee}
-            </DialogContentText>
+            {message?.paymentFee && (
+               <DialogContentText id="alert-dialog-description2">
+               payment fee: {message.paymentFee}
+             </DialogContentText>
+            )}
+           {message?.publishFee && (
+             <DialogContentText id="alert-dialog-description2">
+             publish fee: {message.publishFee}
+           </DialogContentText>
+           )}
           </DialogContent>
           <DialogActions>
           <Button sx={{
