@@ -26,7 +26,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import { GlobalContext } from "../App";
 
 export const manifestData = {
-  version: "0.3.8",
+  version: "0.3.9",
 };
 
 export const NotAuthenticated = ({
