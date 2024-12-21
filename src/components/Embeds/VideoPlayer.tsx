@@ -493,7 +493,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 <>Download Completed: building tutorial video...</>
               ) : resourceStatus?.status !== 'READY' ? (
                 <>
-                  {getDownloadProgress(resourceStatus?.localChunkCount, resourceStatus?.totalChunkCount)}
+                  {getDownloadProgress(resourceStatus?.localChunkCount || 0, resourceStatus?.totalChunkCount || 100)}
 
                 </>
               ) : (
