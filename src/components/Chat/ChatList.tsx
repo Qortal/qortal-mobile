@@ -6,7 +6,7 @@ import { useInView } from 'react-intersection-observer'
 import { Typography } from '@mui/material';
 import ErrorBoundary from '../../common/ErrorBoundary';
 
-export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onReply, handleReaction, chatReferences, tempChatReferences, isPrivate,   onEdit
+export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onReply, handleReaction, chatReferences, tempChatReferences, isPrivate,   onEdit, setMobileViewModeKeepOpen
 }) => {
   const parentRef = useRef();
   const [messages, setMessages] = useState(initialMessages);
@@ -352,6 +352,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
                 reactions={reactions}
                 isUpdating={isUpdating}
                 isPrivate={isPrivate}
+                setMobileViewModeKeepOpen={setMobileViewModeKeepOpen}
               />
               </ErrorBoundary>
             </div>

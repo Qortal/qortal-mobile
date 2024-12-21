@@ -63,7 +63,7 @@ function processText(input) {
   return wrapper.innerHTML;
 }
 
-export const MessageDisplay = ({ htmlContent, isReply }) => {
+export const MessageDisplay = ({ htmlContent, isReply, setMobileViewModeKeepOpen }) => {
   const linkify = (text) => {
     if (!text) return ""; // Return an empty string if text is null or undefined
   
@@ -102,7 +102,9 @@ export const MessageDisplay = ({ htmlContent, isReply }) => {
         const { service, name, identifier, path } = res;
         executeEvent("addTab", { data: { service, name, identifier, path } });
         executeEvent("open-apps-mode", { });
-
+        if(setMobileViewModeKeepOpen){
+          setMobileViewModeKeepOpen('')
+        }
       }
     }
   };

@@ -518,9 +518,9 @@ const sendMessage = async ()=> {
            display: "flex",
            alignItems: "center",
            width: "100%",
-           marginTop: "14px",
+           marginTop: "7px",
+          marginBottom: '7px',
            justifyContent: "center",
-           height: "15px",
          }}
        >
          <Box
@@ -586,7 +586,7 @@ const sendMessage = async ()=> {
         </>
       )}
       
-      <ChatList chatReferences={chatReferences} onEdit={onEdit} onReply={onReply} chatId={selectedDirect?.address} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} tempChatReferences={tempChatReferences}/>
+      <ChatList setMobileViewModeKeepOpen={setMobileViewModeKeepOpen} chatReferences={chatReferences} onEdit={onEdit} onReply={onReply} chatId={selectedDirect?.address} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} tempChatReferences={tempChatReferences}/>
 
    
       <div style={{

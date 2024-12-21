@@ -35,7 +35,8 @@ export const MessageItem = ({
   isUpdating,
   lastSignature,
   onEdit,
-  isPrivate
+  isPrivate,
+  setMobileViewModeKeepOpen
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedReaction, setSelectedReaction] = useState(null);
@@ -206,12 +207,13 @@ export const MessageItem = ({
                     Highlight,
                     Mention
                   ])}
+                  setMobileViewModeKeepOpen={setMobileViewModeKeepOpen}
                 />
               )}
               {reply?.decryptedData?.type === "notification" ? (
                 <MessageDisplay htmlContent={reply.decryptedData?.data?.message} />
               ) : (
-                <MessageDisplay isReply htmlContent={reply.text} />
+                <MessageDisplay setMobileViewModeKeepOpen={setMobileViewModeKeepOpen} isReply htmlContent={reply.text} />
               )}
             </Box>
           </Box>
@@ -225,12 +227,13 @@ export const MessageItem = ({
               Highlight,
               Mention
             ])}
+            setMobileViewModeKeepOpen={setMobileViewModeKeepOpen}
           />
         )}
         {message?.decryptedData?.type === "notification" ? (
           <MessageDisplay htmlContent={message.decryptedData?.data?.message} />
         ) : (
-          <MessageDisplay htmlContent={message.text} />
+          <MessageDisplay setMobileViewModeKeepOpen={setMobileViewModeKeepOpen} htmlContent={message.text} />
         )}
         <Box
           sx={{
