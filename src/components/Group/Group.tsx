@@ -2730,6 +2730,8 @@ export const Group = ({
         </AuthenticatedContainerInnerRight>
         <LoadingSnackbar
           open={isLoadingGroup}
+          close={()=>setIsLoadingGroup(false)}
+
           info={{
             message:
               isLoadingGroupMessage || "Setting up group... please wait.",
@@ -2738,6 +2740,7 @@ export const Group = ({
 
         <LoadingSnackbar
           open={isLoadingGroups}
+          close={()=>setIsLoadingGroup(false)}
           info={{
             message: "Setting up groups... please wait.",
           }}

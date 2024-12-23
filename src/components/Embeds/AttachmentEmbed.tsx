@@ -266,7 +266,9 @@ export const AttachmentCard = ({
           <CardContent>
           {resourceData?.fileName && (
                 <>
-                <Typography>{resourceDetails?.status?.status === 'DOWNLOADED' ? 'BUILDING' : resourceDetails?.status?.status}</Typography>
+               <Typography sx={{
+                  fontSize: '14px'
+                }}>{resourceData?.fileName}</Typography>
                 <Spacer height="10px" />
                 </>
               )}
@@ -286,6 +288,8 @@ export const AttachmentCard = ({
           }}>
              
           <FileAttachmentContainer >
+          <Typography>{resourceDetails?.status?.status === 'DOWNLOADED' ? 'BUILDING' : resourceDetails?.status?.status}</Typography>
+
             {!resourceDetails && (
               <>
                         <DownloadIcon />
@@ -319,9 +323,7 @@ export const AttachmentCard = ({
               
               </FileAttachmentContainer>
               </ButtonBase>
-              <Typography sx={{
-                fontSize: '14px'
-              }}>{resourceDetails?.status?.status}</Typography>
+              
           </CardContent>
         </Box>
       </Card>
