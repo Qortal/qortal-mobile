@@ -104,6 +104,7 @@ import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { executeEvent } from "./utils/events";
+import TradeBotRespondRequest from "./transactions/TradeBotRespondRequest";
 
 const uid = new ShortUniqueId({ length: 9, dictionary: 'number'  });
 
@@ -207,7 +208,16 @@ export const getForeignKey = async (foreignBlockchain)=> {
   switch (foreignBlockchain) {
     case "LITECOIN":
       return parsedData.ltcPrivateKey
-
+      case "DOGECOIN":
+        return parsedData.dogePrivateKey
+      case "BITCOIN":
+        return parsedData.btcPrivateKey
+      case "DIGIBYTE":
+        return parsedData.dgbPrivateKey
+      case "RAVENCOIN":
+        return parsedData.rvnPrivateKey
+      case "PIRATECHAIN":
+        return parsedData.arrrSeed58
       default:
         return null
   }
@@ -1636,20 +1646,42 @@ export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlo
       const wallet = await getSaveWallet();
 
       const address = wallet.address0;
-
-      const message = {
-        addresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
-        foreignKey: await getForeignKey(foreignBlockchain),
-        receivingAddress: address,
-      };
-      let responseVar;
-      const txn = new TradeBotRespondMultipleRequest().createTransaction(
-        message
-      );
+      let message
+      if(foreignBlockchain === 'PIRATECHAIN'){
+        console.log('crosschainAtInfo', crosschainAtInfo, crosschainAtInfo[0].qortalAtAddress)
+         message = {
+          atAddress: crosschainAtInfo[0].qortalAtAddress,
+          foreignKey: await getForeignKey(foreignBlockchain),
+          receivingAddress: address,
+        };
+      } else {
+         message = {
+          addresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+          foreignKey: await getForeignKey(foreignBlockchain),
+          receivingAddress: address,
+        };
+      }
      
-   
-       const url =  await createEndpoint('/crosschain/tradebot/respondmultiple')
-      
+      let responseVar;
+      let txn
+      let url
+      if(foreignBlockchain === 'PIRATECHAIN'){
+         txn = new TradeBotRespondRequest().createTransaction(
+          message
+        );
+       
+     
+          url =  await createEndpoint('/crosschain/tradebot/respond')
+      } else {
+         txn = new TradeBotRespondMultipleRequest().createTransaction(
+          message
+        );
+       
+     
+          url =  await createEndpoint('/crosschain/tradebot/respondmultiple')
+      }
+    
+      console.log('txn', txn, JSON.stringify(txn))
       const responseFetch = await fetch(
         url,
         {
@@ -1660,6 +1692,7 @@ export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlo
           body: JSON.stringify(txn),
         }
       );
+
 
       const res = await responseFetch.json();
 
