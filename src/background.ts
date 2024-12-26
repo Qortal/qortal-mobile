@@ -30,7 +30,7 @@ import { RequestQueueWithPromise } from "./utils/queue/queue";
 import { validateAddress } from "./utils/validateAddress";
 import { Sha256 } from "asmcrypto.js";
 import NativePOW from './utils/nativepow'
-
+import axios from 'axios'
 import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMultipleRequest";
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
 import {
@@ -1382,12 +1382,13 @@ export async function handleActiveGroupDataFromSocket({ groups, directs }) {
   } catch (error) {}
 }
 
-async function sendChatForBuyOrder({ qortAddress, recipientPublicKey, message }) {
+async function sendChatForBuyOrder({ qortAddress, recipientPublicKey, message, atAddresses, isSingle  }) {
   let _reference = new Uint8Array(64);
   self.crypto.getRandomValues(_reference);
 
   let sendTimestamp = Date.now();
-
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
   let reference = Base58.encode(_reference);
   const resKeyPair = await getKeyPair();
   const parsedData = resKeyPair;
@@ -1406,7 +1407,9 @@ async function sendChatForBuyOrder({ qortAddress, recipientPublicKey, message })
   };
   const finalJson = {
     callRequest: jsonData,
-    extra: "whatever additional data goes here",
+    extra: {
+      type: isSingle ? "single" : "multiple"
+    },
   };
   const messageStringified = JSON.stringify(finalJson);
 
@@ -1422,7 +1425,38 @@ async function sendChatForBuyOrder({ qortAddress, recipientPublicKey, message })
     isText: 1,
   });
   if (!hasEnoughBalance) {
-    throw new Error('You must have at least 4 QORT to trade using the gateway.')
+    const _encryptedMessage = tx._encryptedMessage;
+    const encryptedMessageToBase58 = Base58.encode(_encryptedMessage);
+    const signature = "id-" + Date.now() + "-" + Math.floor(Math.random() * 1000)
+    const checkGatewayStatusRes = await fetch(`${buyTradeNodeBaseUrl}/admin/status`)
+    const checkGatewayStatusData = await checkGatewayStatusRes.json()
+    if(+checkGatewayStatusData?.syncPercent !== 100 || checkGatewayStatusData?.isSynchronizing !== false){
+      throw new Error("Cannot make trade. Gateway node is synchronizing")
+    }
+    const healthCheckRes = await fetch('https://www.qort.trade/api/transaction/healthcheck')
+    const healthcheckData = await healthCheckRes.json()
+    if(healthcheckData?.dbConnection !== 'healthy'){
+      throw new Error('Could not connect to db. Try again later.')
+    }
+    const res = await axios.post(
+      `https://www.qort.trade/api/transaction/updatetxgateway`,
+      {
+        qortalAtAddresses: atAddresses, qortAddress: address, node: buyTradeNodeBaseUrl, status: "message-sent", encryptedMessageToBase58, signature ,
+        reference, senderPublicKey: parsedData.publicKey,
+        sender: address,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json"
+        },
+      }
+    );
+
+    return {
+      encryptedMessageToBase58,
+      status: "message-sent",
+      signature
+    }
   }
   const chatBytes = tx.chatBytes;
   const difficulty = 8;
@@ -1713,7 +1747,7 @@ export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlo
           callResponse: response,
           extra: {
             message: "Transaction processed successfully!",
-            atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+            atAddresses: foreignBlockchain === 'PIRATECHAIN' ? [crosschainAtInfo[0].qortalAtAddress]  : crosschainAtInfo.map((order)=> order.qortalAtAddress),
             senderAddress: address,
             node: url
           },
@@ -1723,7 +1757,7 @@ export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlo
           callResponse: "ERROR",
           extra: {
             message: response,
-            atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+            atAddresses: foreignBlockchain === 'PIRATECHAIN' ? [crosschainAtInfo[0].qortalAtAddress]  : crosschainAtInfo.map((order)=> order.qortalAtAddress),
             senderAddress: address,
             node: url
           },
@@ -1737,7 +1771,7 @@ export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlo
 
  
     const message = {
-      addresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+      addresses: foreignBlockchain === 'PIRATECHAIN' ? [crosschainAtInfo[0].qortalAtAddress]  :  crosschainAtInfo.map((order)=> order.qortalAtAddress),
       foreignKey: await getForeignKey(foreignBlockchain),
       receivingAddress: address,
     };
@@ -1745,7 +1779,8 @@ export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlo
       qortAddress: proxyAccountAddress,
       recipientPublicKey: proxyAccountPublicKey,
       message,
-      atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+      atAddresses: foreignBlockchain === 'PIRATECHAIN' ? [crosschainAtInfo[0].qortalAtAddress]  : crosschainAtInfo.map((order)=> order.qortalAtAddress),
+      isSingle: foreignBlockchain === 'PIRATECHAIN'
     });
 
     
@@ -1758,13 +1793,13 @@ export async function createBuyOrderTx({ crosschainAtInfo, isGateway, foreignBlo
           signature: res?.signature,
         });
 
-      const responseMessage = {
+        const responseMessage = {
           callResponse: message.callResponse,
             extra: {
               message: message?.extra?.message,
               senderAddress: address,
               node: buyTradeNodeBaseUrl,
-              atAddresses: crosschainAtInfo.map((order)=> order.qortalAtAddress),
+              atAddresses: foreignBlockchain === 'PIRATECHAIN' ? [crosschainAtInfo[0].qortalAtAddress]  : crosschainAtInfo.map((order)=> order.qortalAtAddress),
             }
           }
     
