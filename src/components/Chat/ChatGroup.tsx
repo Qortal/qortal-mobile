@@ -253,7 +253,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
                         const content = item?.content ||  item.decryptedData?.content;
                         const sender = item.sender;
                         const newTimestamp = item.timestamp;
-                        const contentState = item?.contentState || item.decryptedData?.contentState;
+                        const contentState = item?.contentState !== undefined ? item?.contentState :  item.decryptedData?.contentState;
         
                         if (!content || typeof content !== "string" || !sender || typeof sender !== "string" || !newTimestamp) {
                           console.warn("Invalid content, sender, or timestamp in reaction data", item);
@@ -345,7 +345,7 @@ export const ChatGroup = ({selectedGroup, secretKey, setSecretKey, getSecretKey,
                       const content = item?.content || item.decryptedData?.content;
                       const sender = item.sender;
                       const newTimestamp = item.timestamp;
-                      const contentState = item?.contentState ||  item.decryptedData?.contentState;
+                      const contentState = item?.contentState !== undefined ? item?.contentState :   item.decryptedData?.contentState;
       
                       if (!content || typeof content !== "string" || !sender || typeof sender !== "string" || !newTimestamp) {
                         console.warn("Invalid content, sender, or timestamp in reaction data", item);
@@ -799,7 +799,7 @@ const sendMessage = async ()=> {
       setIsSending(false)
       resumeAllQueues()
     }
-  }, [])
+  }, [isPrivate])
   
   return (
     <div style={{
