@@ -55,7 +55,8 @@ const officialAppList = [
   "qombo",
   "q-fund",
   "q-shop",
-  "q-manager"
+  "q-manager",
+  "q-mintership"
 ];
 
 const ScrollerStyled = styled("div")({
