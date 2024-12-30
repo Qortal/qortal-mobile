@@ -145,3 +145,16 @@ export const isUsingImportExportSettingsAtom = atom({
   key: 'isUsingImportExportSettingsAtom', 
   default: null, 
 });
+
+export const addressInfoControllerAtom = atom({
+  key: 'addressInfoControllerAtom', 
+  default: {}, 
+});
+
+export const addressInfoKeySelector = selectorFamily({
+  key: 'addressInfoKeySelector',
+  get: (key) => ({ get }) => {
+    const userInfo = get(addressInfoControllerAtom);
+    return userInfo[key] || null; // Return the value for the key or null if not found
+  },
+});

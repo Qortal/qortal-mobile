@@ -98,7 +98,7 @@ import { formatEmailDate } from "./QMailMessages";
 import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack";
 import { AdminSpace } from "../Chat/AdminSpace";
 import { useSetRecoilState } from "recoil";
-import { selectedGroupIdAtom } from "../../atoms/global";
+import { addressInfoControllerAtom, selectedGroupIdAtom } from "../../atoms/global";
 import { sortArrayByTimestampAndGroupName } from "../../utils/time";
 
 // let touchStartY = 0;
@@ -494,6 +494,7 @@ export const Group = ({
   const [isOpenSideViewGroups, setIsOpenSideViewGroups] = useState(false)
   const [isForceShowCreationKeyPopup, setIsForceShowCreationKeyPopup] = useState(false)
   const [groupsProperties, setGroupsProperties] = useState({})
+  const setUserInfoForLevels = useSetRecoilState(addressInfoControllerAtom);
 
   const isPrivate = useMemo(()=> {
     if(!selectedGroup?.groupId || !groupsProperties[selectedGroup?.groupId]) return null
@@ -1945,6 +1946,7 @@ export const Group = ({
                   setTriedToFetchSecretKey(false);
                   setNewChat(false);
                   setSelectedGroup(null);
+                  setUserInfoForLevels({})
                   setSecretKey(null);
                   lastFetchedSecretKey.current = null;
                   setSecretKeyPublishDate(null);

@@ -127,6 +127,7 @@ import { Wallets } from "./Wallets";
 import { useHandleTutorials } from "./components/Tutorials/useHandleTutorials";
 import { Tutorials } from "./components/Tutorials/Tutorials";
 import BoundedNumericTextField from "./common/BoundedNumericTextField";
+import { useHandleUserInfo } from "./components/Group/useHandleUserInfo";
 
 
 type extStates =
@@ -455,6 +456,7 @@ function App() {
   useRetrieveDataLocalStorage();
   useQortalGetSaveSettings(userInfo?.name, extState === "authenticated");
   const [fullScreen, setFullScreen] = useRecoilState(fullScreenAtom);
+  const {getIndividualUserInfo} = useHandleUserInfo()
 
   const { toggleFullScreen } = useAppFullScreen(setFullScreen);
   const generatorRef = useRef(null)
@@ -1738,7 +1740,8 @@ console.log('openTutorialModal3', openTutorialModal)
             infoSnackCustom: infoSnack,
             setInfoSnackCustom: setInfoSnack,
             userInfo: userInfo,
-            downloadResource
+            downloadResource,
+            getIndividualUserInfo
           }}
         >
           <Box
