@@ -99,6 +99,9 @@ import {
   createPollCase,
   voteOnPollCase,
   encryptAndPublishSymmetricKeyGroupChatForAdminsCase,
+  createRewardShareCase,
+  getRewardSharePrivateKeyCase,
+  removeRewardShareCase,
 } from "./background-cases";
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
@@ -1024,7 +1027,7 @@ export const sendQortFee = async (): Promise<number> => {
   return qortFee;
 };
 
-async function getNameOrAddress(receiver) {
+export async function getNameOrAddress(receiver) {
   try {
     const isAddress = validateAddress(receiver);
     if (isAddress) {
@@ -2949,6 +2952,15 @@ function setupMessageListener() {
       case "setupGroupWebsocket":
         setupGroupWebsocketCase(request, event);
         break;
+        case "createRewardShare":
+          createRewardShareCase(request, event);
+          break;
+          case "getRewardSharePrivateKey":
+            getRewardSharePrivateKeyCase(request, event);
+            break;
+        case "removeRewardShare" :
+          removeRewardShareCase(request, event);
+          break;
       case "addEnteredQmailTimestamp":
         addEnteredQmailTimestampCase(request, event);
         break;

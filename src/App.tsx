@@ -82,6 +82,8 @@ import { LoadingButton } from "@mui/lab";
 import { Label } from "./components/Group/AddGroup";
 import { CustomizedSnackbars } from "./components/Snackbar/Snackbar";
 import SettingsIcon from "@mui/icons-material/Settings";
+import EngineeringIcon from '@mui/icons-material/Engineering';
+
 import {
   cleanUrl,
   getFee,
@@ -128,6 +130,8 @@ import { useHandleTutorials } from "./components/Tutorials/useHandleTutorials";
 import { Tutorials } from "./components/Tutorials/Tutorials";
 import BoundedNumericTextField from "./common/BoundedNumericTextField";
 import { useHandleUserInfo } from "./components/Group/useHandleUserInfo";
+import { Minting } from "./components/Minting/Minting";
+import { isRunningGateway } from "./qortalRequests";
 
 
 type extStates =
@@ -389,6 +393,8 @@ function App() {
   const [authenticatePassword, setAuthenticatePassword] = useState<string>("");
   const [sendqortState, setSendqortState] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isOpenMinting, setIsOpenMinting] = useState(false)
+
   const [
     walletToBeDownloadedPasswordConfirm,
     setWalletToBeDownloadedPasswordConfirm,
@@ -1618,6 +1624,29 @@ function App() {
           </TextP>
         </AuthenticatedContainerInnerLeft>
         <AuthenticatedContainerInnerRight>
+        <Spacer height="20px" />
+
+        <ButtonBase onClick={async ()=> {
+              try {
+                setIsOpenDrawerProfile(false);
+                const res =  await isRunningGateway()
+                if(res) throw new Error('Cannot view minting details on the gateway')
+                setIsOpenMinting(true)
+
+              } catch (error) {
+                setOpenSnack(true)
+                setInfoSnack({
+                  type: 'error',
+                  message: error?.message
+                })
+              }
+            }}>
+              <EngineeringIcon sx={{
+                color: 'var(--unread)'
+                 }} />
+            </ButtonBase>
+          
+           
           <Spacer height="20px" />
           <img
             onClick={() => {
@@ -1688,7 +1717,6 @@ function App() {
       </AuthenticatedContainer>
     );
   };
-console.log('openTutorialModal3', openTutorialModal)
   return (
     <AppContainer
       sx={{
@@ -3324,6 +3352,9 @@ await showInfo({
          }} />
          </ButtonBase>
       )}
+          {isOpenMinting && (
+      <Minting setIsOpenMinting={setIsOpenMinting} groups={memberGroups} myAddress={address} show={show} setTxList={setTxList} txList={txList}/>
+     )}
     </AppContainer>
   );
 }

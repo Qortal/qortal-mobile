@@ -12,6 +12,7 @@ import PendingIcon from "@mui/icons-material/Pending";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { MyContext, getBaseApiReact, isMobile } from "../../App";
 import { getBaseApi } from "../../background";
+import { executeEvent } from "../../utils/events";
 
 
 
@@ -47,7 +48,7 @@ export const TaskManger = ({getUserInfo}) => {
             await new Promise((res)=> {
               setTimeout(() => {
                   res(null)
-              }, 300000);
+              }, 60000);
             })
 						setTxList((prev)=> {
               let previousData = [...prev];
@@ -70,7 +71,7 @@ export const TaskManger = ({getUserInfo}) => {
 			}
 		}
 
-		intervals.current[signature] = setInterval(getAnswer, 120000)
+		intervals.current[signature] = setInterval(getAnswer, 60000)
 	}
 
   useEffect(() => {
@@ -104,47 +105,42 @@ export const TaskManger = ({getUserInfo}) => {
         }
 
       })
-      prev.forEach((tx, index)=> {
-      
-        if(tx?.type === "created-common-secret" && tx?.signature && !tx.done){
-          if(intervals.current[tx.signature]) return
-
-          getStatus({signature: tx.signature})
-        }
-
-      })
-      prev.forEach((tx, index)=> {
-      
-        if(tx?.type === "joined-group-request" && tx?.signature && !tx.done){
-          if(intervals.current[tx.signature]) return
-
-          getStatus({signature: tx.signature})
-        }
-
-      })
-      prev.forEach((tx, index)=> {
-      
-        if(tx?.type === "join-request-accept" && tx?.signature && !tx.done){
-          if(intervals.current[tx.signature]) return
-
-          getStatus({signature: tx.signature})
-        }
-
-      })
-      
-      prev.forEach((tx, index)=> {
-      
-        if(tx?.type === "register-name" && tx?.signature && !tx.done){
-          if(intervals.current[tx.signature]) return
-
-          getStatus({signature: tx.signature}, getUserInfo)
-        }
-
-      })
+   
      
       return previousData;
     });
   }, [memberGroups, getUserInfo]);
+
+  useEffect(()=> {
+ 
+    txList.forEach((tx) => {
+      if (
+        ["created-common-secret", "joined-group-request", "join-request-accept"].includes(
+          tx?.type
+        ) &&
+        tx?.signature &&
+        !tx.done
+      ) {
+        if (!intervals.current[tx.signature]) {
+          getStatus({ signature: tx.signature });
+        }
+      }
+      if (tx?.type === "register-name" && tx?.signature && !tx.done) {
+        if (!intervals.current[tx.signature]) {
+          getStatus({ signature: tx.signature }, getUserInfo);
+        }
+      }
+      if((tx?.type === "remove-rewardShare" || tx?.type === "add-rewardShare") && tx?.signature && !tx.done){
+        if (!intervals.current[tx.signature]) {
+          const sendEventForRewardShare = ()=> {
+            executeEvent('refresh-rewardshare-list', {})
+          }
+          getStatus({ signature: tx.signature }, sendEventForRewardShare);
+        }
+      }
+    });
+
+}, [txList])
 
   if(isMobile) return null
 
