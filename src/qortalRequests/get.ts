@@ -45,6 +45,8 @@ import { executeEvent } from "../utils/events";
 import { extractComponents } from "../components/Chat/MessageDisplay";
 import { decryptResource, getGroupAdmins, getPublishesFromAdmins, validateSecretKey } from "../components/Group/Group";
 import { getPublishesFromAdminsAdminSpace } from "../components/Chat/AdminSpaceInner";
+import nacl from "../deps/nacl-fast";
+import utils from "../utils/utils";
 
 const btcFeePerByte = 0.00000100
 const ltcFeePerByte = 0.00000030
@@ -3205,6 +3207,98 @@ export const adminAction = async (data, isFromExtension) => {
       res = await response.text();
     }
     return res;
+  } else {
+    throw new Error("User declined request");
+  }
+};
+
+export const signTransaction = async (data, isFromExtension) => {
+  const requiredFields = ["unsignedBytes"];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (!data[field]) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+
+  const shouldProcess = data?.process || false;
+  const _url = await createEndpoint(
+    "/transactions/decode?ignoreValidityChecks=false"
+  );
+
+  const _body = data.unsignedBytes;
+  const response = await fetch(_url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: _body,
+  });
+  if (!response.ok) throw new Error("Failed to decode transaction");
+  const decodedData = await response.json();
+  const resPermission = await getUserPermission(
+    {
+      text1: `Do you give this application permission to ${ shouldProcess ? 'SIGN and PROCESS' : 'SIGN' } a transaction?`,
+      highlightedText: "Read the transaction carefully before accepting!",
+      text2: `Tx type: ${decodedData.type}`,
+      json: decodedData,
+    },
+    isFromExtension
+  );
+  const { accepted } = resPermission;
+  if (accepted) {
+   
+      const urlConverted = await createEndpoint("/transactions/convert");
+
+      const responseConverted = await fetch(urlConverted, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: data.unsignedBytes,
+      });
+      const resKeyPair = await getKeyPair();
+      const parsedData = resKeyPair;
+      const uint8PrivateKey = Base58.decode(parsedData.privateKey);
+      const uint8PublicKey = Base58.decode(parsedData.publicKey);
+      const keyPair = {
+        privateKey: uint8PrivateKey,
+        publicKey: uint8PublicKey,
+      };
+      const convertedBytes = await responseConverted.text();
+      const txBytes = Base58.decode(data.unsignedBytes);
+      const _arbitraryBytesBuffer = Object.keys(txBytes).map(function (key) {
+        return txBytes[key];
+      });
+      const arbitraryBytesBuffer = new Uint8Array(_arbitraryBytesBuffer);
+      const txByteSigned = Base58.decode(convertedBytes);
+      const _bytesForSigningBuffer = Object.keys(txByteSigned).map(function (
+        key
+      ) {
+        return txByteSigned[key];
+      });
+      const bytesForSigningBuffer = new Uint8Array(_bytesForSigningBuffer);
+      const signature = nacl.sign.detached(
+        bytesForSigningBuffer,
+        keyPair.privateKey
+      );
+      const signedBytes = utils.appendBuffer(arbitraryBytesBuffer, signature);
+      const signedBytesToBase58 = Base58.encode(signedBytes);
+      if(!shouldProcess){
+        return uint8ArrayToBase64(signedBytes);
+      }
+      const res = await processTransactionVersion2(signedBytesToBase58);
+      if (!res?.signature)
+      throw new Error(
+        res?.message || "Transaction was not able to be processed"
+      );
+    return res;
+   
   } else {
     throw new Error("User declined request");
   }

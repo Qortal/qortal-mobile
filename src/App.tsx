@@ -27,6 +27,8 @@ import {
   Typography,
 } from "@mui/material";
 import { decryptStoredWallet } from "./utils/decryptWallet";
+import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
+import 'react-json-view-lite/dist/index.css';
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import Logo1 from "./assets/svgs/Logo1.svg";
 import Logo1Dark from "./assets/svgs/Logo1Dark.svg";
@@ -3163,7 +3165,15 @@ await showInfo({
             >
               {messageQortalRequestExtension?.highlightedText}
             </TextP>
+            {messageQortalRequestExtension?.json && (
+              <>
+                          <Spacer height="15px" />
 
+                          <JsonView data={messageQortalRequestExtension?.json} shouldExpandNode={allExpanded} style={darkStyles} />
+                          <Spacer height="15px" />
+
+              </>
+            )}
             {messageQortalRequestExtension?.fee && (
               <>
                 <Spacer height="15px" />
