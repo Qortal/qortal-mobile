@@ -1,13 +1,14 @@
 import { SecureStoragePlugin } from '@evva/capacitor-secure-storage-plugin';
+import { Preferences } from '@capacitor/preferences';
 
 let inMemoryKey: CryptoKey | null = null;
-let inMemoryIV: Uint8Array | null = null;
 
 const keysToEncrypt = ['keyPair'];
+const keysToUseEvva = ['wallets'];
 
 async function initializeKeyAndIV() {
   if (!inMemoryKey) {
-    inMemoryKey = await generateKey();  // Generates the key in memory
+    inMemoryKey = await generateKey(); // Generates the key in memory
   }
 }
 
@@ -15,7 +16,7 @@ async function generateKey(): Promise<CryptoKey> {
   return await crypto.subtle.generateKey(
     {
       name: "AES-GCM",
-      length: 256
+      length: 256,
     },
     true,
     ["encrypt", "decrypt"]
@@ -32,7 +33,7 @@ async function encryptData(data: string, key: CryptoKey): Promise<{ iv: Uint8Arr
   const encryptedData = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
-      iv: iv
+      iv: iv,
     },
     key,
     encodedData
@@ -45,7 +46,7 @@ async function decryptData(encryptedData: ArrayBuffer, key: CryptoKey, iv: Uint8
   const decryptedData = await crypto.subtle.decrypt(
     {
       name: "AES-GCM",
-      iv: iv
+      iv: iv,
     },
     key,
     encryptedData
@@ -56,7 +57,7 @@ async function decryptData(encryptedData: ArrayBuffer, key: CryptoKey, iv: Uint8
 }
 
 // Encode a JSON payload as Base64
-function jsonToBase64(payload) {
+function jsonToBase64(payload: any): string {
   const utf8Array = new TextEncoder().encode(JSON.stringify(payload));
   let binary = '';
   utf8Array.forEach((byte) => (binary += String.fromCharCode(byte)));
@@ -64,7 +65,7 @@ function jsonToBase64(payload) {
 }
 
 // Decode a Base64 string back to JSON
-function base64ToJson(base64) {
+function base64ToJson(base64: string): any {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
@@ -86,24 +87,25 @@ export const storeData = async (key: string, payload: any): Promise<string> => {
     const combinedData = new Uint8Array([...iv, ...new Uint8Array(encryptedData)]);
     const encryptedBase64Data = btoa(String.fromCharCode(...combinedData));
     await SecureStoragePlugin.set({ key, value: encryptedBase64Data });
-  } else {
-    // Store Base64-encoded data in plain text if not in keysToEncrypt
+  } else if (keysToUseEvva?.includes(key)){
     await SecureStoragePlugin.set({ key, value: base64Data });
+  } else {
+    // Store Base64-encoded data in Capacitor Preferences for non-encrypted keys
+    await Preferences.set({ key, value: base64Data });
   }
 
   return "Data saved successfully";
 };
 
-
 export const getData = async <T = any>(key: string): Promise<T | null> => {
   await initializeKeyAndIV();
 
   try {
-    const storedDataBase64 = await SecureStoragePlugin.get({ key });
+    if (keysToEncrypt.includes(key) && inMemoryKey) {
+      // Fetch encrypted data for sensitive keys
+      const storedDataBase64 = await SecureStoragePlugin.get({ key });
 
-    if (storedDataBase64.value) {
-      if (keysToEncrypt.includes(key) && inMemoryKey) {
-        // Decode the Base64-encoded encrypted data
+      if (storedDataBase64.value) {
         const combinedData = atob(storedDataBase64.value)
           .split("")
           .map((c) => c.charCodeAt(0));
@@ -113,28 +115,39 @@ export const getData = async <T = any>(key: string): Promise<T | null> => {
 
         const decryptedBase64Data = await decryptData(encryptedData, inMemoryKey, iv);
         return base64ToJson(decryptedBase64Data);
-      } else {
-        // Decode non-encrypted data
-        return base64ToJson(storedDataBase64.value);
       }
+    } else if (keysToUseEvva?.includes(key)){
+      const storedDataBase64 = await SecureStoragePlugin.get({ key });
+      if(storedDataBase64?.value){
+        return base64ToJson(storedDataBase64.value);
+
+      } else return null
     } else {
-      return null;
+      // Fetch plain data for non-encrypted keys
+      const { value } = await Preferences.get({ key });
+      if (value) {
+        return base64ToJson(value);
+      }
     }
+
+    return null;
   } catch (error) {
-    return null
+    console.error("Error fetching data:", error);
+    return null;
   }
 };
 
-
-
-
-// Remove keys from storage and log out
 export async function removeKeysAndLogout(keys: string[], event: MessageEvent, request: any) {
   try {
     for (const key of keys) {
       try {
-        await SecureStoragePlugin.remove({ key });
-        await SecureStoragePlugin.remove({ key: `${key}_iv` });  // Remove associated IV
+        if (keysToEncrypt.includes(key)) {
+          // Remove from Secure Storage for sensitive keys
+          await SecureStoragePlugin.remove({ key });
+        } else {
+          // Remove from Capacitor Preferences for non-sensitive keys
+          await Preferences.remove({ key });
+        }
       } catch (error) {
         console.warn(`Key not found: ${key}`);
       }

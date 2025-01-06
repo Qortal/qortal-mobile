@@ -533,6 +533,7 @@ export const Group = ({
 
   }, [selectedGroup]);
 
+
   useEffect(() => {
     selectedDirectRef.current = selectedDirect;
   }, [selectedDirect]);
@@ -632,6 +633,13 @@ export const Group = ({
       });
     } catch (error) {}
   };
+
+  useEffect(()=> {
+    if(myAddress){
+      getGroupAnnouncements()
+      getTimestampEnterChat()
+    }
+  }, [myAddress])
 
   const getGroupOwner = async (groupId) => {
     try {
