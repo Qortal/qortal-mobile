@@ -962,6 +962,39 @@ export const publishQDNResource = async (
   }
 };
 
+export const checkArrrSyncStatus = async (seed) => {
+  const _url = await createEndpoint(`/crosschain/arrr/syncstatus`);
+  let tries = 0; // Track the number of attempts
+
+  while (tries < 36) {
+    const response = await fetch(_url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: seed,
+    });
+
+    let res;
+    try {
+      res = await response.clone().json();
+    } catch (e) {
+      res = await response.text();
+    }
+
+    if (res.indexOf('<') > -1 || res !== "Synchronized") {
+      // Wait 2 seconds before trying again
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      tries += 1;
+    } else {
+      // If the response doesn't meet the two conditions, exit the function
+      return;
+    }
+  }
+
+  // If we exceed 6 tries, throw an error
+  throw new Error("Failed to synchronize after 36 attempts");
+};
 
 export const publishMultipleQDNResources = async (data: any, sender, isFromExtension) => {
   const requiredFields = ["resources"];
@@ -1791,6 +1824,7 @@ export const getWalletBalance = async (data, bypassPermission?: boolean, isFromE
           _body = parsedData.rvnPublicKey;
           break;
         case "ARRR":
+          await checkArrrSyncStatus(parsedData.arrrSeed58)
           _url = await createEndpoint(`/crosschain/arrr/walletbalance`);
           _body = parsedData.arrrSeed58;
           break;
@@ -1833,6 +1867,8 @@ const getPirateWallet = async (arrrSeed58)=> {
   if (isGateway) {
     throw new Error("Retrieving PIRATECHAIN balance is not allowed through a gateway.");
   }
+  await checkArrrSyncStatus(arrrSeed58)
+
   const bodyToString = arrrSeed58;
   const url = await createEndpoint(`/crosschain/arrr/walletaddress`);
   const response = await fetch(url, {
