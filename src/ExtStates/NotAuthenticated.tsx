@@ -21,7 +21,7 @@ import Logo1Dark from "../assets/svgs/Logo1Dark.svg";
 import Info from "../assets/svgs/Info.svg";
 import { CustomizedSnackbars } from "../components/Snackbar/Snackbar";
 import { set } from "lodash";
-import { cleanUrl, isUsingLocal } from "../background";
+import { cleanUrl, gateways, isUsingLocal } from "../background";
 import HelpIcon from '@mui/icons-material/Help';
 import { GlobalContext } from "../App";
 
@@ -29,11 +29,19 @@ export const manifestData = {
   version: "0.5.0",
 };
 
+function removeTrailingSlash(url) {
+  return url.replace(/\/+$/, '');
+}
+
+
 export const NotAuthenticated = ({
   getRootProps,
   getInputProps,
   setExtstate,
-
+  currentNode,
+  setCurrentNode,
+  useLocalNode, 
+  setUseLocalNode,
   apiKey,
   setApiKey,
   globalApiKey,
@@ -42,15 +50,15 @@ export const NotAuthenticated = ({
 }) => {
   const [isValidApiKey, setIsValidApiKey] = useState<boolean | null>(null);
   const [hasLocalNode, setHasLocalNode] = useState<boolean | null>(null);
-  const [useLocalNode, setUseLocalNode] = useState(false);
+  // const [useLocalNode, setUseLocalNode] = useState(false);
   const [openSnack, setOpenSnack] = React.useState(false);
   const [infoSnack, setInfoSnack] = React.useState(null);
   const [show, setShow] = React.useState(false);
   const [mode, setMode] = React.useState("list");
   const [customNodes, setCustomNodes] = React.useState(null);
-  const [currentNode, setCurrentNode] = React.useState({
-    url: "http://127.0.0.1:12391",
-  });
+  // const [currentNode, setCurrentNode] = React.useState({
+  //   url: "http://127.0.0.1:12391",
+  // });
   const { showTutorial  } = useContext(GlobalContext);
 
   const [importedApiKey, setImportedApiKey] = React.useState(null);
@@ -71,6 +79,33 @@ export const NotAuthenticated = ({
         const text = e.target.result; // Get the file content
 
         setImportedApiKey(text); // Store the file content in the state
+        if(customNodes){
+          setCustomNodes((prev)=> {
+            const copyPrev = [...prev]
+            const findLocalIndex = copyPrev?.findIndex((item)=> item?.url === 'http://127.0.0.1:12391')
+            if(findLocalIndex === -1){
+              copyPrev.unshift({
+                url: "http://127.0.0.1:12391",
+                apikey: text
+              })
+            } else {
+              copyPrev[findLocalIndex] = {
+                url: "http://127.0.0.1:12391",
+                apikey: text
+              }
+            }
+            window
+            .sendMessage("setCustomNodes", copyPrev)
+            .catch((error) => {
+              console.error(
+                "Failed to set custom nodes:",
+                error.message || "An error occurred"
+              );
+            });
+            return copyPrev
+          })
+       
+        }
       };
       reader.readAsText(file); // Read the file as text
     }
@@ -104,9 +139,14 @@ export const NotAuthenticated = ({
     window
       .sendMessage("getCustomNodesFromStorage")
       .then((response) => {
-        if (response) {
+      
           setCustomNodes(response || []);
-        }
+          if(Array.isArray(response)){
+            const findLocal = response?.find((item)=> item?.url === 'http://127.0.0.1:12391')
+            if(findLocal && findLocal?.apikey){
+              setImportedApiKey(findLocal?.apikey)
+            }
+          }
       })
       .catch((error) => {
         console.error(
@@ -129,9 +169,32 @@ export const NotAuthenticated = ({
 
   const validateApiKey = useCallback(async (key, fromStartUp) => {
     try {
+      const isLocalKey = cleanUrl(key?.url) === "127.0.0.1:12391";
+      if(fromStartUp && key?.url && key?.apikey && !isLocalKey && !gateways.some(gateway => apiKey?.url?.includes(gateway))){
+        setCurrentNode({
+          url: key?.url,
+          apikey: key?.apikey,
+        });
+        const url = `${key?.url}/admin/apikey/test`;
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            accept: "text/plain",
+            "X-API-KEY": key?.apikey, // Include the API key here
+          },
+        });
+  
+        // Assuming the response is in plain text and will be 'true' or 'false'
+        const data = await response.text();
+        if (data === "true") {
+          setIsValidApiKey(true);
+        setUseLocalNode(true);
+        return
+        }
+        
+      }
       if (!currentNodeRef.current) return;
       const stillHasLocal = await checkIfUserHasLocalNode();
-      const isLocalKey = cleanUrl(key?.url) === "127.0.0.1:12391";
       if (isLocalKey && !stillHasLocal && !fromStartUp) {
         throw new Error("Please turn on your local node");
       }
@@ -237,12 +300,12 @@ export const NotAuthenticated = ({
     let nodes = [...(myNodes || [])];
     if (customNodeToSaveIndex !== null) {
       nodes.splice(customNodeToSaveIndex, 1, {
-        url,
+        url: removeTrailingSlash(url),
         apikey: customApikey,
       });
     } else if (url && customApikey) {
       nodes.push({
-        url,
+        url: removeTrailingSlash(url),
         apikey: customApikey,
       });
     }
