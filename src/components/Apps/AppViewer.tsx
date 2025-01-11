@@ -162,7 +162,7 @@ export const AppViewer = React.forwardRef(({ app , hide}, iframeRef) => {
           height: !isMobile ? '100vh' : `calc(${rootHeight} - 60px - 45px )`,
           border: 'none',
           width: '100%'
-        }} id="browser-iframe" src={defaultUrl} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" allow="fullscreen">
+        }} id="browser-iframe" src={defaultUrl} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" allow="fullscreen; clipboard-read; clipboard-write">
     						
     						</iframe>
     </Box>
