@@ -3225,6 +3225,24 @@ await showInfo({
                 <Spacer height="15px" />
               </>
             )}
+              {messageQortalRequestExtension?.appFee && (
+              <>
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: 1.2,
+                    fontSize: "16px",
+                    fontWeight: "normal",
+                    maxWidth: "90%",
+                  }}
+                >
+                  {"App Fee: "}
+                  {messageQortalRequestExtension?.appFee}
+                  {" QORT"}
+                </TextP>
+                <Spacer height="15px" />
+              </>
+            )}
             {messageQortalRequestExtension?.foreignFee && (
               <>
                 <Spacer height="15px" />
@@ -3248,7 +3266,6 @@ await showInfo({
               <Box
                 sx={{
                   display: "flex",
-                  gap: "10px",
                   alignItems: "center",
                   justifyContent: "center",
                   width: "90%",
