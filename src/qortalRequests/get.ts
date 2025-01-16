@@ -2279,7 +2279,8 @@ export const getTxActivitySummary = async (data) => {
     }
   
     const { coin, type } = data;
-    const url = `/crosschain/${coin}/${type}`;
+    const url = `/crosschain/${coin.toLowerCase()}/${type}`;
+
   
     try {
       const endpoint = await createEndpoint(url);

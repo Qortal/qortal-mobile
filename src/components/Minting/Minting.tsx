@@ -54,10 +54,12 @@ export const Minting = ({
   const [nodeInfos, setNodeInfos] = useState({});
   const [openSnack, setOpenSnack] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { isShow, onCancel, onOk, show: showKey, message } = useModal();
+  const {  show: showKey, message } = useModal();
+  const { isShow: isShowNext,  onOk, show: showNext } = useModal();
   const [info, setInfo] = useState(null);
   const [names, setNames] = useState({});
   const [accountInfos, setAccountInfos] = useState({});
+  const [showWaitDialog, setShowWaitDialog] = useState(false)
 
 
  
@@ -199,6 +201,7 @@ export const Minting = ({
       }
       const data = await response.json();
       setRewardShares(data);
+      return data
     } catch (error) {}
   }, []);
 
@@ -338,6 +341,31 @@ export const Minting = ({
     });
   }, []);
 
+  const waitUntilRewardShareIsConfirmed = async (timeoutMs = 600000) => {
+    const pollingInterval = 30000;
+    const startTime = Date.now();
+  
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+  
+    while (Date.now() - startTime < timeoutMs) {
+ 
+        const rewardShares = await getRewardShares(myAddress);
+        const findRewardShare = rewardShares?.find(
+          (item) =>
+            item?.recipient === myAddress && item?.mintingAccount === myAddress
+        );
+  
+        if (findRewardShare) {
+          return true; // Exit early if found
+        }
+  
+  
+      await sleep(pollingInterval); // Wait before the next poll
+    }
+  
+    throw new Error("Timeout waiting for reward share confirmation");
+  };
+
   const startMinting = async () => {
     try {
       setIsLoading(true);
@@ -352,12 +380,20 @@ export const Minting = ({
         addMintingAccount(privateRewardShare);
       } else {
         await createRewardShare(accountInfo?.publicKey, myAddress);
+        setShowWaitDialog(true)
+        await waitUntilRewardShareIsConfirmed()
+        await showNext({
+          message: ''
+        })
         const privateRewardShare = await getRewardSharePrivateKey(
           accountInfo?.publicKey
         );
+        setShowWaitDialog(false)
         addMintingAccount(privateRewardShare);
+       
       }
     } catch (error) {
+      setShowWaitDialog(false)
       setInfo({
         type: "error",
         message: error?.message || "Unable to start minting",
@@ -705,63 +741,7 @@ export const Minting = ({
             </Typography>
           )}
         </Card>
-        {txList?.filter(
-          (item) =>
-            !item?.done &&
-            (item?.type === "remove-rewardShare" ||
-              item?.type === "add-rewardShare")
-        )?.length > 0 && (
-          <>
-            <Spacer height="20px" />
-            <Typography>Ongoing transactions</Typography>
-            <Card
-              sx={{
-                backgroundColor: "var(--bg-2)",
-                padding: "10px",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: "5px",
-                  flexDirection: "column",
-                  width: "100%",
-                }}
-              >
-                {txList
-                  ?.filter(
-                    (item) =>
-                      !item.done &&
-                      (item?.type === "remove-rewardShare" ||
-                        item?.type === "add-rewardShare")
-                  )
-                  ?.map((txItem) => (
-                    <Box
-                      key={txItem?.signature}
-                      sx={{
-                        display: "flex",
-                        gap: "5px",
-                        flexDirection: "column",
-                      }}
-                    >
-                      {txItem?.type === "remove-rewardShare" && (
-                        <Typography>Reward share being removed</Typography>
-                      )}
-                      {txItem?.type === "add-rewardShare" && (
-                        <Typography>Reward share being created</Typography>
-                      )}
-                      <Typography>
-                        Recipient: {handleNames(txItem?.recipient)}
-                      </Typography>
 
-                      <Divider />
-                      <Spacer height="10px" />
-                    </Box>
-                  ))}
-              </Box>
-            </Card>
-          </>
-        )}
         <Spacer height="20px" />
         {!isPartOfMintingGroup && (
           <Card
@@ -814,6 +794,39 @@ export const Minting = ({
             </Box>
           </Card>
         )}
+        {showWaitDialog && (
+          <Dialog
+            open={showWaitDialog}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogTitle id="alert-dialog-title">
+              {isShowNext ? "Confirmed" : "Please Wait"}
+            </DialogTitle>
+            <DialogContent>
+              {!isShowNext && (
+                <Typography>
+                Confirming creation of rewardshare on chain. Please be patient, this could take up to 90 seconds.
+              </Typography>
+              )}
+              {isShowNext && (
+                <Typography>
+                Rewardshare confirmed. Please click Next.
+              </Typography>
+              )}
+              
+            </DialogContent>
+         
+              <DialogActions>
+              <Button disabled={!isShowNext} variant="contained" onClick={onOk} autoFocus>
+                Next
+              </Button>
+            </DialogActions>
+           
+            
+          </Dialog>
+        )}
+
       </DialogContent>
       <DialogActions>
         <Button

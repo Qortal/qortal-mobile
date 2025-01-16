@@ -605,7 +605,8 @@ const sendMessage = async ()=> {
         bottom: isFocusedParent ? '0px' : 'unset',
         top: isFocusedParent ? '0px' : 'unset',
         zIndex: isFocusedParent ? 11 : 'unset',
-        flexShrink: 0
+        flexShrink: 0,
+        gap: '15px'
       }}>
       <div style={{
             display: 'flex',
