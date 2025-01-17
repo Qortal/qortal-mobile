@@ -3312,9 +3312,6 @@ const receivingAddress = await getUserWalletFunc(data.foreignBlockchain)
 export const cancelSellOrder = async (data, isFromExtension) => {
  
   const requiredFields = [
-    "qortAmount",
-    "foreignBlockchain",
-    "foreignAmount",
     "atAddress"
   ];
   const missingFields: string[] = [];
@@ -3328,15 +3325,19 @@ export const cancelSellOrder = async (data, isFromExtension) => {
     const errorMsg = `Missing fields: ${missingFieldsString}`;
     throw new Error(errorMsg);
   }
+  const url = await createEndpoint(`/crosschain/trade/${data.atAddress}`)
+  const resAddress = await fetch(url);
+  const resData = await resAddress.json();
+  if(!resData?.qortalAtAddress) throw new Error('Cannot find AT info.')
 
   try {
     const fee = await getFee("MESSAGE");
 
     const resPermission = await getUserPermission({
       text1: "Do you give this application permission to perform cancel a sell order?",
-      text2: `${data.qortAmount}${" "}
+      text2: `${resData.qortAmount}${" "}
       ${`QORT`}`, 
-      text3: `FOR  ${data.foreignAmount} ${data.foreignBlockchain}`,
+      text3: `FOR  ${resData.expectedForeignAmount} ${resData.foreignBlockchain}`,
       fee: fee.fee
     }, isFromExtension);
     const { accepted } = resPermission;
