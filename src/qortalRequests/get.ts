@@ -410,7 +410,7 @@ export const encryptData = async (data, sender) => {
 
 
 export const encryptQortalGroupData = async (data, sender) => {
-  let data64 = data.data64;
+  let data64 = data?.data64 || data?.base64;
   let groupId = data?.groupId
   let isAdmins = data?.isAdmins
   if(!groupId){
@@ -445,7 +445,7 @@ export const encryptQortalGroupData = async (data, sender) => {
 url
   );
   const resData = await res.text();
-  const decryptedKey: any = await decryptResource(resData);
+  const decryptedKey: any = await decryptResource(resData, true);
 
   const dataint8Array = base64ToUint8Array(decryptedKey.data);
   const decryptedKeyToObject = uint8ArrayToObject(dataint8Array);
@@ -479,7 +479,7 @@ url
 url
   );
   const resData = await res.text();
-  const decryptedKey: any = await decryptResource(resData);
+  const decryptedKey: any = await decryptResource(resData, true);
 
   const dataint8Array = base64ToUint8Array(decryptedKey.data);
   const decryptedKeyToObject = uint8ArrayToObject(dataint8Array);
@@ -509,7 +509,7 @@ url
 };
 
 export const decryptQortalGroupData = async (data, sender) => {
-  let data64 = data.data64;
+  let data64 = data?.data64 || data?.base64;
   let groupId = data?.groupId
   let isAdmins = data?.isAdmins
   if(!groupId){
@@ -540,7 +540,7 @@ export const decryptQortalGroupData = async (data, sender) => {
 url
   );
   const resData = await res.text();
-  const decryptedKey: any = await decryptResource(resData);
+  const decryptedKey: any = await decryptResource(resData, true);
 
   const dataint8Array = base64ToUint8Array(decryptedKey.data);
   const decryptedKeyToObject = uint8ArrayToObject(dataint8Array);
@@ -571,7 +571,7 @@ url
 url
   );
   const resData = await res.text();
-  const decryptedKey: any = await decryptResource(resData);
+  const decryptedKey: any = await decryptResource(resData, true);
 
   const dataint8Array = base64ToUint8Array(decryptedKey.data);
   const decryptedKeyToObject = uint8ArrayToObject(dataint8Array);
@@ -598,7 +598,7 @@ url
 };
 
 export const encryptDataWithSharingKey = async (data, sender) => {
-  let data64 = data.data64;
+  let data64 = data?.data64 || data?.base64;
   let publicKeys = data.publicKeys || [];
   if (data.fileId) {
     data64 = await getFileFromContentScript(data.fileId);
@@ -3697,7 +3697,10 @@ export const createAndCopyEmbedLink = async (data, isFromExtension) => {
 };
 
 export const getHostedData = async (data, isFromExtension) => {
- 
+  const isGateway = await isRunningGateway();
+  if (isGateway) {
+    throw new Error("This action cannot be done through a gateway");
+  }
   const resPermission = await getUserPermission(
     {
       text1: "Do you give this application permission to",
@@ -3709,18 +3712,19 @@ export const getHostedData = async (data, isFromExtension) => {
 
   if(accepted){
     const limit = data?.limit ? data?.limit : 20;
-    const query = data?.query ? data?.query : undefined
+    const query = data?.query ? data?.query : ""
     const offset = data?.offset ? data?.offset : 0
 
-    try {
-       
-      const url = await createEndpoint(`/arbitrary/hosted/resources/?limit=${limit}&query=${query}&offset=${offset}`);
-      const response = await fetch(url);
-      const data =  await response.json();
-      return data
-    } catch (error) {
-      throw error
+    let urlPath = `/arbitrary/hosted/resources/?limit=${limit}&offset=${offset}`
+    if(query){
+      urlPath = urlPath + `&query=${query}`
     }
+       
+      const url = await createEndpoint(urlPath);
+      const response = await fetch(url);
+      const dataResponse =  await response.json();
+      return dataResponse
+
     
     } else {
     throw new Error("User declined to get list of hosted resources");
@@ -3729,6 +3733,10 @@ export const getHostedData = async (data, isFromExtension) => {
 };
 
 export const deleteHostedData = async (data, isFromExtension) => {
+  const isGateway = await isRunningGateway();
+  if (isGateway) {
+    throw new Error("This action cannot be done through a gateway");
+  }
   const requiredFields = ["hostedData"];
   const missingFields: string[] = [];
   requiredFields.forEach((field) => {
@@ -3750,7 +3758,7 @@ export const deleteHostedData = async (data, isFromExtension) => {
 
   for (const hostedDataItem of hostedData){
     try {
-      const url = await createEndpoint(`/arbitrary/resource/${hostedDataItem.service}/${hostedDataItem.name}/${hostedDataItem.identifer}`);
+      const url = await createEndpoint(`/arbitrary/resource/${hostedDataItem.service}/${hostedDataItem.name}/${hostedDataItem.identifier}`);
        await fetch(url, {
         method: "DELETE",
         headers: {

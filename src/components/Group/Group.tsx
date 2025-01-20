@@ -250,7 +250,7 @@ export const getGroupMembers = async (groupNumber: number) => {
   return groupData;
 };
 
-export const decryptResource = async (data: string) => {
+export const decryptResource = async (data: string, fromQortalRequest?:boolean) => {
   try {
     return new Promise((res, rej) => {
       window.sendMessage("decryptGroupEncryption", {
@@ -261,10 +261,19 @@ export const decryptResource = async (data: string) => {
             res(response);
             return;
           }
-          rej(response.error);
+          if(fromQortalRequest){
+            rej({error: response.error, message: response?.error});
+          } else {
+            rej(response.error);
+
+          }
         })
         .catch((error) => {
-          rej(error.message || "An error occurred");
+          if(fromQortalRequest){
+            rej({message: error.message || "An error occurred", error: error.message || "An error occurred"});
+          } else {
+            rej(error.message || "An error occurred",);
+          }
         });
       
     });
