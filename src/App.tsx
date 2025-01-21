@@ -134,6 +134,7 @@ import BoundedNumericTextField from "./common/BoundedNumericTextField";
 import { useHandleUserInfo } from "./components/Group/useHandleUserInfo";
 import { Minting } from "./components/Minting/Minting";
 import { isRunningGateway } from "./qortalRequests";
+import { GlobalActions } from "./components/GlobalActions/GlobalActions";
 
 
 type extStates =
@@ -1817,6 +1818,7 @@ function App() {
           >
             <TaskManger getUserInfo={getUserInfo} />
           </Box>
+          <GlobalActions memberGroups={memberGroups} />
         </MyContext.Provider>
       )}
       {isOpenSendQort && isMainWindow && (

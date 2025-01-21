@@ -541,7 +541,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         id={identifier}
         ref={videoRef}
         src={!startPlay ? '' : resourceStatus?.status === 'READY' ? src : ''}
-        poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+        poster={poster ? poster : "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="}
         onTimeUpdate={updateProgress}
         autoPlay={autoplay}
         onClick={togglePlay}

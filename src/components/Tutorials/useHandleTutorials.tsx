@@ -2,6 +2,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { saveToLocalStorage } from "../Apps/AppsNavBar";
 import { getData, storeData } from "../../utils/chromeStorage";
 
+import creationImg from './img/creation.webp'
+import dashboardImg from './img/dashboard.webp'
+import groupsImg from './img/groups.webp'
+import importantImg from './img/important.webp'
+import navigationImg from './img/navigation.webp'
+import overviewImg from './img/overview.webp'
+import startedImg from './img/started.webp'
 
 const checkIfGatewayIsOnline = async () => {
     try {
@@ -80,6 +87,7 @@ useEffect(()=> {
                     name: "a-test",
                     service: "VIDEO",
                     identifier: "account-creation-go",
+                    poster: creationImg
                   },
                 });
               }
@@ -95,6 +103,7 @@ useEffect(()=> {
                     name: "a-test",
                     service: "VIDEO",
                     identifier: "important-information-go",
+                    poster: importantImg
                   },
                 });
               }
@@ -114,6 +123,7 @@ useEffect(()=> {
                         name: "a-test",
                         service: "VIDEO",
                         identifier: "getting-started-go",
+                        poster: startedImg
                       },
                     },
                     {
@@ -122,6 +132,7 @@ useEffect(()=> {
                           name: "a-test",
                           service: "VIDEO",
                           identifier: "overview-go",
+                          poster: overviewImg
                         },
                       },
                     {
@@ -130,6 +141,7 @@ useEffect(()=> {
                         name: "a-test",
                         service: "VIDEO",
                         identifier: "groups-go",
+                        poster: groupsImg
                       },
                     },
                   ],
@@ -149,6 +161,7 @@ useEffect(()=> {
                             name: "a-test",
                             service: "VIDEO",
                             identifier: "apps-dashboard-go",
+                            poster: dashboardImg
                           },
                         },
                         {
@@ -157,6 +170,7 @@ useEffect(()=> {
                             name: "a-test",
                             service: "VIDEO",
                             identifier: "apps-navigation-go",
+                            poster: navigationImg
                           },
                         }
                        
