@@ -1,6 +1,6 @@
 import { gateways, getApiKeyFromStorage } from "./background";
 import { listOfAllQortalRequests } from "./components/Apps/useQortalMessageListener";
-import { addForeignServer, addListItems, adminAction, cancelSellOrder, createAndCopyEmbedLink, createBuyOrder, createPoll, decryptData, decryptDataWithSharingKey, decryptQortalGroupData, deleteHostedData, deleteListItems, deployAt, encryptData, encryptDataWithSharingKey, encryptQortalGroupData, getCrossChainServerInfo, getDaySummary, getForeignFee, getHostedData, getListItems, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getWalletBalance, joinGroup, openNewTab, publishMultipleQDNResources, publishQDNResource, registerNameRequest, removeForeignServer, saveFile, sendChatMessage, sendCoin, setCurrentForeignServer, signTransaction, updateForeignFee, updateNameRequest, voteOnPoll } from "./qortalRequests/get";
+import { addForeignServer, addListItems, adminAction, cancelSellOrder, createAndCopyEmbedLink, createBuyOrder, createPoll, decryptData, decryptDataWithSharingKey, decryptQortalGroupData, deleteHostedData, deleteListItems, deployAt, encryptData, encryptDataWithSharingKey, encryptQortalGroupData, getCrossChainServerInfo, getDaySummary, getForeignFee, getHostedData, getListItems, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getWalletBalance, inviteToGroupRequest, joinGroup, leaveGroupRequest, openNewTab, publishMultipleQDNResources, publishQDNResource, registerNameRequest, removeForeignServer, saveFile, sendChatMessage, sendCoin, setCurrentForeignServer, signTransaction, updateForeignFee, updateNameRequest, voteOnPoll } from "./qortalRequests/get";
 import { getData, storeData } from "./utils/chromeStorage";
 
 
@@ -892,6 +892,45 @@ export const isRunningGateway = async ()=> {
         case "UPDATE_NAME" : {
           try {
             const res =  await updateNameRequest(request.payload, isFromExtension)
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error?.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+        case "LEAVE_GROUP" : {
+          try {
+            const res =  await leaveGroupRequest(request.payload, isFromExtension)
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error?.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+
+        case "INVITE_TO_GROUP" : {
+          try {
+            const res =  await inviteToGroupRequest(request.payload, isFromExtension)
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
