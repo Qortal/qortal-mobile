@@ -412,7 +412,7 @@ function App() {
   const [hasSettingsChanged, setHasSettingsChanged] = useRecoilState(
     hasSettingsChangedAtom
   );
-  const {showTutorial, openTutorialModal, shownTutorialsInitiated, setOpenTutorialModal} = useHandleTutorials()
+  const {showTutorial, openTutorialModal, shownTutorialsInitiated, setOpenTutorialModal, hasSeenGettingStarted} = useHandleTutorials()
   const holdRefExtState = useRef<extStates>("not-authenticated");
   const isFocusedRef = useRef<boolean>(true);
   const { isShow, onCancel, onOk, show, message } = useModal();
@@ -1739,7 +1739,8 @@ function App() {
             showTutorial,
             openTutorialModal,
             setOpenTutorialModal,
-            downloadResource
+            downloadResource,
+            hasSeenGettingStarted
       }}>
             <Tutorials />
       {extState === "not-authenticated" && (
@@ -2320,8 +2321,7 @@ function App() {
               height: "154px",
             }}
           >
-            <img src={Logo1} className="base-image" />
-            <img src={Logo1Dark} className="hover-image" />
+            <img src={Logo1Dark} className="base-image" />
           </div>
           <Spacer height="38px" />
           <TextP
@@ -2383,8 +2383,7 @@ function App() {
               height: "154px",
             }}
           >
-            <img src={Logo1} className="base-image" />
-            <img src={Logo1Dark} className="hover-image" />
+            <img src={Logo1Dark} className="base-image" />
           </div>
           <Spacer height="38px" />
           <TextP
@@ -2480,8 +2479,7 @@ function App() {
               height: "154px",
             }}
           >
-            <img src={Logo1} className="base-image" />
-            <img src={Logo1Dark} className="hover-image" />
+            <img src={Logo1Dark} className="base-image" />
           </div>
           <Spacer height="35px" />
           <Box
@@ -2580,8 +2578,7 @@ function App() {
               height: "154px",
             }}
           >
-            <img src={Logo1} className="base-image" />
-            <img src={Logo1Dark} className="hover-image" />
+            <img src={Logo1Dark} className="base-image" />
           </div>
           <Spacer height="35px" />
           <Box
@@ -2678,8 +2675,7 @@ await showInfo({
                   height: "154px",
                 }}
               >
-                <img src={Logo1} className="base-image" />
-                <img src={Logo1Dark} className="hover-image" />
+                <img src={Logo1Dark} className="base-image" />
               </div>
               <Spacer height="38px" />
               <TextP

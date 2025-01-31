@@ -70,7 +70,7 @@ body {
 }
 
 .image-container:hover .base-image {
-  opacity: 0;
+  opacity: 0.6;
 
 }
 

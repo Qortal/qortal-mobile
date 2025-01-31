@@ -59,7 +59,7 @@ export const NotAuthenticated = ({
   // const [currentNode, setCurrentNode] = React.useState({
   //   url: "http://127.0.0.1:12391",
   // });
-  const { showTutorial  } = useContext(GlobalContext);
+  const { showTutorial, hasSeenGettingStarted  } = useContext(GlobalContext);
 
   const [importedApiKey, setImportedApiKey] = React.useState(null);
   //add and edit states
@@ -341,18 +341,22 @@ export const NotAuthenticated = ({
           height: "154px",
         }}
       >
-        <img src={Logo1} className="base-image" />
-        <img src={Logo1Dark} className="hover-image" />
+        <img src={Logo1Dark} className="base-image" />
       </div>
       <Spacer height="30px" />
       <TextP
         sx={{
           textAlign: "center",
-          lineHeight: "15px",
+          lineHeight: 1.2,
+          fontSize: '16px'
         }}
       >
-        WELCOME TO <TextItalic>YOUR</TextItalic> <br></br>
-        <TextSpan> QORTAL WALLET</TextSpan>
+        WELCOME TO <TextItalic sx={{
+          fontSize: '18px'
+        }}>YOUR</TextItalic> <br></br>
+        <TextSpan sx={{
+          fontSize: '18px'
+        }}> QORTAL WALLET</TextSpan>
       </TextP>
       <Spacer height="30px" />
       <Box
@@ -379,8 +383,16 @@ export const NotAuthenticated = ({
           onClick={() => {
             setExtstate("create-wallet");
           }}
+          sx={{
+            backgroundColor: hasSeenGettingStarted === false && 'var(--green)',
+            color: hasSeenGettingStarted === false && 'black',
+            "&:hover": {
+              backgroundColor: hasSeenGettingStarted === false && 'var(--green)',
+              color: hasSeenGettingStarted === false && 'black'
+            }
+          }}
         >
-          Create account
+          Create wallet
         </CustomButton>
       </Box>
       <Spacer height="15px" />
@@ -401,9 +413,15 @@ export const NotAuthenticated = ({
             gap: "10px",
             alignItems: "center",
             flexDirection: "column",
+            outline: '0.5px solid rgba(255, 255, 255, 0.5)',
+            padding: '20px 30px',
+            borderRadius: '5px',
           }}
         >
           <>
+          <Typography sx={{
+            textDecoration: 'underline'
+          }}>For advanced users</Typography>
             <Box
               sx={{
                 display: "flex",

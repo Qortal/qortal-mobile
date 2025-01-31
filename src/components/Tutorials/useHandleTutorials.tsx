@@ -189,6 +189,7 @@ useEffect(()=> {
     showTutorial,
     openTutorialModal,
     setOpenTutorialModal,
-    shownTutorialsInitiated: !!shownTutorials
+    shownTutorialsInitiated: !!shownTutorials,
+    hasSeenGettingStarted: shownTutorials === null ? null : !!(shownTutorials || {})['getting-started'],
   };
 };
