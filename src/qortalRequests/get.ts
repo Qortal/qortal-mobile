@@ -24,7 +24,8 @@ import {
   banFromGroup,
   kickFromGroup,
   cancelBan,
-  makeAdmin
+  makeAdmin,
+  removeAdmin
 } from "../background";
 import { getNameInfo, uint8ArrayToObject } from "../backgroundFunctions/encryption";
 import { showSaveFilePicker } from "../components/Apps/useQortalMessageListener";
@@ -4120,6 +4121,53 @@ export const addGroupAdminRequest = async (data, isFromExtension) => {
   const { accepted } = resPermission;
   if (accepted) {
   const response = await makeAdmin({
+        groupId,
+        qortalAddress,
+      })
+  return response
+
+  } else {
+    throw new Error("User declined request");
+  }
+};
+
+export const removeGroupAdminRequest = async (data, isFromExtension) => {
+  const requiredFields = ["groupId", "qortalAddress"];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (!data[field]) {
+      missingFields.push(field);
+    }
+  });
+  const groupId = data.groupId
+  const qortalAddress = data?.qortalAddress
+
+  let groupInfo = null;
+  try {
+    const url = await createEndpoint(`/groups/${groupId}`);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to fetch group");
+
+    groupInfo = await response.json();
+  } catch (error) {
+    const errorMsg = (error && error.message) || "Group not found";
+    throw new Error(errorMsg);
+  }
+
+  const displayInvitee = await getNameInfoForOthers(qortalAddress)
+
+  const fee = await getFee("REMOVE_GROUP_ADMIN");
+  const resPermission = await getUserPermission(
+    {
+      text1: `Do you give this application permission to remove user ${displayInvitee || qortalAddress} as admin?`,
+      highlightedText: `Group: ${groupInfo.groupName}`,
+      fee: fee.fee,
+    },
+    isFromExtension
+  );
+  const { accepted } = resPermission;
+  if (accepted) {
+  const response = await removeAdmin({
         groupId,
         qortalAddress,
       })
