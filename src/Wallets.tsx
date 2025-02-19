@@ -285,10 +285,11 @@ export const Wallets = ({ setExtState, setRawWallet, rawWallet }) => {
         <List
           sx={{
             width: "100%",
-            maxWidth: "500px",
-            bgcolor: "background.paper",
-            maxHeight: "60vh",
-            overflow: "auto",
+          maxWidth: "500px",
+          maxHeight: "60vh",
+          overflowY: "auto",
+          overflowX: "hidden",
+          backgroundColor: "rgb(30 30 32 / 70%)"
           }}
         >
           {wallets?.map((wallet, idx) => {
@@ -443,38 +444,25 @@ const WalletItem = ({ wallet, updateWalletItem, idx, setSelectedWallet }) => {
         }}
         sx={{
           width: "100%",
+            padding: '10px'
         }}
       >
         <ListItem
-          secondaryAction={
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEdit(true);
-              }}
-              edge="end"
-              aria-label="edit"
-            >
-              <EditIcon
-                sx={{
-                  color: "white",
-                }}
-              />
-            </IconButton>
-          }
+          sx={{
+            bgcolor: "background.paper",
+            flexGrow: 1,
+            "&:hover": { backgroundColor: "secondary.main", transform: "scale(1.01)" },
+            transition: "all 0.1s ease-in-out",
+          }}
+
           alignItems="flex-start"
         >
           <ListItemAvatar>
             <Avatar alt="" src="/static/images/avatar/1.jpg" />
           </ListItemAvatar>
           <ListItemText
-            primary={
-              wallet?.name
-                ? wallet.name
-                : wallet?.filename
-                ? parsefilenameQortal(wallet?.filename)
-                : "No name"
-            }
+          
+            primary={wallet?.name ? wallet.name : wallet?.filename ? parsefilenameQortal(wallet?.filename)  : "No name"}
             secondary={
               <Box
                 sx={{
@@ -490,10 +478,31 @@ const WalletItem = ({ wallet, updateWalletItem, idx, setSelectedWallet }) => {
                   {wallet?.address0}
                 </Typography>
                 {wallet?.note}
+                <Typography sx={{
+                  textAlign: 'end',
+                  marginTop: '5px'
+                }}>Login</Typography>
               </Box>
             }
           />
         </ListItem>
+        <IconButton
+              sx={{
+                alignSelf: 'flex-start'
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEdit(true);
+              }}
+              edge="end"
+              aria-label="edit"
+            >
+              <EditIcon
+                sx={{
+                  color: "white",
+                }}
+              />
+            </IconButton>
       </ButtonBase>
       {isEdit && (
         <Box

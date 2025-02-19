@@ -31,6 +31,8 @@ import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import Logo1 from "./assets/svgs/Logo1.svg";
+import WarningIcon from '@mui/icons-material/Warning';
+
 import Logo1Dark from "./assets/svgs/Logo1Dark.svg";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Logo2 from "./assets/svgs/Logo2.svg";
@@ -2822,6 +2824,8 @@ await showInfo({
                   setWalletToBeDownloadedPasswordConfirm(e.target.value)
                 }
               />
+                <Spacer height="5px" />
+                <Typography variant="body2">There is no minimum length requirement</Typography>
               <Spacer height="17px" />
 
               <CustomButton onClick={createAccountFunc}>
@@ -2845,7 +2849,17 @@ await showInfo({
               >
                 Congrats, you’re all set up!
               </TextP>
-              <Spacer height="100px" />
+              <Spacer height="50px"/>
+              <Box sx={{
+                display: 'flex',
+                gap: '15px',
+                alignItems: 'center',
+                padding: '10px'
+              }}>
+                <WarningIcon color="warning" />
+                <Typography>Save your account in a place where you will remember it!</Typography>
+              </Box>
+              <Spacer height="50px" />
               <CustomButton
                 onClick={async () => {
                   await saveFileToDiskFunc();
