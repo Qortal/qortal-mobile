@@ -26,7 +26,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import { GlobalContext } from "../App";
 
 export const manifestData = {
-  version: "0.5.1",
+  version: "0.5.2",
 };
 
 function removeTrailingSlash(url) {
