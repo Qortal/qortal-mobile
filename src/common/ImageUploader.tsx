@@ -47,10 +47,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ children, onPick }) => {
               maxWidth: 1200,
               mimeType: 'image/webp',
               success(result) {
-                const file = new File([result], image.name, {
-                  type: 'image/webp'
-                })
-                compressedFile = file
+                compressedFile = result
                 resolve()
               },
               error(err) {
