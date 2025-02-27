@@ -1,30 +1,15 @@
-# React + TypeScript + Vite
+# Qortal Mobile - The Mobile Qortal Interface for Android
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Qortal Mobile is an android-based interface for Qortal. Part of the new 'Qortal Trifecta' series of Qortal interfaces, Qortal Mobile is the first mobile interface built for Qortal. 
 
-Currently, two official plugins are available:
+Qortal Mobile is ANDROID ONLY at the moment, and is unlikely to be supported on iOS devices due to the extremely locked-down nature of iOS and Apple, and their lack of leniency when it comes to having an application added to their App Store. In order to do so they require things that our developers are not willing to provide, and may even require things that Qortal simply cannot provide, such as the ability to decrypt all data published to QDN. This is simply impossible to provide, as Qortal and QDN are decentralized, and there is not a single key that can be utilized to decrypt data.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Therefore, it is extremely unlikely for Qortal Mobile to be supported on iOS devices, and it is recommended to get away from iOS entirely if your goal is to have a mobile device running Qortal. 
 
-## Expanding the ESLint configuration
+## Part of the 'Qortal Trifecta' Series of Qortal User Interfaces
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Qortal Mobile is one of three (hence 'trifecta') interfaces that are newly created for the Qortal Network. See more information here - https://qortal.dev 
 
-- Configure the top-level `parserOptions` property like this:
+More details will be published in this readme and in newly created wikis in the future. 
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Reach out via the chat on https://qortal.dev with any issues running this application, and/or communicate to the Qortal community in any of the available community locations. 
