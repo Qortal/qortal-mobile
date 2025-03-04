@@ -796,14 +796,18 @@ function App() {
       balanceSetIntervalRef.current =  setInterval(async () => {
         if (isCalling) return;
         isCalling = true;
-        chrome?.runtime?.sendMessage({ action: "balance" }, (response) => {
+        window
+        .sendMessage("balance")
+        .then((response) => {
           if (!response?.error && !isNaN(+response)) {
             setBalance(response);
           }
-     
-          isCalling = false
+               isCalling = false;
+        })
+        .catch((error) => {
+          console.error("Failed to get balance:", error);
+               isCalling = false;
         });
-     
       }, 40000);
     } catch (error) {
       console.error(error)
@@ -819,12 +823,13 @@ function App() {
           setBalance(response);
         }
         setQortBalanceLoading(false);
-        balanceSetInterval()
+       
       })
       .catch((error) => {
         console.error("Failed to get balance:", error);
         setQortBalanceLoading(false);
       });
+      balanceSetInterval()
   };
   const getLtcBalanceFunc = () => {
     setLtcBalanceLoading(true);

@@ -12,6 +12,7 @@ import { Box, Typography } from "@mui/material";
 import { Spacer } from "../../common/Spacer";
 import { isMobile } from "../../App";
 import { QMailMessages } from "./QMailMessages";
+import { executeEvent } from "../../utils/events";
 
 export const ThingsToDoInitial = ({ myAddress, name, hasGroups, balance , userInfo}) => {
   const [checked1, setChecked1] = React.useState(false);
@@ -94,7 +95,6 @@ return null
       <Box
         sx={{
           width: "322px",
-          minHeight: isMobile ? "165px" : "250px",
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.paper",
@@ -125,6 +125,9 @@ return null
               disableRipple
               role={undefined}
               dense
+              onClick={()=> {
+                executeEvent("openBuyQortInfo", {})
+               }}
             >
               <ListItemText
                 sx={{
@@ -182,7 +185,9 @@ return null
             //   }
             disablePadding
           >
-            <ListItemButton sx={{
+            <ListItemButton onClick={() => {
+                             executeEvent('openRegisterName', {})
+                           }} sx={{
                 padding: "0px",
               }} disableRipple role={undefined} dense>
               
@@ -207,16 +212,7 @@ return null
               </ListItemIcon>
             </ListItemButton>
           </ListItem>
-          <ListItem
-            //  secondaryAction={
-            //     <IconButton edge="end" aria-label="comments">
-            //       <InfoIcon
-            //         sx={{
-            //           color: "white",
-            //         }}
-            //       />
-            //     </IconButton>
-            //   }
+          {/* <ListItem
             disablePadding
           >
             <ListItemButton sx={{
@@ -243,7 +239,7 @@ return null
                 />
               </ListItemIcon>
             </ListItemButton>
-          </ListItem>
+          </ListItem> */}
         </List>
       </Box>
     </Box>

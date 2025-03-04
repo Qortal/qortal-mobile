@@ -178,6 +178,7 @@ export const RegisterName = ({setOpenSnack, setInfoSnack, userInfo, show, setTxL
           open={isOpen}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
+          fullWidth
         >
           <DialogTitle id="alert-dialog-title">
             {"Register name"}
@@ -185,8 +186,7 @@ export const RegisterName = ({setOpenSnack, setInfoSnack, userInfo, show, setTxL
           <DialogContent>
           <Box
           sx={{
-            width: "400px",
-            maxWidth: '90vw',
+            width: "100%",
             height: "500px",
             maxHeight: '90vh',
             display: "flex",
@@ -198,6 +198,7 @@ export const RegisterName = ({setOpenSnack, setInfoSnack, userInfo, show, setTxL
         >
           <Label>Choose a name</Label>
           <TextField
+          size="small"
           autoComplete='off'
           autoFocus
             onChange={(e) => setRegisterNameValue(e.target.value)}
@@ -299,7 +300,7 @@ export const RegisterName = ({setOpenSnack, setInfoSnack, userInfo, show, setTxL
               Close
             </Button>
             <Button
-              disabled={!registerNameValue.trim() ||isLoadingRegisterName || isNameAvailable !== Availability.AVAILABLE || !balance || ((balance && nameFee) && +balance < +nameFee)}
+              // disabled={!registerNameValue.trim() ||isLoadingRegisterName || isNameAvailable !== Availability.AVAILABLE || !balance || ((balance && nameFee) && +balance < +nameFee)}
               variant="contained"
               onClick={registerName}
               autoFocus

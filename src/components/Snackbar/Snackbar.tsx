@@ -23,7 +23,7 @@ export const  CustomizedSnackbars = ({open, setOpen, info, setInfo, duration}) =
   return (
     <div>
       <Snackbar sx={{
-        zIndex: 15
+        zIndex: 10015
       }} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} open={open} autoHideDuration={info?.duration === null ? null : (duration || 6000)}  onClose={handleClose}>
         <Alert
                 

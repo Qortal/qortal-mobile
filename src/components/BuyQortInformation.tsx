@@ -64,8 +64,7 @@ export const BuyQortInformation = ({balance}) => {
           <DialogContent>
           <Box
           sx={{
-            width: "400px",
-            maxWidth: '90vw',
+            width: "100%",
             height: "400px",
             maxHeight: '90vh',
             display: "flex",

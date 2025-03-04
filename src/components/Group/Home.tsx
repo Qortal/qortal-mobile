@@ -169,7 +169,11 @@ export const Home = ({
           
       <ListOfGroupPromotions />
         
-        <Divider
+       
+
+          </>
+          )}
+           <Divider
           color="secondary"
           sx={{
             width: "100%",
@@ -197,9 +201,6 @@ export const Home = ({
           </Box>
         </Divider>
            <Explore setMobileViewMode={setMobileViewMode} />
-
-          </>
-          )}
         </Box>
       )}
         
