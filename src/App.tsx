@@ -92,10 +92,12 @@ import {
   cleanUrl,
   getFee,
   getProtocol,
+  getWallets,
   groupApi,
   groupApiLocal,
   groupApiSocket,
   groupApiSocketLocal,
+  storeWallets,
 } from "./background";
 import {
   executeEvent,
@@ -1096,6 +1098,26 @@ function App() {
     }
   };
 
+  const saveWalletToLocalStorage = async (newWallet)=> {
+    try {
+       getWallets().then((res)=> {
+            
+              if(res && Array.isArray(res)){
+                 const wallets = [...res, newWallet]
+                 storeWallets(wallets)
+              } else {
+                storeWallets([newWallet])
+              }
+              setIsLoading(false)
+          }).catch((error)=> {
+              console.error(error)
+              setIsLoading(false)
+          })
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const createAccountFunc = async () => {
     try {
       if (!walletToBeDownloadedPassword) {
@@ -1131,6 +1153,7 @@ function App() {
         },120000)
         .then((response) => {
           if (response && !response.error) {
+            saveWalletToLocalStorage(wallet)
             setRawWallet(wallet);
             setWalletToBeDownloaded({
               wallet,
@@ -2612,7 +2635,7 @@ function App() {
                          fontSize: "12px",
                        }}
                      >
-                       {"Using gateway"} 
+                       {"Using public node"} 
                      </Typography>
                  </>
             )}
