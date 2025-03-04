@@ -12,41 +12,46 @@ import {
   DialogTitle,
   FormControlLabel,
   Input,
+  styled,
   Switch,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import Logo1 from "../assets/svgs/Logo1.svg";
 import Logo1Dark from "../assets/svgs/Logo1Dark.svg";
 import Info from "../assets/svgs/Info.svg";
+import HelpIcon from '@mui/icons-material/Help';
 import { CustomizedSnackbars } from "../components/Snackbar/Snackbar";
 import { set } from "lodash";
 import { cleanUrl, gateways, isUsingLocal } from "../background";
-import HelpIcon from '@mui/icons-material/Help';
 import { GlobalContext } from "../App";
+import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 
 export const manifestData = {
   version: "0.5.2",
 };
+
+
 
 function removeTrailingSlash(url) {
   return url.replace(/\/+$/, '');
 }
 
 
+
+
 export const NotAuthenticated = ({
   getRootProps,
   getInputProps,
   setExtstate,
-  currentNode,
-  setCurrentNode,
-  useLocalNode, 
-  setUseLocalNode,
+
   apiKey,
   setApiKey,
   globalApiKey,
   handleSetGlobalApikey,
-  handleFilePick,
+  currentNode,
+  setCurrentNode,
+  useLocalNode, 
+  setUseLocalNode
 }) => {
   const [isValidApiKey, setIsValidApiKey] = useState<boolean | null>(null);
   const [hasLocalNode, setHasLocalNode] = useState<boolean | null>(null);
@@ -59,14 +64,14 @@ export const NotAuthenticated = ({
   // const [currentNode, setCurrentNode] = React.useState({
   //   url: "http://127.0.0.1:12391",
   // });
-  const { showTutorial, hasSeenGettingStarted  } = useContext(GlobalContext);
-
   const [importedApiKey, setImportedApiKey] = React.useState(null);
   //add and edit states
-  const [url, setUrl] = React.useState("http://");
+  const [url, setUrl] = React.useState("https://");
   const [customApikey, setCustomApiKey] = React.useState("");
   const [customNodeToSaveIndex, setCustomNodeToSaveIndex] =
     React.useState(null);
+    const { showTutorial, hasSeenGettingStarted  } = useContext(GlobalContext);
+
   const importedApiKeyRef = useRef(null);
   const currentNodeRef = useRef(null);
   const hasLocalNodeRef = useRef(null);
@@ -106,6 +111,7 @@ export const NotAuthenticated = ({
           })
        
         }
+        
       };
       reader.readAsText(file); // Read the file as text
     }
@@ -123,12 +129,14 @@ export const NotAuthenticated = ({
       const data = await response.json();
       if (data?.height) {
         setHasLocalNode(true);
-        return true;
+        return true
       }
-      return false;
+      return false
+      
     } catch (error) {
-      return false;
-    }
+      return false
+      
+    } 
   }, []);
 
   useEffect(() => {
@@ -141,12 +149,16 @@ export const NotAuthenticated = ({
       .then((response) => {
       
           setCustomNodes(response || []);
+          if(window?.electronAPI?.setAllowedDomains){
+            window.electronAPI.setAllowedDomains(response?.map((node)=> node.url))
+          }
           if(Array.isArray(response)){
             const findLocal = response?.find((item)=> item?.url === 'http://127.0.0.1:12391')
             if(findLocal && findLocal?.apikey){
               setImportedApiKey(findLocal?.apikey)
             }
           }
+        
       })
       .catch((error) => {
         console.error(
@@ -167,37 +179,54 @@ export const NotAuthenticated = ({
     hasLocalNodeRef.current = hasLocalNode;
   }, [hasLocalNode]);
 
+
+
   const validateApiKey = useCallback(async (key, fromStartUp) => {
     try {
+      if(key === "isGateway") return
       const isLocalKey = cleanUrl(key?.url) === "127.0.0.1:12391";
-      if(fromStartUp && key?.url && key?.apikey && !isLocalKey && !gateways.some(gateway => apiKey?.url?.includes(gateway))){
+      if (fromStartUp && key?.url && key?.apikey && !isLocalKey && !gateways.some(gateway => key?.url?.includes(gateway))) {
         setCurrentNode({
           url: key?.url,
           apikey: key?.apikey,
         });
-        const url = `${key?.url}/admin/apikey/test`;
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            accept: "text/plain",
-            "X-API-KEY": key?.apikey, // Include the API key here
-          },
-        });
-  
+
+        let isValid = false
+
+        
+        const url = `${key?.url}/admin/settings/localAuthBypassEnabled`;
+        const response = await fetch(url);
+
         // Assuming the response is in plain text and will be 'true' or 'false'
         const data = await response.text();
-        if (data === "true") {
-          setIsValidApiKey(true);
-        setUseLocalNode(true);
-        return
+        if(data && data === 'true'){
+          isValid = true
+        } else {
+          const url2 = `${key?.url}/admin/apikey/test?apiKey=${key?.apikey}`;
+          const response2 = await fetch(url2);
+    
+          // Assuming the response is in plain text and will be 'true' or 'false'
+          const data2 = await response2.text();
+          if (data2 === "true") {
+            isValid = true
+          }
         }
-        
+       
+        if (isValid) {
+          setIsValidApiKey(true);
+          setUseLocalNode(true);
+          return
+        }
+
       }
       if (!currentNodeRef.current) return;
-      const stillHasLocal = await checkIfUserHasLocalNode();
+      const stillHasLocal = await checkIfUserHasLocalNode()
+
       if (isLocalKey && !stillHasLocal && !fromStartUp) {
         throw new Error("Please turn on your local node");
       }
+      //check custom nodes
+      // !gateways.some(gateway => apiKey?.url?.includes(gateway))
       const isCurrentNodeLocal =
         cleanUrl(currentNodeRef.current?.url) === "127.0.0.1:12391";
       if (isLocalKey && !isCurrentNodeLocal) {
@@ -215,18 +244,29 @@ export const NotAuthenticated = ({
       } else if (currentNodeRef.current) {
         payload = currentNodeRef.current;
       }
-      const url = `${payload?.url}/admin/apikey/test`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          accept: "text/plain",
-          "X-API-KEY": payload?.apikey, // Include the API key here
-        },
-      });
+      let isValid = false
+
+        
+      const url = `${payload?.url}/admin/settings/localAuthBypassEnabled`;
+      const response = await fetch(url);
 
       // Assuming the response is in plain text and will be 'true' or 'false'
       const data = await response.text();
-      if (data === "true") {
+      if(data && data === 'true'){
+        isValid = true
+      } else {
+        const url2 = `${payload?.url}/admin/apikey/test?apiKey=${payload?.apikey}`;
+        const response2 = await fetch(url2);
+  
+        // Assuming the response is in plain text and will be 'true' or 'false'
+        const data2 = await response2.text();
+        if (data2 === "true") {
+          isValid = true
+        }
+      }
+     
+
+      if (isValid) {
         window
           .sendMessage("setApiKey", payload)
           .then((response) => {
@@ -248,21 +288,24 @@ export const NotAuthenticated = ({
       } else {
         setIsValidApiKey(false);
         setUseLocalNode(false);
-        setInfoSnack({
-          type: "error",
-          message: "Select a valid apikey",
-        });
-        setOpenSnack(true);
+        if(!fromStartUp){
+          setInfoSnack({
+            type: "error",
+            message: "Select a valid apikey",
+          });
+          setOpenSnack(true);
+        }
+        
       }
     } catch (error) {
       setIsValidApiKey(false);
       setUseLocalNode(false);
-      if(fromStartUp){
+      if (fromStartUp) {
         setCurrentNode({
           url: "http://127.0.0.1:12391",
         });
         window
-          .sendMessage("setApiKey", null)
+          .sendMessage("setApiKey", "isGateway")
           .then((response) => {
             if (response) {
               setApiKey(null);
@@ -277,11 +320,13 @@ export const NotAuthenticated = ({
           });
         return
       }
+      if(!fromStartUp){
       setInfoSnack({
         type: "error",
         message: error?.message || "Select a valid apikey",
       });
       setOpenSnack(true);
+    }
       console.error("Error validating API key:", error);
     }
   }, []);
@@ -295,15 +340,14 @@ export const NotAuthenticated = ({
   const addCustomNode = () => {
     setMode("add-node");
   };
-
-  const saveCustomNodes = (myNodes) => {
+  const saveCustomNodes = (myNodes, isFullListOfNodes) => {
     let nodes = [...(myNodes || [])];
-    if (customNodeToSaveIndex !== null) {
+    if (!isFullListOfNodes && customNodeToSaveIndex !== null) {
       nodes.splice(customNodeToSaveIndex, 1, {
         url: removeTrailingSlash(url),
         apikey: customApikey,
       });
-    } else if (url && customApikey) {
+    } else if (!isFullListOfNodes && url) {
       nodes.push({
         url: removeTrailingSlash(url),
         apikey: customApikey,
@@ -311,6 +355,7 @@ export const NotAuthenticated = ({
     }
 
     setCustomNodes(nodes);
+  
     setCustomNodeToSaveIndex(null);
     if (!nodes) return;
     window
@@ -318,8 +363,11 @@ export const NotAuthenticated = ({
       .then((response) => {
         if (response) {
           setMode("list");
-          setUrl("http://");
+          setUrl("https://");
           setCustomApiKey("");
+          if(window?.electronAPI?.setAllowedDomains){
+            window.electronAPI.setAllowedDomains(nodes?.map((node) => node.url))
+            }
           // add alert if needed
         }
       })
@@ -351,13 +399,12 @@ export const NotAuthenticated = ({
           fontSize: '16px'
         }}
       >
-        WELCOME TO <TextItalic sx={{
-          fontSize: '18px'
-        }}>YOUR</TextItalic> <br></br>
+        WELCOME TO 
         <TextSpan sx={{
-          fontSize: '18px'
-        }}> QORTAL WALLET</TextSpan>
+          fontSize: '16px'
+        }}> QORTAL</TextSpan>
       </TextP>
+      
       <Spacer height="30px" />
       <Box
         sx={{
@@ -366,9 +413,15 @@ export const NotAuthenticated = ({
           alignItems: "center",
         }}
       >
-        <CustomButton onClick={() => setExtstate("wallets")}>
-          Wallets
+       
+        <CustomButton onClick={()=> setExtstate('wallets')}>
+          {/* <input {...getInputProps()} /> */}
+          Accounts
         </CustomButton>
+       
+        {/* <Tooltip title="Authenticate by importing your Qortal JSON file" arrow>
+          <img src={Info} />
+        </Tooltip> */}
       </Box>
 
       <Spacer height="6px" />
@@ -377,8 +430,10 @@ export const NotAuthenticated = ({
           display: "flex",
           gap: "10px",
           alignItems: "center",
+         
         }}
       >
+        
         <CustomButton
           onClick={() => {
             setExtstate("create-wallet");
@@ -392,8 +447,10 @@ export const NotAuthenticated = ({
             }
           }}
         >
-          Create wallet
+          Create account
         </CustomButton>
+ 
+      
       </Box>
       <Spacer height="15px" />
 
@@ -432,6 +489,12 @@ export const NotAuthenticated = ({
               }}
             >
               <FormControlLabel
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: '14px'
+                }
+                
+              }}
                 control={
                   <Switch
                     sx={{
@@ -677,7 +740,7 @@ export const NotAuthenticated = ({
                                 ...(customNodes || []),
                               ].filter((item) => item?.url !== node?.url);
 
-                              saveCustomNodes(nodesToSave);
+                              saveCustomNodes(nodesToSave, true);
                             }}
                             variant="contained"
                           >
@@ -750,7 +813,7 @@ export const NotAuthenticated = ({
 
                 <Button
                   variant="contained"
-                  disabled={!customApikey || !url}
+                  disabled={!url}
                   onClick={() => saveCustomNodes(customNodes)}
                   autoFocus
                 >
@@ -761,8 +824,8 @@ export const NotAuthenticated = ({
           </DialogActions>
         </Dialog>
       )}
-       <ButtonBase onClick={()=> {
-     showTutorial('create-account', true)
+      <ButtonBase onClick={()=> {
+         showTutorial('create-account', true)
       }} sx={{
         position: 'fixed',
         bottom: '25px',

@@ -19,6 +19,8 @@ import React, {
   useRef,
   useState,
 } from "react";
+import BlockIcon from '@mui/icons-material/Block';
+
 import SettingsIcon from "@mui/icons-material/Settings";
 import { ChatGroup } from "../Chat/ChatGroup";
 import { CreateCommonSecret } from "../Chat/CreateCommonSecret";
@@ -95,9 +97,11 @@ import { AppsDesktop } from "../Apps/AppsDesktop";
 import { formatEmailDate } from "./QMailMessages";
 import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack";
 import { AdminSpace } from "../Chat/AdminSpace";
-import { useSetRecoilState } from "recoil";
-import { addressInfoControllerAtom, selectedGroupIdAtom } from "../../atoms/global";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { addressInfoControllerAtom, groupsPropertiesAtom, lastEnteredGroupIdAtom, selectedGroupIdAtom } from "../../atoms/global";
 import { sortArrayByTimestampAndGroupName } from "../../utils/time";
+import { BlockedUsersModal } from "./BlockedUsersModal";
+import { GlobalTouchMenu } from "../GlobalTouchMenu";
 
 // let touchStartY = 0;
 // let disablePullToRefresh = false;
@@ -500,10 +504,12 @@ export const Group = ({
   const [isOpenSideViewDirects, setIsOpenSideViewDirects] = useState(false)
   const [isOpenSideViewGroups, setIsOpenSideViewGroups] = useState(false)
   const [isForceShowCreationKeyPopup, setIsForceShowCreationKeyPopup] = useState(false)
-  const [groupsProperties, setGroupsProperties] = useState({})
+  const [groupsProperties, setGroupsProperties] = useRecoilState(groupsPropertiesAtom)
   const setUserInfoForLevels = useSetRecoilState(addressInfoControllerAtom);
-
+  const [isOpenBlockedUserModal, setIsOpenBlockedUserModal] = React.useState(false);
+  const setLastEnteredGroupIdAtom = useSetRecoilState(lastEnteredGroupIdAtom)
   const isPrivate = useMemo(()=> {
+    if(selectedGroup?.groupId === '0') return false
     if(!selectedGroup?.groupId || !groupsProperties[selectedGroup?.groupId]) return null
     if(groupsProperties[selectedGroup?.groupId]?.isOpen === true) return false
     if(groupsProperties[selectedGroup?.groupId]?.isOpen === false) return true
@@ -906,7 +912,10 @@ export const Group = ({
     }
     if(isPrivate === false){
       setTriedToFetchSecretKey(true);
-      getAdminsForPublic(selectedGroup)
+      if(selectedGroup?.groupId !== '0'){
+         getAdminsForPublic(selectedGroup)
+      }
+     
 
     }
   }, [selectedGroup, isPrivate]);
@@ -997,7 +1006,7 @@ export const Group = ({
         // Update the component state with the received 'sendqort' state
         setGroups(sortArrayByTimestampAndGroupName(message.payload));
         getLatestRegularChat(message.payload);
-        setMemberGroups(message.payload);
+        setMemberGroups(message.payload?.filter((item)=> item?.groupId !== '0'));
   
         if (selectedGroupRef.current && groupSectionRef.current === "chat") {
           window.sendMessage("addTimestampEnterChat", {
@@ -1091,7 +1100,7 @@ export const Group = ({
       !initiatedGetMembers.current &&
       selectedGroup?.groupId &&
       secretKey &&
-      admins.includes(myAddress)
+      admins.includes(myAddress) && selectedGroup?.groupId !== '0'
     ) {
       // getAdmins(selectedGroup?.groupId);
       getMembers(selectedGroup?.groupId);
@@ -1441,7 +1450,8 @@ export const Group = ({
     const findGroup = groups?.find((group) => +group?.groupId === +groupId);
     if (findGroup?.groupId === selectedGroup?.groupId) {
       isLoadingOpenSectionFromNotification.current = false;
-
+      setChatMode("groups");
+      setMobileViewMode('group')
       return;
     }
     if (findGroup) {
@@ -1475,6 +1485,7 @@ export const Group = ({
 
       setTimeout(() => {
         setSelectedGroup(findGroup);
+        setLastEnteredGroupIdAtom(findGroup?.groupId)
         setMobileViewMode("group");
         setDesktopSideView('groups')
         setDesktopViewMode('home')
@@ -1525,6 +1536,8 @@ export const Group = ({
       
       setTimeout(() => {
         setSelectedGroup(findGroup);
+        setLastEnteredGroupIdAtom(findGroup?.groupId)
+
         setMobileViewMode("group");
         setDesktopSideView('groups')
         setDesktopViewMode('home')
@@ -1582,6 +1595,8 @@ export const Group = ({
 
       setTimeout(() => {
         setSelectedGroup(findGroup);
+        setLastEnteredGroupIdAtom(findGroup?.groupId)
+
         setMobileViewMode("group");
         setDesktopSideView('groups')
         setDesktopViewMode('home')
@@ -1713,6 +1728,7 @@ export const Group = ({
           borderRadius: !isMobile && '0px 15px 15px 0px'
         }}
       >
+        
         {isMobile && (
            <Box
            sx={{
@@ -1978,6 +1994,8 @@ export const Group = ({
                   setIsOpenDrawer(false);
                   setTimeout(() => {
                     setSelectedGroup(group);
+                    setLastEnteredGroupIdAtom(group?.groupId)
+
 
                     // getTimestampEnterChat();
                   }, 200);
@@ -2054,7 +2072,7 @@ export const Group = ({
                       
                     </ListItemAvatar>
                     <ListItemText
-                      primary={group.groupName}
+                      primary={group.groupId === '0' ? 'General' : group.groupName}
                       secondary={!group?.timestamp ? 'no messages' :`last message: ${formatEmailDate(group?.timestamp)}`}
                       primaryTypographyProps={{
                         style: {
@@ -2113,21 +2131,39 @@ export const Group = ({
             width: "100%",
             justifyContent: "center",
             padding: "10px",
+             gap: '10px'
           }}
         >
           {chatMode === "groups" && (
-            <CustomButton
-              onClick={() => {
-                setOpenAddGroup(true);
-              }}
-            >
-              <AddCircleOutlineIcon
-                sx={{
-                  color: "white",
+              <>
+              <CustomButton
+                onClick={() => {
+                  setOpenAddGroup(true);
                 }}
-              />
-              Group Mgmt
-            </CustomButton>
+              >
+                <AddCircleOutlineIcon
+                  sx={{
+                    color: "white",
+                  }}
+                />
+                Group Mgmt
+              </CustomButton>
+              <CustomButton
+                onClick={() => {
+                  setIsOpenBlockedUserModal(true);
+                }}
+                sx={{
+                  minWidth: 'unset',
+                  padding: '10px'
+                }}
+              >
+                <BlockIcon
+                  sx={{
+                    color: "white",
+                  }}
+                />
+              </CustomButton>
+              </>
           )}
           {chatMode === "directs" && (
             <CustomButton
@@ -2157,6 +2193,7 @@ export const Group = ({
         myAddress={myAddress}
         setIsLoadingGroups={setIsLoadingGroups}
       />
+      <GlobalTouchMenu />
       <CustomizedSnackbars
         open={openSnack}
         setOpen={setOpenSnack}
@@ -2383,7 +2420,7 @@ export const Group = ({
                      fontWeight: 600,
                    }}
                  >
-                   {selectedGroup?.groupName}
+                    {selectedGroup?.groupId === '0' ? 'General' :selectedGroup?.groupName}
                  </Typography>
                  <Box
                    sx={{
@@ -2410,7 +2447,9 @@ export const Group = ({
             )}
              
               {isMobile && mobileViewMode === "group" && (
-                <>
+                <div style={{
+                  visibility: selectedGroup?.groupId === '0' ? 'hidden' : 'visibile'
+                }}>
                   <GroupMenu
                     setGroupSection={setGroupSection}
                     groupSection={groupSection}
@@ -2420,7 +2459,7 @@ export const Group = ({
                     hasUnreadAnnouncements={isUnread}
                     hasUnreadChat={isUnreadChat}
                   />
-                </>
+                </div>
               )}
               <Box
                 sx={{
@@ -2610,7 +2649,11 @@ export const Group = ({
               )}
             </>
           )}
-
+             {isOpenBlockedUserModal && (
+        <BlockedUsersModal close={()=> {
+          setIsOpenBlockedUserModal(false)
+        }} />
+       )}
           {selectedDirect && !newChat && (
             <>
               <Box
@@ -2690,6 +2733,7 @@ export const Group = ({
       )}
           {isMobile && mobileViewMode === "home" && (
             <Home
+              name={userInfo?.name}
               refreshHomeDataFunc={refreshHomeDataFunc}
               myAddress={myAddress}
               isLoadingGroups={isLoadingGroups}

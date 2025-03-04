@@ -102,6 +102,7 @@ import {
   createRewardShareCase,
   getRewardSharePrivateKeyCase,
   removeRewardShareCase,
+  listActionsCase,
 } from "./background-cases";
 import { getData, removeKeysAndLogout, storeData } from "./utils/chromeStorage";
 import {BackgroundFetch} from '@transistorsoft/capacitor-background-fetch';
@@ -778,7 +779,7 @@ export async function getNameInfoForOthers(address) {
   }
 }
 
-async function getAddressInfo(address) {
+export async function getAddressInfo(address) {
   const validApi = await getBaseApi();
   const response = await fetch(validApi + "/addresses/" + address);
   const data = await response.json();
@@ -3008,6 +3009,9 @@ function setupMessageListener() {
       case "getEnteredQmailTimestamp":
         getEnteredQmailTimestampCase(request, event);
         break;
+        case "listActions":
+          listActionsCase(request, event);
+          break;
       case "logout":
         {
           try {

@@ -59,9 +59,7 @@ return false
 }, [checked1, isLoaded, checked2])
 
 if(hasDoneNameAndBalanceAndIsLoaded){
-return (
- <QMailMessages userAddress={userInfo?.address} userName={userInfo?.name} />
-);
+return null
 }
 
   return (

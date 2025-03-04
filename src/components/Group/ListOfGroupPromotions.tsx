@@ -9,6 +9,8 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -28,8 +30,8 @@ import {
 import { getNameInfo } from "./Group";
 import { getBaseApi, getFee } from "../../background";
 import { LoadingButton } from "@mui/lab";
-import LockIcon from '@mui/icons-material/Lock';
-import NoEncryptionGmailerrorredIcon from '@mui/icons-material/NoEncryptionGmailerrorred';
+import LockIcon from "@mui/icons-material/Lock";
+import NoEncryptionGmailerrorredIcon from "@mui/icons-material/NoEncryptionGmailerrorred";
 import {
   MyContext,
   getArbitraryEndpointReact,
@@ -40,7 +42,11 @@ import { Spacer } from "../../common/Spacer";
 import { CustomLoader } from "../../common/CustomLoader";
 import { RequestQueueWithPromise } from "../../utils/queue/queue";
 import { useRecoilState } from "recoil";
-import { myGroupsWhereIAmAdminAtom, promotionTimeIntervalAtom, promotionsAtom } from "../../atoms/global";
+import {
+  myGroupsWhereIAmAdminAtom,
+  promotionTimeIntervalAtom,
+  promotionsAtom,
+} from "../../atoms/global";
 import { Label } from "./AddGroup";
 import ShortUniqueId from "short-unique-id";
 import { CustomizedSnackbars } from "../Snackbar/Snackbar";
@@ -48,7 +54,8 @@ import { getGroupNames } from "./UserListOfInvites";
 import { WrapperUserAction } from "../WrapperUserAction";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import ErrorBoundary from "../../common/ErrorBoundary";
-
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 export const requestQueuePromos = new RequestQueueWithPromise(20);
 
 export function utf8ToBase64(inputString: string): string {
@@ -65,8 +72,6 @@ export function utf8ToBase64(inputString: string): string {
 
 const uid = new ShortUniqueId({ length: 8 });
 
-
-
 export function getGroupId(str) {
   const match = str.match(/group-(\d+)-/);
   return match ? match[1] : null;
@@ -82,12 +87,12 @@ export const ListOfGroupPromotions = () => {
   const [myGroupsWhereIAmAdmin, setMyGroupsWhereIAmAdmin] = useRecoilState(
     myGroupsWhereIAmAdminAtom
   );
-  const [promotions, setPromotions] = useRecoilState(
-    promotionsAtom
-  );
+  const [promotions, setPromotions] = useRecoilState(promotionsAtom);
   const [promotionTimeInterval, setPromotionTimeInterval] = useRecoilState(
     promotionTimeIntervalAtom
   );
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
   const [openSnack, setOpenSnack] = useState(false);
   const [infoSnack, setInfoSnack] = useState(null);
   const [fee, setFee] = useState(null);
@@ -96,18 +101,16 @@ export const ListOfGroupPromotions = () => {
   const { show, setTxList } = useContext(MyContext);
 
   const listRef = useRef();
-    const rowVirtualizer = useVirtualizer({
-      count: promotions.length,
-      getItemKey: React.useCallback(
-        (index) => promotions[index]?.identifier,
-        [promotions]
-      ),
-      getScrollElement: () => listRef.current,
-      estimateSize: () => 80, // Provide an estimated height of items, adjust this as needed
-      overscan: 10, // Number of items to render outside the visible area to improve smoothness
-    });
-
- 
+  const rowVirtualizer = useVirtualizer({
+    count: promotions.length,
+    getItemKey: React.useCallback(
+      (index) => promotions[index]?.identifier,
+      [promotions]
+    ),
+    getScrollElement: () => listRef.current,
+    estimateSize: () => 80, // Provide an estimated height of items, adjust this as needed
+    overscan: 10, // Number of items to render outside the visible area to improve smoothness
+  });
 
   useEffect(() => {
     try {
@@ -119,7 +122,7 @@ export const ListOfGroupPromotions = () => {
   }, []);
   const getPromotions = useCallback(async () => {
     try {
-      setPromotionTimeInterval(Date.now())
+      setPromotionTimeInterval(Date.now());
       const identifier = `group-promotions-ui24-`;
       const url = `${getBaseApiReact()}${getArbitraryEndpointReact()}?mode=ALL&service=DOCUMENT&identifier=${identifier}&limit=100&includemetadata=false&reverse=true&prefix=true`;
       const response = await fetch(url, {
@@ -170,7 +173,9 @@ export const ListOfGroupPromotions = () => {
       });
 
       await Promise.all(getPromos);
-      const groupWithInfo = await getGroupNames(data.sort((a, b) => b.created - a.created));
+      const groupWithInfo = await getGroupNames(
+        data.sort((a, b) => b.created - a.created)
+      );
       setPromotions(groupWithInfo);
     } catch (error) {
       console.error(error);
@@ -179,22 +184,23 @@ export const ListOfGroupPromotions = () => {
 
   useEffect(() => {
     const now = Date.now();
-    
+
     const timeSinceLastFetch = now - promotionTimeInterval;
-    const initialDelay = timeSinceLastFetch >= THIRTY_MINUTES 
-      ? 0 
-      : THIRTY_MINUTES - timeSinceLastFetch;
+    const initialDelay =
+      timeSinceLastFetch >= THIRTY_MINUTES
+        ? 0
+        : THIRTY_MINUTES - timeSinceLastFetch;
     const initialTimeout = setTimeout(() => {
       getPromotions();
-  
+
       // Start a 30-minute interval
       const interval = setInterval(() => {
         getPromotions();
       }, THIRTY_MINUTES);
-  
+
       return () => clearInterval(interval);
     }, initialDelay);
-  
+
     return () => clearTimeout(initialTimeout);
   }, [getPromotions, promotionTimeInterval]);
 
@@ -330,8 +336,6 @@ export const ListOfGroupPromotions = () => {
     }
   };
 
-
-
   return (
     <Box
       sx={{
@@ -339,91 +343,124 @@ export const ListOfGroupPromotions = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        marginTop: "25px",
       }}
     >
-      <Box
+      <ButtonBase
         sx={{
-          width: isMobile ? "320px" : "750px",
-          maxWidth: "90%",
+          width: "100%",
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           padding: "0px 20px",
+          gap: '10px',
+          justifyContent: 'flex-start',
         }}
-      >
-        <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
+          onClick={() => setIsExpanded((prev) => !prev)}
         >
           <Typography
             sx={{
-              fontSize: "13px",
-              fontWeight: 600,
+              fontSize: "1rem",
             }}
           >
-            Group Promotions
+            Group promotions {promotions.length > 0 && ` (${promotions.length})`}
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => setIsShowModal(true)}
-            sx={{
-              fontSize: "12px",
-            }}
-          >
-            Add Promotion
-          </Button>
-        </Box>
-        <Spacer height="10px" />
-      </Box>
-
-      <Box
-        sx={{
-          width: isMobile ? "320px" : "750px",
-          maxWidth: "90%",
-          maxHeight: "700px",
-          display: "flex",
-          flexDirection: "column",
-          bgcolor: "background.paper",
-          padding: "20px 0px",
-          borderRadius: "19px",
-        }}
-      >
-        {loading && promotions.length === 0 && (
-          <Box
-            sx={{
-              width: "100%",
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <CustomLoader />
-          </Box>
-        )}
-        {!loading && promotions.length === 0 && (
-          <Box
-            sx={{
-              width: "100%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            <Typography
+          {isExpanded ? (
+            <ExpandLessIcon
               sx={{
-                fontSize: "11px",
-                fontWeight: 400,
-                color: "rgba(255, 255, 255, 0.2)",
+                marginLeft: "auto",
+              }}
+            />
+          ) : (
+            <ExpandMoreIcon
+              sx={{
+                marginLeft: "auto",
+              }}
+            />
+          )}
+        </ButtonBase>
+     
+
+      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+        <>
+          <Box
+            sx={{
+              width: '100%',
+              display: "flex",
+              flexDirection: "column",
+              padding: "0px 20px",
+              marginTop: '15px',
+              width: "322px",
+              maxWidth: '100%'
+            }}
+          >
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              Nothing to display
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              ></Typography>
+              <Button
+                variant="contained"
+                onClick={() => setIsShowModal(true)}
+                sx={{
+                  fontSize: "12px",
+                }}
+              >
+                Add Promotion
+              </Button>
+            </Box>
+            <Spacer height="10px" />
           </Box>
-        )}
+          <Box
+            sx={{
+              width: isMobile ? "320px" : "750px",
+              maxHeight: "700px",
+              display: "flex",
+              flexDirection: "column",
+              bgcolor: "background.paper",
+              padding: "20px 0px",
+              borderRadius: "19px",
+            }}
+          >
+            {loading && promotions.length === 0 && (
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <CustomLoader />
+              </Box>
+            )}
+            {!loading && promotions.length === 0 && (
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "11px",
+                    fontWeight: 400,
+                    color: "rgba(255, 255, 255, 0.2)",
+                  }}
+                >
+                  Nothing to display
+                </Typography>
+              </Box>
+            )}
             <div
               style={{
                 height: "600px",
@@ -462,7 +499,6 @@ export const ListOfGroupPromotions = () => {
                       const index = virtualRow.index;
                       const promotion = promotions[index];
                       return (
-                    
                         <div
                           data-index={virtualRow.index} //needed for dynamic row height measurement
                           ref={rowVirtualizer.measureElement} //measure dynamic row height
@@ -481,237 +517,251 @@ export const ListOfGroupPromotions = () => {
                             gap: "5px",
                           }}
                         >
-                              <ErrorBoundary
-                        fallback={
-                          <Typography>
-                            Error loading content: Invalid Data
-                          </Typography>
-                        }
-                      >
-                   <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  width: "100%",
-                  padding: "0px 20px",
-                }}
-              >
-                <Popover
-                  open={openPopoverIndex === promotion?.groupId}
-                  anchorEl={popoverAnchor}
-                  onClose={(event, reason) => {
-                    if (reason === "backdropClick") {
-                      // Prevent closing on backdrop click
-                      return;
-                    }
-                    handlePopoverClose(); // Close only on other events like Esc key press
-                  }}
-                  anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "center",
-                  }}
-                  transformOrigin={{
-                    vertical: "bottom",
-                    horizontal: "center",
-                  }}
-                  style={{ marginTop: "8px" }}
-                >
-                  <Box
-                    sx={{
-                      width: "325px",
-                      height: "auto",
-                      maxHeight: "400px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "10px",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "13px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Group name: {` ${promotion?.groupName}`}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "13px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Number of members: {` ${promotion?.memberCount}`}
-                    </Typography>
-                    {promotion?.description && (
-                      <Typography
-                        sx={{
-                          fontSize: "13px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {promotion?.description}
-                      </Typography>
-                    )}
-                    {promotion?.isOpen === false && (
-                      <Typography
-                        sx={{
-                          fontSize: "13px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        *This is a closed/private group, so you will need to wait
-                        until an admin accepts your request
-                      </Typography>
-                    )}
-                    <Spacer height="5px" />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        gap: "20px",
-                        alignItems: "center",
-                        width: "100%",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <LoadingButton
-                        loading={isLoadingJoinGroup}
-                        loadingPosition="start"
-                        variant="contained"
-                        onClick={handlePopoverClose}
-                      >
-                        Close
-                      </LoadingButton>
-                      <LoadingButton
-                        loading={isLoadingJoinGroup}
-                        loadingPosition="start"
-                        variant="contained"
-                        onClick={() =>
-                          handleJoinGroup(promotion, promotion?.isOpen)
-                        }
-                      >
-                        Join
-                      </LoadingButton>
-                    </Box>
-                  </Box>
-                </Popover>
-  
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "15px",
-                    }}
-                  >
-                    <Avatar
-                      sx={{
-                        backgroundColor: "#27282c",
-                        color: "white",
-                      }}
-                      alt={promotion?.name}
-                      src={`${getBaseApiReact()}/arbitrary/THUMBNAIL/${
-                        promotion?.name
-                      }/qortal_avatar?async=true`}
-                    >
-                      {promotion?.name?.charAt(0)}
-                    </Avatar>
-                    <Typography
-                      sx={{
-                        fontWight: 600,
-                        fontFamily: "Inter",
-                        color: "cadetBlue",
-                      }}
-                    >
-                      {promotion?.name}
-                    </Typography>
-                  </Box>
-                 
-                </Box>
-                <Spacer height="20px"/>
-                <Typography
-                    sx={{
-                      fontWight: 600,
-                      fontFamily: "Inter",
-                      color: "cadetBlue",
-                    }}
-                  >
-                    {promotion?.groupName}
-                  </Typography>
-                <Spacer height="20px" />
-                  <Box sx={{
-                    display: 'flex',
-                    gap: '20px',
-                    alignItems: 'center'
-                  }}>
-                  {promotion?.isOpen === false && (
-            <LockIcon sx={{
-              color: 'var(--green)'
-            }} />
-          )}
-          {promotion?.isOpen === true && (
-            <NoEncryptionGmailerrorredIcon sx={{
-              color: 'var(--danger)'
-            }} />
-          )}
-           <Typography
-                        sx={{
-                          fontSize: "15px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {promotion?.isOpen ? 'Public group' : 'Private group' }
-                      </Typography>
-                  </Box>
-                <Spacer height="20px" />
-                <Typography
-                  sx={{
-                    fontWight: 600,
-                    fontFamily: "Inter",
-                    color: "cadetBlue",
-                  }}
-                >
-                  {promotion?.data}
-                </Typography>
-                <Spacer height="20px" />
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    width: "100%",
-                  }}
-                >
-                  <Button
-                    onClick={(event) => handlePopoverOpen(event, promotion?.groupId)}
-                    sx={{
-                      fontSize: "12px",
-                      color: 'white'
-                    }}
-                  >
-                    Join Group: {` ${promotion?.groupName}`}
-                  </Button>
-                </Box>
-              </Box>
-            <Spacer height="50px" />
+                          <ErrorBoundary
+                            fallback={
+                              <Typography>
+                                Error loading content: Invalid Data
+                              </Typography>
+                            }
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                width: "100%",
+                                padding: "0px 20px",
+                              }}
+                            >
+                              <Popover
+                                open={openPopoverIndex === promotion?.groupId}
+                                anchorEl={popoverAnchor}
+                                onClose={(event, reason) => {
+                                  if (reason === "backdropClick") {
+                                    // Prevent closing on backdrop click
+                                    return;
+                                  }
+                                  handlePopoverClose(); // Close only on other events like Esc key press
+                                }}
+                                anchorOrigin={{
+                                  vertical: "top",
+                                  horizontal: "center",
+                                }}
+                                transformOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "center",
+                                }}
+                                style={{ marginTop: "8px" }}
+                              >
+                                <Box
+                                  sx={{
+                                    width: "325px",
+                                    height: "auto",
+                                    maxHeight: "400px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    gap: "10px",
+                                    padding: "10px",
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontSize: "13px",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Group name: {` ${promotion?.groupName}`}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "13px",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Number of members:{" "}
+                                    {` ${promotion?.memberCount}`}
+                                  </Typography>
+                                  {promotion?.description && (
+                                    <Typography
+                                      sx={{
+                                        fontSize: "13px",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      {promotion?.description}
+                                    </Typography>
+                                  )}
+                                  {promotion?.isOpen === false && (
+                                    <Typography
+                                      sx={{
+                                        fontSize: "13px",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      *This is a closed/private group, so you
+                                      will need to wait until an admin accepts
+                                      your request
+                                    </Typography>
+                                  )}
+                                  <Spacer height="5px" />
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      gap: "20px",
+                                      alignItems: "center",
+                                      width: "100%",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    <LoadingButton
+                                      loading={isLoadingJoinGroup}
+                                      loadingPosition="start"
+                                      variant="contained"
+                                      onClick={handlePopoverClose}
+                                    >
+                                      Close
+                                    </LoadingButton>
+                                    <LoadingButton
+                                      loading={isLoadingJoinGroup}
+                                      loadingPosition="start"
+                                      variant="contained"
+                                      onClick={() =>
+                                        handleJoinGroup(
+                                          promotion,
+                                          promotion?.isOpen
+                                        )
+                                      }
+                                    >
+                                      Join
+                                    </LoadingButton>
+                                  </Box>
+                                </Box>
+                              </Popover>
+
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  width: "100%",
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "15px",
+                                  }}
+                                >
+                                  <Avatar
+                                    sx={{
+                                      backgroundColor: "#27282c",
+                                      color: "white",
+                                    }}
+                                    alt={promotion?.name}
+                                    src={`${getBaseApiReact()}/arbitrary/THUMBNAIL/${
+                                      promotion?.name
+                                    }/qortal_avatar?async=true`}
+                                  >
+                                    {promotion?.name?.charAt(0)}
+                                  </Avatar>
+                                  <Typography
+                                    sx={{
+                                      fontWight: 600,
+                                      fontFamily: "Inter",
+                                      color: "cadetBlue",
+                                    }}
+                                  >
+                                    {promotion?.name}
+                                  </Typography>
+                                </Box>
+                                <Typography
+                                  sx={{
+                                    fontWight: 600,
+                                    fontFamily: "Inter",
+                                    color: "cadetBlue",
+                                  }}
+                                >
+                                  {promotion?.groupName}
+                                </Typography>
+                              </Box>
+                              <Spacer height="20px" />
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: "20px",
+                                  alignItems: "center",
+                                }}
+                              >
+                                {promotion?.isOpen === false && (
+                                  <LockIcon
+                                    sx={{
+                                      color: "var(--green)",
+                                    }}
+                                  />
+                                )}
+                                {promotion?.isOpen === true && (
+                                  <NoEncryptionGmailerrorredIcon
+                                    sx={{
+                                      color: "var(--danger)",
+                                    }}
+                                  />
+                                )}
+                                <Typography
+                                  sx={{
+                                    fontSize: "15px",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {promotion?.isOpen
+                                    ? "Public group"
+                                    : "Private group"}
+                                </Typography>
+                              </Box>
+                              <Spacer height="20px" />
+                              <Typography
+                                sx={{
+                                  fontWight: 600,
+                                  fontFamily: "Inter",
+                                  color: "cadetBlue",
+                                }}
+                              >
+                                {promotion?.data}
+                              </Typography>
+                              <Spacer height="20px" />
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  width: "100%",
+                                }}
+                              >
+                                <Button
+                                  // variant="contained"
+                                  onClick={(event) =>
+                                    handlePopoverOpen(event, promotion?.groupId)
+                                  }
+                                  sx={{
+                                    fontSize: "12px",
+                                    color: "white",
+                                  }}
+                                >
+                                  Join Group: {` ${promotion?.groupName}`}
+                                </Button>
+                              </Box>
+                            </Box>
+                            <Spacer height="50px" />
                           </ErrorBoundary>
                         </div>
-                    
                       );
                     })}
                   </div>
                 </div>
               </div>
             </div>
-
-      </Box>
+          </Box>
+        </>
+      </Collapse>
       <Spacer height="20px" />
 
       {isShowModal && (
@@ -747,6 +797,7 @@ export const ListOfGroupPromotions = () => {
                 value={selectedGroup}
                 label="Groups where you are an admin"
                 onChange={(e) => setSelectedGroup(e.target.value)}
+                variant="outlined"
               >
                 {myGroupsWhereIAmAdmin?.map((group) => {
                   return (

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Popover, Button, Box } from '@mui/material';
+import React, { useContext, useEffect, useState } from 'react';
+import { Popover, Button, Box, CircularProgress } from '@mui/material';
 import { executeEvent } from '../utils/events';
+import { BlockedUsersModal } from './Group/BlockedUsersModal';
+import { MyContext } from '../App';
 
 export const WrapperUserAction = ({ children, address, name, disabled }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -119,8 +121,78 @@ export const WrapperUserAction = ({ children, address, name, disabled }) => {
           >
             Copy address
           </Button>
+          <Button
+               variant="text"
+               onClick={() => {
+                 executeEvent('openUserLookupDrawer', {
+                  addressOrName: name || address
+                 })
+                 handleClose();
+                
+               }}
+               sx={{
+                   color: 'white',
+                   justifyContent: 'flex-start'
+               }}
+             >
+              User lookup
+             </Button>
+             <BlockUser handleClose={handleClose} address={address} name={name} />
         </Box>
       </Popover>
     </>
   );
 };
+
+
+const BlockUser = ({address, name, handleClose})=> {
+  const [isAlreadyBlocked, setIsAlreadyBlocked] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const {isUserBlocked,
+    addToBlockList,
+    removeBlockFromList} = useContext(MyContext)
+
+useEffect(()=> {
+  if(!address) return
+    setIsAlreadyBlocked(isUserBlocked(address, name))
+}, [address, setIsAlreadyBlocked, isUserBlocked, name])
+
+  return (
+    <Button
+    variant="text"
+    onClick={async () => {
+      try {
+        setIsLoading(true)
+        if(isAlreadyBlocked === true){
+          await removeBlockFromList(address, name)
+        } else if(isAlreadyBlocked === false) {
+          await addToBlockList(address, name)
+        }
+        executeEvent('updateChatMessagesWithBlocks', true)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setIsLoading(false)
+        handleClose();
+      }
+
+     
+    }}
+    sx={{
+        color: 'white',
+        justifyContent: 'flex-start',
+        gap: '10px'
+    }}
+  >
+    {(isAlreadyBlocked === null || isLoading) && (
+      <CircularProgress color="secondary" size={24} />
+    )}
+    {isAlreadyBlocked && (
+      'Unblock name'
+    )}
+     {isAlreadyBlocked === false && (
+      'Block name'
+    )}
+  </Button>
+  )
+}

@@ -297,7 +297,7 @@ export const Apps = ({ mode, setMode, show , myName}) => {
     >
       {mode !== "viewer" && !selectedTab  && <Spacer height="30px" />}
       {mode === "home" && (
-        <AppsHome availableQapps={availableQapps}  setMode={setMode} myApp={myApp} myWebsite={myWebsite} />
+        <AppsHome myName={myName} availableQapps={availableQapps}  setMode={setMode} myApp={myApp} myWebsite={myWebsite} />
       )}
     
         <AppsLibrary
@@ -326,6 +326,7 @@ export const Apps = ({ mode, setMode, show , myName}) => {
             isSelected={tab?.tabId === selectedTab?.tabId}
             app={tab}
             ref={iframeRefs.current[tab.tabId]}
+            isDevMode={tab?.service ? false : true}
           />
         );
       })}
@@ -333,7 +334,7 @@ export const Apps = ({ mode, setMode, show , myName}) => {
       {isNewTabWindow && mode === "viewer" && (
         <>
           <Spacer height="30px" />
-          <AppsHome availableQapps={availableQapps} setMode={setMode} myApp={myApp} myWebsite={myWebsite}  />
+          <AppsHome myName={myName} availableQapps={availableQapps} setMode={setMode} myApp={myApp} myWebsite={myWebsite}  />
         </>
       )}
       {mode !== "viewer" && !selectedTab  && <Spacer height="180px" />}

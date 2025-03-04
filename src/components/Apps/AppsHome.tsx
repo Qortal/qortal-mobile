@@ -18,8 +18,9 @@ import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
 import { extractComponents } from "../Chat/MessageDisplay";
 import HelpIcon from '@mui/icons-material/Help';
 import { useHandleTutorials } from "../Tutorials/useHandleTutorials";
+import { AppsPrivate } from "./AppsPrivate";
 
-export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps  }) => {
+export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps, myName  }) => {
   const [qortalUrl, setQortalUrl] = useState('')
   const { showTutorial } = useContext(GlobalContext);
 
@@ -145,7 +146,8 @@ export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps  }) => {
             <AppCircleLabel>Library</AppCircleLabel>
           </AppCircleContainer>
         </ButtonBase>
-       
+        <AppsPrivate myName={myName} />
+
         <SortablePinnedApps availableQapps={availableQapps} myWebsite={myWebsite} myApp={myApp}  />
     
       </AppsContainer>

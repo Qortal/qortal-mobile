@@ -1,4 +1,4 @@
-import { Box, Button, ButtonBase, Typography } from "@mui/material";
+import { Box, Button, ButtonBase, Divider, Typography } from "@mui/material";
 import React, { useContext } from "react";
 import { Spacer } from "../../common/Spacer";
 import { ListOfThreadPostsWatched } from "./ListOfThreadPostsWatched";
@@ -10,8 +10,13 @@ import { ListOfGroupPromotions } from "./ListOfGroupPromotions";
 import HelpIcon from '@mui/icons-material/Help';
 import { useHandleTutorials } from "../Tutorials/useHandleTutorials";
 import { GlobalContext } from "../../App";
+import { QortPrice } from "../Home/QortPrice";
+import { QMailMessages } from "./QMailMessages";
+import { Explore } from "../Explore/Explore";
+import ExploreIcon from "@mui/icons-material/Explore";
 
 export const Home = ({
+  name,
   refreshHomeDataFunc,
   myAddress,
   isLoadingGroups,
@@ -26,6 +31,30 @@ export const Home = ({
   setMobileViewMode,
 }) => {
   const { showTutorial } = useContext(GlobalContext);
+
+  const [checked1, setChecked1] = React.useState(false);
+  const [checked2, setChecked2] = React.useState(false);
+  React.useEffect(() => {
+      if (balance && +balance >= 6) {
+        setChecked1(true);
+      }
+    }, [balance]);
+  
+  
+    React.useEffect(() => {
+      if (name) setChecked2(true);
+    }, [name]);
+  
+  
+    const isLoaded = React.useMemo(()=> {
+        if(userInfo !== null) return true
+      return false
+    }, [ userInfo])
+  
+    const hasDoneNameAndBalanceAndIsLoaded = React.useMemo(()=> {
+      if(isLoaded && checked1 && checked2) return true
+    return false
+  }, [checked1, isLoaded, checked2])
 
   return (
     <Box
@@ -101,19 +130,27 @@ export const Home = ({
             display: "flex",
             gap: "15px",
             flexWrap: "wrap",
-            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: 'column',
+            width: '100%'
           }}
         >
           <ThingsToDoInitial
             balance={balance}
             myAddress={myAddress}
             name={userInfo?.name}
-            hasGroups={groups?.length !== 0}
+            hasGroups={
+              groups?.filter((item) => item?.groupId !== "0").length !== 0
+            }
             userInfo={userInfo}
 
           />
-          <ListOfThreadPostsWatched />
-
+          {/* <ListOfThreadPostsWatched /> */}
+          <QortPrice />
+          {hasDoneNameAndBalanceAndIsLoaded && (
+            <>
+            <Spacer height="20px" />
+            <QMailMessages userAddress={userInfo?.address} userName={userInfo?.name} />
           <GroupJoinRequests
             setGroupSection={setGroupSection}
             setSelectedGroup={setSelectedGroup}
@@ -129,11 +166,43 @@ export const Home = ({
             groups={groups}
             setMobileViewMode={setMobileViewMode}
           />
+          
+      <ListOfGroupPromotions />
+        
+        <Divider
+          color="secondary"
+          sx={{
+            width: "100%",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              gap: "10px",
+              alignItems: "center",
+            }}
+          >
+            <ExploreIcon
+              sx={{
+                color: "white",
+              }}
+            />{" "}
+            <Typography
+              sx={{
+                fontSize: "1rem",
+              }}
+            >
+              Explore
+            </Typography>{" "}
+          </Box>
+        </Divider>
+           <Explore setMobileViewMode={setMobileViewMode} />
+
+          </>
+          )}
         </Box>
       )}
-         {!isLoadingGroups && (
-      <ListOfGroupPromotions />
-         )}
+        
       <Spacer height="180px" />
     </Box>
   );

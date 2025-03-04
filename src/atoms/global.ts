@@ -158,3 +158,23 @@ export const addressInfoKeySelector = selectorFamily({
     return userInfo[key] || null; // Return the value for the key or null if not found
   },
 });
+
+export const groupsPropertiesAtom = atom({
+  key: 'groupsPropertiesAtom', 
+  default: {}, 
+});
+
+export const qMailLastEnteredTimestampAtom = atom({
+  key: 'qMailLastEnteredTimestampAtom', 
+  default: null, 
+});
+
+export const mailsAtom = atom({
+  key: 'mailsAtom', 
+  default: [], 
+});
+
+export const lastEnteredGroupIdAtom = atom({
+  key: 'lastEnteredGroupIdAtom', 
+  default: null, 
+});

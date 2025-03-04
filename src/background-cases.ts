@@ -12,6 +12,7 @@ import {
   checkNewMessages,
   checkThreads,
   clearAllNotifications,
+  createEndpoint,
   createGroup,
   decryptDirectFunc,
   decryptSingleForPublishes,
@@ -56,7 +57,13 @@ import {
   updateThreadActivity,
   walletVersion,
 } from "./background";
-import { decryptGroupEncryption, encryptAndPublishSymmetricKeyGroupChat, encryptAndPublishSymmetricKeyGroupChatForAdmins, publishGroupEncryptedResource, publishOnQDN } from "./backgroundFunctions/encryption";
+import {
+  decryptGroupEncryption,
+  encryptAndPublishSymmetricKeyGroupChat,
+  encryptAndPublishSymmetricKeyGroupChatForAdmins,
+  publishGroupEncryptedResource,
+  publishOnQDN,
+} from "./backgroundFunctions/encryption";
 import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from "./constants/codes";
 import Base58 from "./deps/Base58";
 import { encryptSingle } from "./qdn/encryption/group-encryption";
@@ -81,8 +88,8 @@ export async function getWalletInfoCase(request, event) {
     const response = await getKeyPair();
 
     try {
-      const walletInfo = await getData('walletInfo').catch((error)=> null)
-      if(walletInfo){
+      const walletInfo = await getData("walletInfo").catch((error) => null);
+      if (walletInfo) {
         event.source.postMessage(
           {
             requestId: request.requestId,
@@ -103,7 +110,6 @@ export async function getWalletInfoCase(request, event) {
           event.origin
         );
       }
-   
     } catch (error) {
       event.source.postMessage(
         {
@@ -115,11 +121,10 @@ export async function getWalletInfoCase(request, event) {
         event.origin
       );
     }
-   
   } catch (error) {
     try {
-      const walletInfo = await getData('walletInfo').catch((error)=> null)
-      if(walletInfo){
+      const walletInfo = await getData("walletInfo").catch((error) => null);
+      if (walletInfo) {
         event.source.postMessage(
           {
             requestId: request.requestId,
@@ -151,7 +156,6 @@ export async function getWalletInfoCase(request, event) {
         event.origin
       );
     }
-   
   }
 }
 
@@ -234,9 +238,13 @@ export async function userInfoCase(request, event) {
 }
 
 export async function decryptWalletCase(request, event) {
-  try { 
+  try {
     const { password, wallet } = request.payload;
-    const response = await decryptWallet({password, wallet, walletVersion: wallet?.version || walletVersion});
+    const response = await decryptWallet({
+      password,
+      wallet,
+      walletVersion: wallet?.version || walletVersion,
+    });
     event.source.postMessage(
       {
         requestId: request.requestId,
@@ -620,8 +628,7 @@ export async function banFromGroupCase(request, event) {
 export async function addDataPublishesCase(request, event) {
   try {
     const { data, groupId, type } = request.payload;
-    const response = await addDataPublishes( data, groupId, type );
-
+    const response = await addDataPublishes(data, groupId, type);
 
     event.source.postMessage(
       {
@@ -648,8 +655,7 @@ export async function addDataPublishesCase(request, event) {
 export async function getDataPublishesCase(request, event) {
   try {
     const { groupId, type } = request.payload;
-    const response = await getDataPublishes(groupId, type );
-
+    const response = await getDataPublishes(groupId, type);
 
     event.source.postMessage(
       {
@@ -843,7 +849,7 @@ export async function notificationCase(request, event) {
     //   iconUrl: "qort.png", // Add an appropriate icon for chat notifications
     //   title: "New Group Message!",
     //   message: "You have received a new message from one of your groups",
-    //   priority: 2, // Use the maximum priority to ensure it's 
+    //   priority: 2, // Use the maximum priority to ensure it's
     // });
     // Set a timeout to clear the notification after 'timeout' milliseconds
     // setTimeout(() => {
@@ -902,7 +908,7 @@ export async function addTimestampEnterChatCase(request, event) {
 export async function setApiKeyCase(request, event) {
   try {
     const payload = request.payload;
-    storeData('apiKey', payload)
+    storeData("apiKey", payload);
     event.source.postMessage(
       {
         requestId: request.requestId,
@@ -927,7 +933,7 @@ export async function setApiKeyCase(request, event) {
 export async function setCustomNodesCase(request, event) {
   try {
     const nodes = request.payload;
-    storeData('customNodes', nodes)
+    storeData("customNodes", nodes);
 
     event.source.postMessage(
       {
@@ -1039,7 +1045,7 @@ export async function addGroupNotificationTimestampCase(request, event) {
     const response = await addTimestampGroupAnnouncement({
       groupId,
       timestamp,
-      seenTimestamp: true
+      seenTimestamp: true,
     });
 
     event.source.postMessage(
@@ -1225,17 +1231,17 @@ export async function encryptAndPublishSymmetricKeyGroupChatCase(
       event.origin
     );
     if (!previousData) {
-    try {
-      sendChatGroup({
-        groupId,
-        typeMessage: undefined,
-        chatReference: undefined,
-        messageText: PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY,
-      });
-    } catch (error) {
-      // error in sending chat message
+      try {
+        sendChatGroup({
+          groupId,
+          typeMessage: undefined,
+          chatReference: undefined,
+          messageText: PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY,
+        });
+      } catch (error) {
+        // error in sending chat message
+      }
     }
-  }
     try {
       sendChatNotification(data, groupId, previousData, numberOfMembers);
     } catch (error) {
@@ -1264,7 +1270,7 @@ export async function encryptAndPublishSymmetricKeyGroupChatForAdminsCase(
       await encryptAndPublishSymmetricKeyGroupChatForAdmins({
         groupId,
         previousData,
-        admins
+        admins,
       });
 
     event.source.postMessage(
@@ -1290,751 +1296,875 @@ export async function encryptAndPublishSymmetricKeyGroupChatForAdminsCase(
 }
 
 export async function publishGroupEncryptedResourceCase(request, event) {
-    try {
-      const {encryptedData, identifier} = request.payload;
-      const response = await publishGroupEncryptedResource({encryptedData, identifier});
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "publishGroupEncryptedResource",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "publishGroupEncryptedResource",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+  try {
+    const { encryptedData, identifier } = request.payload;
+    const response = await publishGroupEncryptedResource({
+      encryptedData,
+      identifier,
+    });
 
-  export async function publishOnQDNCase(request, event) {
-    try {
-      const {data, identifier, service, title,
-          description,
-          category,
-          tag1,
-          tag2,
-          tag3,
-          tag4,
-          tag5, uploadType} = request.payload;
-      const response = await publishOnQDN({data, identifier, service, title,
-          description,
-          category,
-          tag1,
-          tag2,
-          tag3,
-          tag4,
-          tag5, uploadType});
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "publishOnQDN",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "publishOnQDN",
-          error: error?.message || 'Unable to publish',
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "publishGroupEncryptedResource",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "publishGroupEncryptedResource",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function handleActiveGroupDataFromSocketCase(request, event) {
-    try {
-      const {groups, directs} = request.payload;
-      const response = await handleActiveGroupDataFromSocket({groups, directs});
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "handleActiveGroupDataFromSocket",
-          payload: true,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "handleActiveGroupDataFromSocket",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+export async function publishOnQDNCase(request, event) {
+  try {
+    const {
+      data,
+      identifier,
+      service,
+      title,
+      description,
+      category,
+      tag1,
+      tag2,
+      tag3,
+      tag4,
+      tag5,
+      uploadType,
+    } = request.payload;
+    const response = await publishOnQDN({
+      data,
+      identifier,
+      service,
+      title,
+      description,
+      category,
+      tag1,
+      tag2,
+      tag3,
+      tag4,
+      tag5,
+      uploadType,
+    });
 
-  export async function getThreadActivityCase(request, event) {
-    try {
-      const response = await checkThreads(true)
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getThreadActivity",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getThreadActivity",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "publishOnQDN",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "publishOnQDN",
+        error: error?.message || "Unable to publish",
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function updateThreadActivityCase(request, event) {
-    try {
-      const { threadId, qortalName, groupId, thread} = request.payload;
-      const response = await updateThreadActivity({ threadId, qortalName, groupId, thread });
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "updateThreadActivity",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "updateThreadActivity",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+export async function handleActiveGroupDataFromSocketCase(request, event) {
+  try {
+    const { groups, directs } = request.payload;
+    const response = await handleActiveGroupDataFromSocket({ groups, directs });
 
-  export async function decryptGroupEncryptionCase(request, event) {
-    try {
-      const { data} = request.payload;
-      const response = await decryptGroupEncryption({ data });
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptGroupEncryption",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptGroupEncryption",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "handleActiveGroupDataFromSocket",
+        payload: true,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "handleActiveGroupDataFromSocket",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function encryptSingleCase(request, event) {
-    try {
-      const { data, secretKeyObject, typeNumber} = request.payload;
-      const response = await encryptSingle({ data64: data, secretKeyObject, typeNumber });
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "encryptSingle",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "encryptSingle",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+export async function getThreadActivityCase(request, event) {
+  try {
+    const response = await checkThreads(true);
 
-  export async function decryptSingleCase(request, event) {
-    try {
-      const { data, secretKeyObject, skipDecodeBase64} = request.payload;
-      const response = await decryptSingleFunc({ messages: data, secretKeyObject, skipDecodeBase64 });
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptSingle",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptSingle",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getThreadActivity",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getThreadActivity",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function pauseAllQueuesCase(request, event) {
-    try {
-       await pauseAllQueues();
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "pauseAllQueues",
-          payload: true,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "pauseAllQueues",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+export async function updateThreadActivityCase(request, event) {
+  try {
+    const { threadId, qortalName, groupId, thread } = request.payload;
+    const response = await updateThreadActivity({
+      threadId,
+      qortalName,
+      groupId,
+      thread,
+    });
 
-  export async function resumeAllQueuesCase(request, event) {
-    try {
-       await resumeAllQueues();
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "resumeAllQueues",
-          payload: true,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "resumeAllQueues",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "updateThreadActivity",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "updateThreadActivity",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
-  export async function checkLocalCase(request, event) {
-    try {
-      const response = await checkLocalFunc()
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "pauseAllQueues",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "checkLocal",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+}
 
-  export async function decryptSingleForPublishesCase(request, event) {
-    try {
-      const { data, secretKeyObject, skipDecodeBase64} = request.payload;
-      const response = await decryptSingleForPublishes({ messages: data, secretKeyObject, skipDecodeBase64 });
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptSingleForPublishes",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptSingle",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+export async function decryptGroupEncryptionCase(request, event) {
+  try {
+    const { data } = request.payload;
+    const response = await decryptGroupEncryption({ data });
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptGroupEncryption",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptGroupEncryption",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function decryptDirectCase(request, event) {
-    try {
-      const { data, involvingAddress} = request.payload;
-      const response = await decryptDirectFunc({ messages: data, involvingAddress });
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptDirect",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "decryptDirect",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
-  export async function sendChatGroupCase(request, event) {
-    try {
-      const {   groupId,
-        typeMessage = undefined,
-        chatReference = undefined,
-        messageText} = request.payload;
-      const response = await sendChatGroup({ groupId, typeMessage, chatReference, messageText });
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "sendChatGroup",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "sendChatGroup",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
-  export async function sendChatDirectCase(request, event) {
-    try {
-      const {    directTo,
-        typeMessage = undefined,
-        chatReference = undefined,
-        messageText,
-        publicKeyOfRecipient,
-        address,
-        otherData} = request.payload;
-      const response = await sendChatDirect({  directTo,
-        chatReference,
-        messageText,
-        typeMessage,
-        publicKeyOfRecipient,
-        address,
-        otherData });
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "sendChatDirect",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "sendChatDirect",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+export async function encryptSingleCase(request, event) {
+  try {
+    const { data, secretKeyObject, typeNumber } = request.payload;
+    const response = await encryptSingle({
+      data64: data,
+      secretKeyObject,
+      typeNumber,
+    });
 
-  export async function setupGroupWebsocketCase(request, event) {
-    try {
-     
-        checkNewMessages();
-        checkThreads();
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "sendChatDirect",
-          payload: true,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "sendChatDirect",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "encryptSingle",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "encryptSingle",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function addEnteredQmailTimestampCase(request, event) {
-    try {
-      const response = await addEnteredQmailTimestamp();
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "addEnteredQmailTimestamp",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "addEnteredQmailTimestamp",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+export async function decryptSingleCase(request, event) {
+  try {
+    const { data, secretKeyObject, skipDecodeBase64 } = request.payload;
+    const response = await decryptSingleFunc({
+      messages: data,
+      secretKeyObject,
+      skipDecodeBase64,
+    });
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptSingle",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptSingle",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
-  export async function getEnteredQmailTimestampCase(request, event) {
-    try {
-      const response = await getEnteredQmailTimestamp();
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getEnteredQmailTimestamp",
-          payload: {timestamp: response},
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getEnteredQmailTimestamp",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+}
 
-  export async function getTimestampMentionCase(request, event) {
-    try {
-      const response = await getTimestampMention();
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getTimestampMention",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getTimestampMention",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
-  
-  export async function addTimestampMentionCase(request, event) {
-    try {
-      const { groupId, timestamp } = request.payload;
-      const response = await addTimestampMention({ groupId, timestamp });
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "addTimestampMention",
-          payload: response,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "addTimestampMention",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
-  }
+export async function pauseAllQueuesCase(request, event) {
+  try {
+    await pauseAllQueues();
 
-  export async function createPollCase(request, event) {
-    try {
-      const { pollName, pollDescription, pollOptions } = request.payload;
-      const resCreatePoll = await _createPoll(
-        {
-          pollName,
-          pollDescription,
-          options: pollOptions,
-        },
-        true,
-         true // skip permission
-      );
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "registerName",
-          payload: resCreatePoll,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "registerName",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "pauseAllQueues",
+        payload: true,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "pauseAllQueues",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
-  export async function voteOnPollCase(request, event) {
-    try {
-      const res = await _voteOnPoll(request.payload, true, true);
-  
-  
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "registerName",
-          payload: res,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "registerName",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+}
+
+export async function resumeAllQueuesCase(request, event) {
+  try {
+    await resumeAllQueues();
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "resumeAllQueues",
+        payload: true,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "resumeAllQueues",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
-
-  export async function createRewardShareCase(request, event) {
-    try {
-      const {recipientPublicKey} = request.payload;
-        const resKeyPair = await getKeyPair();
-        const parsedData = resKeyPair;
-        const uint8PrivateKey = Base58.decode(parsedData.privateKey);
-        const uint8PublicKey = Base58.decode(parsedData.publicKey);
-        const keyPair = {
-          privateKey: uint8PrivateKey,
-          publicKey: uint8PublicKey,
-        };
-        let lastRef = await getLastRef();
-      
-        const tx = await createTransaction(38, keyPair, {
-          recipientPublicKey,
-          percentageShare: 0,
-          lastReference: lastRef,
-        });
-
-        const signedBytes = Base58.encode(tx.signedBytes);
-      
-        const res = await processTransactionVersion2(signedBytes);
-        if (!res?.signature)
-          throw new Error("Transaction was not able to be processed");
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "createRewardShare",
-          payload: res,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "createRewardShare",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+}
+export async function checkLocalCase(request, event) {
+  try {
+    const response = await checkLocalFunc();
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "pauseAllQueues",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "checkLocal",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function removeRewardShareCase(request, event) {
-    try {
-      const {rewardShareKeyPairPublicKey, recipient, percentageShare} = request.payload;
-        const resKeyPair = await getKeyPair();
-        const parsedData = resKeyPair;
-        const uint8PrivateKey = Base58.decode(parsedData.privateKey);
-        const uint8PublicKey = Base58.decode(parsedData.publicKey);
-        const keyPair = {
-          privateKey: uint8PrivateKey,
-          publicKey: uint8PublicKey,
-        };
-        let lastRef = await getLastRef();
-      
-        const tx = await createTransaction(381, keyPair, {
-          rewardShareKeyPairPublicKey,
-          recipient,
-          percentageShare,
-          lastReference: lastRef,
-        });
+export async function decryptSingleForPublishesCase(request, event) {
+  try {
+    const { data, secretKeyObject, skipDecodeBase64 } = request.payload;
+    const response = await decryptSingleForPublishes({
+      messages: data,
+      secretKeyObject,
+      skipDecodeBase64,
+    });
 
-        const signedBytes = Base58.encode(tx.signedBytes);
-      
-        const res = await processTransactionVersion2(signedBytes);
-        if (!res?.signature)
-          throw new Error("Transaction was not able to be processed");
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "removeRewardShare",
-          payload: res,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "removeRewardShare",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptSingleForPublishes",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptSingle",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
 
-  export async function getRewardSharePrivateKeyCase(request, event) {
-    try {
-      const {recipientPublicKey} = request.payload;
-        const resKeyPair = await getKeyPair();
-        const parsedData = resKeyPair;
-        const uint8PrivateKey = Base58.decode(parsedData.privateKey);
-        const uint8PublicKey = Base58.decode(parsedData.publicKey);
-        const keyPair = {
-          privateKey: uint8PrivateKey,
-          publicKey: uint8PublicKey,
-        };
-        let lastRef = await getLastRef();
-      
-        const tx = await createTransaction(38, keyPair, {
-          recipientPublicKey,
-          percentageShare: 0,
-          lastReference: lastRef,
-        });
+export async function decryptDirectCase(request, event) {
+  try {
+    const { data, involvingAddress } = request.payload;
+    const response = await decryptDirectFunc({
+      messages: data,
+      involvingAddress,
+    });
 
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getRewardSharePrivateKey",
-          payload: tx?._base58RewardShareSeed,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    } catch (error) {
-      event.source.postMessage(
-        {
-          requestId: request.requestId,
-          action: "getRewardSharePrivateKey",
-          error: error?.message,
-          type: "backgroundMessageResponse",
-        },
-        event.origin
-      );
-    }
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptDirect",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "decryptDirect",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
   }
+}
+export async function sendChatGroupCase(request, event) {
+  try {
+    const {
+      groupId,
+      typeMessage = undefined,
+      chatReference = undefined,
+      messageText,
+    } = request.payload;
+    const response = await sendChatGroup({
+      groupId,
+      typeMessage,
+      chatReference,
+      messageText,
+    });
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "sendChatGroup",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "sendChatGroup",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+export async function sendChatDirectCase(request, event) {
+  try {
+    const {
+      directTo,
+      typeMessage = undefined,
+      chatReference = undefined,
+      messageText,
+      publicKeyOfRecipient,
+      address,
+      otherData,
+    } = request.payload;
+    const response = await sendChatDirect({
+      directTo,
+      chatReference,
+      messageText,
+      typeMessage,
+      publicKeyOfRecipient,
+      address,
+      otherData,
+    });
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "sendChatDirect",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "sendChatDirect",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function setupGroupWebsocketCase(request, event) {
+  try {
+    checkNewMessages();
+    checkThreads();
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "sendChatDirect",
+        payload: true,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "sendChatDirect",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function addEnteredQmailTimestampCase(request, event) {
+  try {
+    const response = await addEnteredQmailTimestamp();
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "addEnteredQmailTimestamp",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "addEnteredQmailTimestamp",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+export async function getEnteredQmailTimestampCase(request, event) {
+  try {
+    const response = await getEnteredQmailTimestamp();
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getEnteredQmailTimestamp",
+        payload: { timestamp: response },
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getEnteredQmailTimestamp",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function getTimestampMentionCase(request, event) {
+  try {
+    const response = await getTimestampMention();
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getTimestampMention",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getTimestampMention",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function addTimestampMentionCase(request, event) {
+  try {
+    const { groupId, timestamp } = request.payload;
+    const response = await addTimestampMention({ groupId, timestamp });
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "addTimestampMention",
+        payload: response,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "addTimestampMention",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function createPollCase(request, event) {
+  try {
+    const { pollName, pollDescription, pollOptions } = request.payload;
+    const resCreatePoll = await _createPoll(
+      {
+        pollName,
+        pollDescription,
+        options: pollOptions,
+      },
+      true,
+      true // skip permission
+    );
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "registerName",
+        payload: resCreatePoll,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "registerName",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+export async function voteOnPollCase(request, event) {
+  try {
+    const res = await _voteOnPoll(request.payload, true, true);
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "registerName",
+        payload: res,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "registerName",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function createRewardShareCase(request, event) {
+  try {
+    const { recipientPublicKey } = request.payload;
+    const resKeyPair = await getKeyPair();
+    const parsedData = resKeyPair;
+    const uint8PrivateKey = Base58.decode(parsedData.privateKey);
+    const uint8PublicKey = Base58.decode(parsedData.publicKey);
+    const keyPair = {
+      privateKey: uint8PrivateKey,
+      publicKey: uint8PublicKey,
+    };
+    let lastRef = await getLastRef();
+
+    const tx = await createTransaction(38, keyPair, {
+      recipientPublicKey,
+      percentageShare: 0,
+      lastReference: lastRef,
+    });
+
+    const signedBytes = Base58.encode(tx.signedBytes);
+
+    const res = await processTransactionVersion2(signedBytes);
+    if (!res?.signature)
+      throw new Error("Transaction was not able to be processed");
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "createRewardShare",
+        payload: res,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "createRewardShare",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function removeRewardShareCase(request, event) {
+  try {
+    const { rewardShareKeyPairPublicKey, recipient, percentageShare } =
+      request.payload;
+    const resKeyPair = await getKeyPair();
+    const parsedData = resKeyPair;
+    const uint8PrivateKey = Base58.decode(parsedData.privateKey);
+    const uint8PublicKey = Base58.decode(parsedData.publicKey);
+    const keyPair = {
+      privateKey: uint8PrivateKey,
+      publicKey: uint8PublicKey,
+    };
+    let lastRef = await getLastRef();
+
+    const tx = await createTransaction(381, keyPair, {
+      rewardShareKeyPairPublicKey,
+      recipient,
+      percentageShare,
+      lastReference: lastRef,
+    });
+
+    const signedBytes = Base58.encode(tx.signedBytes);
+
+    const res = await processTransactionVersion2(signedBytes);
+    if (!res?.signature)
+      throw new Error("Transaction was not able to be processed");
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "removeRewardShare",
+        payload: res,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "removeRewardShare",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function getRewardSharePrivateKeyCase(request, event) {
+  try {
+    const { recipientPublicKey } = request.payload;
+    const resKeyPair = await getKeyPair();
+    const parsedData = resKeyPair;
+    const uint8PrivateKey = Base58.decode(parsedData.privateKey);
+    const uint8PublicKey = Base58.decode(parsedData.publicKey);
+    const keyPair = {
+      privateKey: uint8PrivateKey,
+      publicKey: uint8PublicKey,
+    };
+    let lastRef = await getLastRef();
+
+    const tx = await createTransaction(38, keyPair, {
+      recipientPublicKey,
+      percentageShare: 0,
+      lastReference: lastRef,
+    });
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getRewardSharePrivateKey",
+        payload: tx?._base58RewardShareSeed,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "getRewardSharePrivateKey",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}
+
+export async function listActionsCase(request, event) {
+  try {
+    const { type, listName = "", items = [] } = request.payload;
+    let responseData;
+
+    if (type === "get") {
+      const url = await createEndpoint(`/lists/${listName}`);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch");
+
+      responseData = await response.json();
+    } else if (type === "remove") {
+      const url = await createEndpoint(`/lists/${listName}`);
+      const body = {
+        items: items,
+      };
+      const bodyToString = JSON.stringify(body);
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: bodyToString,
+      });
+
+      if (!response.ok) throw new Error("Failed to remove from list");
+      let res;
+      try {
+        res = await response.clone().json();
+      } catch (e) {
+        res = await response.text();
+      }
+      responseData = res;
+    } else if (type === "add") {
+      const url = await createEndpoint(`/lists/${listName}`);
+      const body = {
+        items: items,
+      };
+      const bodyToString = JSON.stringify(body);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: bodyToString,
+      });
+
+      if (!response.ok) throw new Error("Failed to add to list");
+      let res;
+      try {
+        res = await response.clone().json();
+      } catch (e) {
+        res = await response.text();
+      }
+      responseData = res;
+    }
+
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "listActions",
+        payload: responseData,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  } catch (error) {
+    event.source.postMessage(
+      {
+        requestId: request.requestId,
+        action: "listActions",
+        error: error?.message,
+        type: "backgroundMessageResponse",
+      },
+      event.origin
+    );
+  }
+}

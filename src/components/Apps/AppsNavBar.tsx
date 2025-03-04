@@ -132,10 +132,20 @@ export const AppsNavBar = ({appsMode}) => {
     };
   }, []);
 
-  const isSelectedAppPinned = !!sortablePinnedApps?.find(
-    (item) =>
-      item?.name === selectedTab?.name && item?.service === selectedTab?.service
-  );
+  const isSelectedAppPinned = useMemo(()=> {
+    if(selectedTab?.isPrivate){
+      return !!sortablePinnedApps?.find(
+        (item) =>
+          item?.privateAppProperties?.name === selectedTab?.privateAppProperties?.name && item?.privateAppProperties?.service === selectedTab?.privateAppProperties?.service && item?.privateAppProperties?.identifier === selectedTab?.privateAppProperties?.identifier
+      );
+    } else {
+      return !!sortablePinnedApps?.find(
+        (item) =>
+          item?.name === selectedTab?.name && item?.service === selectedTab?.service
+      );
+    }
+  }, [selectedTab,sortablePinnedApps])
+
   return (
     <AppsNavBarParent>
       <AppsNavBarLeft>
@@ -259,27 +269,54 @@ export const AppsNavBar = ({appsMode}) => {
           onClick={() => {
             if (!selectedTab) return;
 
-            setSortablePinnedApps((prev) => {
+           setSortablePinnedApps((prev) => {
               let updatedApps;
 
               if (isSelectedAppPinned) {
                 // Remove the selected app if it is pinned
-                updatedApps = prev.filter(
-                  (item) =>
-                    !(
-                      item?.name === selectedTab?.name &&
-                      item?.service === selectedTab?.service
-                    )
-                );
+                if(selectedTab?.isPrivate){
+                  updatedApps = prev.filter(
+                    (item) =>
+                      !(
+                        item?.privateAppProperties?.name === selectedTab?.privateAppProperties?.name &&
+                        item?.privateAppProperties?.service === selectedTab?.privateAppProperties?.service &&
+                        item?.privateAppProperties?.identifier === selectedTab?.privateAppProperties?.identifier
+                      )
+                  );
+                } else {
+                  updatedApps = prev.filter(
+                    (item) =>
+                      !(
+                        item?.name === selectedTab?.name &&
+                        item?.service === selectedTab?.service
+                      )
+                  );
+                }
+                
               } else {
                 // Add the selected app if it is not pinned
-                updatedApps = [
+                if(selectedTab?.isPrivate){
+                  updatedApps = [
                   ...prev,
                   {
-                    name: selectedTab?.name,
-                    service: selectedTab?.service,
+                    isPreview: true,
+                    isPrivate: true,
+                    privateAppProperties: {
+                      ...(selectedTab?.privateAppProperties || {})
+                    }
+                    
                   },
                 ];
+                } else {
+                  updatedApps = [
+                    ...prev,
+                    {
+                      name: selectedTab?.name,
+                      service: selectedTab?.service,
+                    },
+                  ];
+                }
+                
               }
 
               saveToLocalStorage(
@@ -320,9 +357,15 @@ export const AppsNavBar = ({appsMode}) => {
         </MenuItem>
         <MenuItem
           onClick={() => {
-            executeEvent("refreshApp", {
-              tabId: selectedTab?.tabId,
-            });
+            if (selectedTab?.refreshFunc) {
+              selectedTab.refreshFunc(selectedTab?.tabId);
+            
+            } else {
+              executeEvent("refreshApp", {
+                tabId: selectedTab?.tabId,
+              });
+            }
+            
             handleClose();
           }}
         >
@@ -350,6 +393,7 @@ export const AppsNavBar = ({appsMode}) => {
             primary="Refresh"
           />
         </MenuItem>
+        {!selectedTab?.isPrivate && (
         <MenuItem
           onClick={() => {
             executeEvent("copyLink", {
@@ -382,6 +426,7 @@ export const AppsNavBar = ({appsMode}) => {
             primary="Copy link"
           />
         </MenuItem>
+        )}
       </Menu>
     </AppsNavBarParent>
   );

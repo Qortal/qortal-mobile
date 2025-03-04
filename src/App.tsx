@@ -117,9 +117,13 @@ import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
 import {
   canSaveSettingToQdnAtom,
   fullScreenAtom,
+  groupsPropertiesAtom,
   hasSettingsChangedAtom,
   isUsingImportExportSettingsAtom,
+  lastEnteredGroupIdAtom,
+  mailsAtom,
   oldPinnedAppsAtom,
+  qMailLastEnteredTimestampAtom,
   settingsLocalLastUpdatedAtom,
   settingsQDNLastUpdatedAtom,
   sortablePinnedAppsAtom,
@@ -137,6 +141,10 @@ import { useHandleUserInfo } from "./components/Group/useHandleUserInfo";
 import { Minting } from "./components/Minting/Minting";
 import { isRunningGateway } from "./qortalRequests";
 import { GlobalActions } from "./components/GlobalActions/GlobalActions";
+import { useBlockedAddresses } from "./components/Chat/useBlockUsers";
+import { UserLookup } from "./components/UserLookup.tsx/UserLookup";
+import { RegisterName } from "./components/RegisterName";
+import { BuyQortInformation } from "./components/BuyQortInformation";
 
 
 type extStates =
@@ -381,6 +389,8 @@ function App() {
   const [requestBuyOrder, setRequestBuyOrder] = useState<any>(null);
   const [authenticatedMode, setAuthenticatedMode] = useState("qort");
   const [requestAuthentication, setRequestAuthentication] = useState<any>(null);
+  const [isOpenDrawerLookup, setIsOpenDrawerLookup] = useState(false)
+
   const [userInfo, setUserInfo] = useState<any>(null);
   const [balance, setBalance] = useState<any>(null);
   const [ltcBalance, setLtcBalance] = useState<any>(null);
@@ -418,6 +428,9 @@ function App() {
   const holdRefExtState = useRef<extStates>("not-authenticated");
   const isFocusedRef = useRef<boolean>(true);
   const { isShow, onCancel, onOk, show, message } = useModal();
+  const {isUserBlocked,
+    addToBlockList,
+    removeBlockFromList, getAllBlockedUsers} = useBlockedAddresses()
   const {
     isShow: isShowUnsavedChanges,
     onCancel: onCancelUnsavedChanges,
@@ -472,6 +485,9 @@ function App() {
   useQortalGetSaveSettings(userInfo?.name, extState === "authenticated");
   const [fullScreen, setFullScreen] = useRecoilState(fullScreenAtom);
   const {getIndividualUserInfo} = useHandleUserInfo()
+
+  const balanceSetIntervalRef = useRef(null)
+
 
   const { toggleFullScreen } = useAppFullScreen(setFullScreen);
   const generatorRef = useRef(null)
@@ -529,7 +545,10 @@ function App() {
   );
   const resetAtomOldPinnedAppsAtom = useResetRecoilState(oldPinnedAppsAtom);
   const resetAtomIsUsingImportExportSettingsAtom = useResetRecoilState(isUsingImportExportSettingsAtom)
-
+  const resetGroupPropertiesAtom = useResetRecoilState(groupsPropertiesAtom)
+  const resetAtomQMailLastEnteredTimestampAtom = useResetRecoilState(qMailLastEnteredTimestampAtom)
+  const resetAtomMailsAtom = useResetRecoilState(mailsAtom)
+  const resetLastEnteredGroupIdAtom = useResetRecoilState(lastEnteredGroupIdAtom)
   const resetAllRecoil = () => {
     resetAtomSortablePinnedAppsAtom();
     resetAtomCanSaveSettingToQdnAtom();
@@ -537,6 +556,10 @@ function App() {
     resetAtomSettingsLocalLastUpdatedAtom();
     resetAtomOldPinnedAppsAtom();
     resetAtomIsUsingImportExportSettingsAtom();
+    resetAtomQMailLastEnteredTimestampAtom()
+    resetAtomMailsAtom()
+    resetGroupPropertiesAtom()
+    resetLastEnteredGroupIdAtom()
   };
   useEffect(() => {
     if (!isMobile) return;
@@ -763,6 +786,30 @@ function App() {
     };
   };
 
+  const balanceSetInterval = ()=> {
+    try {
+      if(balanceSetIntervalRef?.current){
+        clearInterval(balanceSetIntervalRef?.current);
+      }
+
+      let isCalling = false;
+      balanceSetIntervalRef.current =  setInterval(async () => {
+        if (isCalling) return;
+        isCalling = true;
+        chrome?.runtime?.sendMessage({ action: "balance" }, (response) => {
+          if (!response?.error && !isNaN(+response)) {
+            setBalance(response);
+          }
+     
+          isCalling = false
+        });
+     
+      }, 40000);
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const getBalanceFunc = () => {
     setQortBalanceLoading(true);
     window
@@ -772,6 +819,7 @@ function App() {
           setBalance(response);
         }
         setQortBalanceLoading(false);
+        balanceSetInterval()
       })
       .catch((error) => {
         console.error("Failed to get balance:", error);
@@ -1188,6 +1236,9 @@ function App() {
     resetAllRecoil();
     setShowSeed(false)
     setCreationStep(1)
+    if(balanceSetIntervalRef?.current){
+      clearInterval(balanceSetIntervalRef?.current);
+    }
   };
 
   function roundUpToDecimals(number, decimals = 8) {
@@ -1355,6 +1406,18 @@ function App() {
 
     return () => {
       unsubscribeFromEvent("openPaymentInternal", openPaymentInternal);
+    };
+  }, []);
+
+  const openUserProfile = (e) => {
+   setIsOpenDrawerProfile(true);
+  };
+
+  useEffect(() => {
+    subscribeToEvent("openUserProfile", openUserProfile);
+
+    return () => {
+      unsubscribeFromEvent("openUserProfile", openUserProfile);
     };
   }, []);
 
@@ -1595,7 +1658,7 @@ function App() {
                     textDecoration: "underline",
                   }}
                   onClick={() => {
-                    setOpenRegisterName(true);
+                    executeEvent('openRegisterName', {})
                   }}
                 >
                   REGISTER NAME
@@ -1784,7 +1847,11 @@ function App() {
             setInfoSnackCustom: setInfoSnack,
             userInfo: userInfo,
             downloadResource,
-            getIndividualUserInfo
+            getIndividualUserInfo,
+            isUserBlocked,
+            addToBlockList,
+            removeBlockFromList,
+            getAllBlockedUsers
           }}
         >
           <Box
@@ -1835,7 +1902,7 @@ function App() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            zIndex: 6,
+            zIndex: 10000,
           }}
         >
           <Spacer height="22px" />
@@ -2885,7 +2952,7 @@ await showInfo({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            zIndex: 6,
+            zIndex: 10000,
           }}
         >
           <Spacer height="48px" />
@@ -2985,6 +3052,9 @@ await showInfo({
           open={isShow}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
+          sx={{
+            zIndex: 10001
+          }}
         >
           <DialogTitle id="alert-dialog-title">{message.paymentFee ? "Payment"  : "Publish"}</DialogTitle>
           <DialogContent>
@@ -3059,7 +3129,7 @@ await showInfo({
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle id="alert-dialog-title">{"Warning"}</DialogTitle>
+          <DialogTitle id="alert-dialog-title">{"LOGOUT"}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
               {messageUnsavedChanges.message}
@@ -3409,6 +3479,9 @@ await showInfo({
       >
         {renderProfile()}
       </DrawerComponent>
+      <UserLookup isOpenDrawerLookup={isOpenDrawerLookup} setIsOpenDrawerLookup={setIsOpenDrawerLookup} />
+      <RegisterName balance={balance}  show={show} setTxList={setTxList} userInfo={userInfo} setOpenSnack={setOpenSnack}  setInfoSnack={setInfoSnack}/>
+      <BuyQortInformation balance={balance} />
      </GlobalContext.Provider>
      {extState === "create-wallet" && walletToBeDownloaded && (
          <ButtonBase onClick={()=> {
