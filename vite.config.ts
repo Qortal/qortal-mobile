@@ -12,15 +12,17 @@ export default defineConfig({
  
   assetsInclude: ['**/*.wasm'], 
   plugins: [react(), wasm(), topLevelAwait(), VitePWA({
-    registerType: 'prompt', 
+    registerType: "autoUpdate",
+
     manifest: {
       name: 'Qortal Go',
       short_name: 'Go',
       description: 'Your easy access to the Qortal blockchain',
       start_url: '/',
       display: 'standalone',
-      theme_color: '#ffffff',
-      background_color: '#ffffff',
+
+      theme_color: '#1f2023',
+      background_color: '#1f2023',
       icons: [
         {
           src: '/qortal192.png',
@@ -37,6 +39,8 @@ export default defineConfig({
     workbox: {
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
       disableDevLogs: true, // Suppresses logs in development
+      skipWaiting: true,  // Forces the new version to activate immediately
+      clientsClaim: true  // Makes the new service worker take control
     },
   })],
   build: {

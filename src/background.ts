@@ -114,22 +114,31 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { executeEvent } from "./utils/events";
 import TradeBotRespondRequest from "./transactions/TradeBotRespondRequest";
 
+
+export const isNative = Capacitor.isNativePlatform();
+
+
 const uid = new ShortUniqueId({ length: 9, dictionary: 'number'  });
 
 const generateId = ()=> {
   return parseInt(uid.rnd())
 }
-LocalNotifications.requestPermissions().then(permission => {
-  if (permission.display === 'granted') {
-    console.log("Notifications enabled");
-  }
-}).catch((error)=> console.error(error));
 
-FilePicker.requestPermissions().then(permission => {
-  if (permission?.publicStorage === 'granted') {
-    console.log("File access permission granted");
-  }
-}).catch((error)=> console.error(error));;
+if(isNative){
+
+  LocalNotifications.requestPermissions().then(permission => {
+    if (permission.display === 'granted') {
+      console.log("Notifications enabled");
+    }
+  }).catch((error)=> console.error(error));
+  
+  FilePicker.requestPermissions().then(permission => {
+    if (permission?.publicStorage === 'granted') {
+      console.log("File access permission granted");
+    }
+  }).catch((error)=> console.error(error));
+}
+
 
 
 export let groupSecretkeys = {}
@@ -435,7 +444,6 @@ export async function performPowTaskWeb(chatBytes, difficulty) {
 }
 
 export async function performPowTask(chatBytes, difficulty) {
-  const isNative = Capacitor.isNativePlatform();
   const chatBytesArray = Uint8Array.from(Object.values(chatBytes));
   const result = isNative ? await NativePOW.computeProofOfWork({ chatBytes, difficulty }) : await performPowTaskWeb(chatBytes, difficulty);
   return  {nonce: result.nonce, chatBytesArray}
@@ -3375,7 +3383,9 @@ export const checkThreads = async (bringBack) => {
   }
 };
 
-// Configure Background Fetch
+if(isNative){
+
+  // Configure Background Fetch
 BackgroundFetch.configure({
   minimumFetchInterval: 15,    // Minimum 15-minute interval
   enableHeadless: true,        // Enable headless mode for Android
@@ -3400,7 +3410,9 @@ BackgroundFetch.configure({
   BackgroundFetch.finish(taskId);
 });
 
+}
 
+if(isNative){
 
 LocalNotifications.addListener('localNotificationActionPerformed', async (event) => {
 
@@ -3430,6 +3442,9 @@ LocalNotifications.addListener('localNotificationActionPerformed', async (event)
   }
 });
 
+}
+
+
 
 const initializeBackButton = () => {
 
@@ -3443,5 +3458,6 @@ const initializeBackButton = () => {
   
 };
 
-// Call this function on app startup
-initializeBackButton();
+if(isNative){
+  initializeBackButton();
+} 

@@ -147,6 +147,7 @@ import { useBlockedAddresses } from "./components/Chat/useBlockUsers";
 import { UserLookup } from "./components/UserLookup.tsx/UserLookup";
 import { RegisterName } from "./components/RegisterName";
 import { BuyQortInformation } from "./components/BuyQortInformation";
+import { InstallPWA } from "./components/InstallPWA";
 
 
 type extStates =
@@ -1839,6 +1840,13 @@ function App() {
         backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
       }}
     >
+          
+              <div style={{
+                display: !isNative && extState === "not-authenticated" ? 'block' : 'none'
+              }}>
+                <InstallPWA />
+                </div>
+       
        <GlobalContext.Provider value={{
             showTutorial,
             openTutorialModal,
