@@ -29,6 +29,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { useSetRecoilState } from "recoil";
 import { blobControllerAtom } from "../../atoms/global";
 import { decodeIfEncoded } from "../../utils/decode";
+import { isNative } from "../Apps/useQortalMessageListener";
 
 
 export const AttachmentCard = ({
@@ -67,7 +68,7 @@ export const AttachmentCard = ({
               setInfoSnack({
                 type: "success",
                 message:
-                  "File saved in INTERNAL STORAGE, DOCUMENT folder.",
+                 isNative ?  "File saved in INTERNAL STORAGE, DOCUMENT folder." : "File downloaded",
               });
             })
             .catch(error => {
@@ -126,7 +127,7 @@ export const AttachmentCard = ({
         setInfoSnack({
           type: "success",
           message:
-            "File saved in INTERNAL STORAGE, DOCUMENT folder.",
+          isNative ?  "File saved in INTERNAL STORAGE, DOCUMENT folder." : "File downloaded",
         });
       } catch (error) {
         console.error(error)

@@ -7,8 +7,11 @@ import { Browser } from '@capacitor/browser';
 import { saveFile } from '../../qortalRequests/get';
 import { mimeToExtensionMap } from '../../utils/memeTypes';
 import { MyContext } from '../../App';
+import FileSaver from 'file-saver';
 
+import { Capacitor } from '@capacitor/core';
 
+export const isNative = Capacitor.isNativePlatform();
 
 
 export const saveFileInChunks = async (
@@ -16,7 +19,7 @@ export const saveFileInChunks = async (
   fileName: string,
   chunkSize = 1024 * 1024
 ) => {
-  try {
+
     let offset = 0;
     let isFirstChunk = true;
 
@@ -77,9 +80,7 @@ export const saveFileInChunks = async (
       isFirstChunk = false;
     }
 
-  } catch (error) {
-    throw error
-  }
+
 };
 
 
@@ -317,9 +318,11 @@ const UIQortalRequests = [
  
      
       setOpenSnackGlobal(true);
-      
+      if(isNative){
      await saveFileInChunks(blob, filename)
-    
+      } else {
+        FileSaver.saveAs(blob, filename)
+      }
      setInfoSnackCustom({
       type: "success",
       message:

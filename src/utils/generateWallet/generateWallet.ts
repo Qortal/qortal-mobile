@@ -9,6 +9,11 @@ import * as WORDLISTS from './wordlists';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import ShortUniqueId from "short-unique-id";
 const uid = new ShortUniqueId({ length: 8 });
+import FileSaver from 'file-saver';
+import { Capacitor } from '@capacitor/core';
+
+const isNative = Capacitor.isNativePlatform();
+
 
 export function generateRandomSentence(template = 'adverb verb noun adjective noun adverb verb noun adjective noun adjective verbed adjective noun', maxWordLength = 0, capitalize = true) {
     const partsOfSpeechMap = {
@@ -89,22 +94,30 @@ export const createAccount = async(generatedSeedPhrase)=> {
   }
 
  export const saveFileToDisk = async (data: any, qortAddress: string) => {
+    if(isNative){
+        const dataString = JSON.stringify(data);
+        const fileName = `qortal_backup_${qortAddress}_${uid.rnd()}.json`;
+    
+        // Write the file to the Filesystem
+        await Filesystem.writeFile({
+          path: fileName,
+          data: dataString,
+          directory: Directory.Documents, // Save in the Documents folder
+          encoding: Encoding.UTF8,
+        });
+    } else {
+        const dataString = JSON.stringify(data);
+        const blob = new Blob([dataString], { type: 'application/json' });
+    const fileName = "qortal_backup_" + qortAddress + ".json";
 
-    const dataString = JSON.stringify(data);
-    const fileName = `qortal_backup_${qortAddress}_${uid.rnd()}.json`;
-
-    // Write the file to the Filesystem
-    await Filesystem.writeFile({
-      path: fileName,
-      data: dataString,
-      directory: Directory.Documents, // Save in the Documents folder
-      encoding: Encoding.UTF8,
-    });
+    await FileSaver.saveAs(blob, fileName);
+    }
+   
 
 };
 
 export const saveSeedPhraseToDisk = async (data) => {
-   
+    if(isNative){
     const fileName = `qortal_seedphrase_${uid.rnd()}.txt`
 
     await Filesystem.writeFile({
@@ -113,7 +126,12 @@ export const saveSeedPhraseToDisk = async (data) => {
         directory: Directory.Documents, // Save in the Documents folder
         encoding: Encoding.UTF8,
       });
-
+    } else {
+        const blob = new Blob([data], { type: 'text/plain;charset=utf-8' })
+        const fileName = "qortal_seedphrase.txt"
+    
+    await FileSaver.saveAs(blob, fileName);
+    }
 }
 
 const hasExtension = (filename) => {
@@ -122,13 +140,25 @@ const hasExtension = (filename) => {
 
 
 export const saveFileToDiskGeneric = async (blob, filename) => {
-    const timestamp = new Date()
-                        .toISOString()
-                        .replace(/:/g, "-"); // Safe timestamp for filenames
-                
-                        const fileExtension = mimeToExtensionMap[blob.type]
+    if(isNative){
+        const timestamp = new Date()
+        .toISOString()
+        .replace(/:/g, "-"); // Safe timestamp for filenames
+
+        const fileExtension = mimeToExtensionMap[blob.type]
 let fileName = filename ||  "qortal_file_" + timestamp + "." + fileExtension;
 fileName = hasExtension(fileName) ? fileName : fileName  + "." + fileExtension;
 await saveFileInChunks(blob, fileName)
-// await FileSaver.saveAs(blob, fileName);
+    } else {
+        const timestamp = new Date()
+        .toISOString()
+        .replace(/:/g, "-"); // Safe timestamp for filenames
+
+        const fileExtension = mimeToExtensionMap[blob.type]
+let fileName = filename ||  "qortal_file_" + timestamp + "." + fileExtension;
+fileName = hasExtension(fileName) ? fileName : fileName  + "." + fileExtension;
+
+await FileSaver.saveAs(blob, fileName);
+    }
+  
 }

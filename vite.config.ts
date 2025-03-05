@@ -6,10 +6,39 @@ import { resolve } from 'path';
 import fixReactVirtualized from 'esbuild-plugin-react-virtualized'
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import { VitePWA } from 'vite-plugin-pwa';
+
 export default defineConfig({
  
   assetsInclude: ['**/*.wasm'], 
-  plugins: [react(), wasm(), topLevelAwait()],
+  plugins: [react(), wasm(), topLevelAwait(), VitePWA({
+    registerType: 'prompt', 
+    manifest: {
+      name: 'Qortal Go',
+      short_name: 'Go',
+      description: 'Your easy access to the Qortal blockchain',
+      start_url: '/',
+      display: 'standalone',
+      theme_color: '#ffffff',
+      background_color: '#ffffff',
+      icons: [
+        {
+          src: '/qortal192.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          src: '/qortal.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ],
+    },
+    workbox: {
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+      disableDevLogs: true, // Suppresses logs in development
+    },
+  })],
   build: {
     rollupOptions: {
       // Specify multiple entry points for Rollup

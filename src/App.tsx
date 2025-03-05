@@ -132,7 +132,7 @@ import {
 } from "./atoms/global";
 import { useAppFullScreen } from "./useAppFullscreen";
 import { NotAuthenticated, manifestData } from "./ExtStates/NotAuthenticated";
-import {  openIndexedDB, showSaveFilePicker } from "./components/Apps/useQortalMessageListener";
+import {  isNative, openIndexedDB, showSaveFilePicker } from "./components/Apps/useQortalMessageListener";
 import { fileToBase64 } from "./utils/fileReading";
 import { handleGetFileFromIndexedDB } from "./utils/indexedDB";
 import { Wallets } from "./Wallets";
@@ -499,7 +499,7 @@ function App() {
       const seedPhrase = generatorRef.current.parsedString
       saveSeedPhraseToDisk(seedPhrase)
       await showInfo({
-        message: `Your seed phrase was saved to INTERNAL storage, in the document folder. Keep that file secure.`,
+        message: isNative ? `Your seed phrase was downloaded by your browser.. Keep that file secure.` : `Your seed phrase was saved to INTERNAL storage, in the document folder. Keep that file secure.`,
        })
     } catch (error) {
       
@@ -2705,7 +2705,7 @@ function App() {
                 fontWeight: 600,
               }}
             >
-              Download Wallet
+              Download Account
             </TextP>
           </Box>
           <Spacer height="35px" />
@@ -2735,10 +2735,10 @@ function App() {
               <CustomButton onClick={async ()=> {
                 await saveFileToDiskFunc()
 await showInfo({
-  message: `Your wallet file was saved to internal storage, in the document folder. Keep that file secure.`,
+  message: isNative ? `Your account file was saved to internal storage, in the document folder. Keep that file secure.` : `Your account file was downloaded by your browser. Keep that file secure.` ,
  })
               }}>
-                Download wallet
+                Download account
               </CustomButton>
             </>
           )}
@@ -2972,7 +2972,7 @@ await showInfo({
                   await saveFileToDiskFunc();
                   returnToMain();
                   await showInfo({
-                    message: `Your wallet file was saved to internal storage, in the document folder. Keep that file secure.`,
+                    message: isNative ? `Your account file was saved to internal storage, in the document folder. Keep that file secure.` : `Your account file was downloaded by your browser. Keep that file secure.`
                    })
                 }}
               >

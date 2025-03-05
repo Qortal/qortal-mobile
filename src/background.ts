@@ -13,6 +13,8 @@ import { PUBLIC_NOTIFICATION_CODE_FIRST_SECRET_KEY } from "./constants/codes";
 import ShortUniqueId from "short-unique-id";
 import { App as CapacitorApp } from '@capacitor/app';
 import Base58 from "./deps/Base58";
+import ChatComputePowWorker from './chatComputePow.worker.js?worker';
+
 import {
   base64ToUint8Array,
   decryptSingle,
@@ -33,6 +35,8 @@ import NativePOW from './utils/nativepow'
 import axios from 'axios'
 import { TradeBotRespondMultipleRequest } from "./transactions/TradeBotRespondMultipleRequest";
 import { RESOURCE_TYPE_NUMBER_GROUP_CHAT_REACTIONS } from "./constants/resourceTypes";
+import { Capacitor } from '@capacitor/core';
+
 import {
   addDataPublishesCase,
   addEnteredQmailTimestampCase,
@@ -405,11 +409,35 @@ function playNotificationSound() {
   // chrome.runtime.sendMessage({ action: "PLAY_NOTIFICATION_SOUND" });
 }
 
-// const worker = new ChatComputePowWorker()
+const worker = new ChatComputePowWorker()
+
+export async function performPowTaskWeb(chatBytes, difficulty) {
+  return new Promise((resolve, reject) => {
+    worker.onmessage = (e) => {
+      if (e.data.error) {
+        reject(new Error(e.data.error));
+      } else {
+        resolve(e.data);
+      }
+    };
+
+    worker.onerror = (err) => {
+      reject(err);
+    };
+
+    // Send the task to the worker
+    worker.postMessage({
+      chatBytes,
+      path: `${import.meta.env.BASE_URL}memory-pow.wasm.full`,
+      difficulty,
+    });
+  });
+}
 
 export async function performPowTask(chatBytes, difficulty) {
+  const isNative = Capacitor.isNativePlatform();
   const chatBytesArray = Uint8Array.from(Object.values(chatBytes));
-  const result = await NativePOW.computeProofOfWork({ chatBytes, difficulty });
+  const result = isNative ? await NativePOW.computeProofOfWork({ chatBytes, difficulty }) : await performPowTaskWeb(chatBytes, difficulty);
   return  {nonce: result.nonce, chatBytesArray}
   
 }

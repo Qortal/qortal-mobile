@@ -30,6 +30,7 @@ import { crypto } from "./constants/decryptWallet";
 import { LoadingButton } from "@mui/lab";
 import { PasswordField } from "./components";
 import { FilePicker } from '@capawesome/capacitor-file-picker';
+import { isNative } from "./components/Apps/useQortalMessageListener";
 
 const parsefilenameQortal = (filename) => {
   return filename.startsWith("qortal_backup_") ? filename.slice(14) : filename;
@@ -118,6 +119,8 @@ export const Wallets = ({ setExtState, setRawWallet, rawWallet }) => {
       console.error("Error picking JSON file:", error);
     }
   };
+
+
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
@@ -267,7 +270,7 @@ export const Wallets = ({ setExtState, setRawWallet, rawWallet }) => {
           </>
         ) : (
           <>
-            <Typography>Your saved wallets</Typography>
+            <Typography>Your saved accounts</Typography>
           </>
         )}
       </Box>
@@ -328,15 +331,25 @@ export const Wallets = ({ setExtState, setRawWallet, rawWallet }) => {
         >
           Add seed-phrase
         </CustomButton>
-        <CustomButton
+        {isNative ? (
+          <CustomButton
           sx={{
             padding: "10px",
           }}
           onClick={handleFilePick}
         >
       
-          Add wallets
+          Add account
         </CustomButton>
+        ) : (
+          <CustomButton sx={{
+            padding: '10px'
+          }} {...getRootProps()}>
+            <input {...getInputProps()} />
+            Add account
+          </CustomButton>
+        )}
+        
       </Box>
 
       <Dialog

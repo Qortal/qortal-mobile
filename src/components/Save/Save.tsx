@@ -23,6 +23,7 @@ import { saveToLocalStorage } from "../Apps/AppsNavBar";
 import { decryptData, encryptData } from "../../qortalRequests/get";
 import { saveFileToDiskGeneric } from "../../utils/generateWallet/generateWallet";
 import { base64ToUint8Array, uint8ArrayToObject } from "../../backgroundFunctions/encryption";
+import { isNative } from "../Apps/useQortalMessageListener";
 
 export const handleImportClick = async () => {
   const fileInput = document.createElement('input');
@@ -544,7 +545,7 @@ export const Save = ({ isDesktop, disableWidth, myName }) => {
                         await saveFileToDiskGeneric(blob, filename)
                         setInfoSnack({
                           type: "success",
-                          message: "saved in INTERNAL storage under DOCUMENTS",
+                          message: isNative ? "saved in INTERNAL storage under DOCUMENTS" : "file saved by your browser",
                         });
                         setOpenSnack(true);
                         

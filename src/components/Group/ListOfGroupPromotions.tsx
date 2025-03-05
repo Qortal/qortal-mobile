@@ -383,7 +383,6 @@ export const ListOfGroupPromotions = () => {
         <>
           <Box
             sx={{
-              width: '100%',
               display: "flex",
               flexDirection: "column",
               padding: "0px 20px",
