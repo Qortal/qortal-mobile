@@ -466,7 +466,7 @@ export const Group = ({
   const [openAddGroup, setOpenAddGroup] = useState(false);
   const [isInitialGroups, setIsInitialGroups] = useState(false);
   const [openManageMembers, setOpenManageMembers] = useState(false);
-  const { setMemberGroups, memberGroups, rootHeight } = useContext(MyContext);
+  const { setMemberGroups, memberGroups, rootHeight, isRunningPublicNode } = useContext(MyContext);
   const lastGroupNotification = useRef<null | number>(null);
   const [timestampEnterData, setTimestampEnterData] = useState({});
   const [chatMode, setChatMode] = useState("groups");
@@ -2148,21 +2148,24 @@ export const Group = ({
                 />
                 Group Mgmt
               </CustomButton>
-              <CustomButton
-                onClick={() => {
-                  setIsOpenBlockedUserModal(true);
-                }}
-                sx={{
-                  minWidth: 'unset',
-                  padding: '10px'
-                }}
-              >
-                <BlockIcon
-                  sx={{
-                    color: "white",
-                  }}
-                />
-              </CustomButton>
+              {!isRunningPublicNode && (
+                 <CustomButton
+                 onClick={() => {
+                   setIsOpenBlockedUserModal(true);
+                 }}
+                 sx={{
+                   minWidth: 'unset',
+                   padding: '10px'
+                 }}
+               >
+                 <BlockIcon
+                   sx={{
+                     color: "white",
+                   }}
+                 />
+               </CustomButton>
+              )}
+             
               </>
           )}
           {chatMode === "directs" && (

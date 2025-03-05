@@ -6,6 +6,7 @@ import { MyContext } from '../App';
 
 export const WrapperUserAction = ({ children, address, name, disabled }) => {
   const [anchorEl, setAnchorEl] = useState(null);
+  const {isRunningPublicNode} = useContext(MyContext)
 
   // Handle child element click to open Popover
   const handleChildClick = (event) => {
@@ -137,7 +138,10 @@ export const WrapperUserAction = ({ children, address, name, disabled }) => {
              >
               User lookup
              </Button>
-             <BlockUser handleClose={handleClose} address={address} name={name} />
+             {!isRunningPublicNode && (
+              <BlockUser handleClose={handleClose} address={address} name={name} />
+             )}
+             
         </Box>
       </Popover>
     </>

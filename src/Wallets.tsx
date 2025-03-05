@@ -367,10 +367,15 @@ export const Wallets = ({ setExtState, setRawWallet, rawWallet }) => {
             />
             <Spacer height="7px" />
             <Label>Seed-phrase</Label>
-            <Input
-              placeholder="Seed-phrase"
+            <PasswordField
+           placeholder="Seed-phrase"
+              id="standard-adornment-password"
               value={seedValue}
               onChange={(e) => setSeedValue(e.target.value)}
+              autoComplete="off"
+              sx={{
+                width: '100%'
+              }}
             />
             <Spacer height="7px" />
 
@@ -380,6 +385,9 @@ export const Wallets = ({ setExtState, setRawWallet, rawWallet }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="off"
+              sx={{
+                width: '100%'
+              }}
             />
           </Box>
         </DialogContent>

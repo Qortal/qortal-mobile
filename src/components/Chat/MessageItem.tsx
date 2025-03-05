@@ -201,7 +201,7 @@ const onSeenFunc = useCallback(()=> {
                 disableFocusListener
                 disableHoverListener
                 disableTouchListener
-                title={`level ${userInfo?.level}`}
+                title={`level ${userInfo ?? 0}`}
                 slotProps={{
                   popper: {
                     disablePortal: true,
@@ -210,7 +210,7 @@ const onSeenFunc = useCallback(()=> {
               >
          
             <img onClick={handleTooltipOpen} style={{
-              visibility: userInfo?.level !== undefined ? 'visible' : 'hidden',
+              visibility: 'visible',
               width: '30px',
               height: 'auto'
             }} src={getBadgeImg(userInfo)} /> 

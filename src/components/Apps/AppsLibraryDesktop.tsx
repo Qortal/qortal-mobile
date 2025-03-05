@@ -52,7 +52,6 @@ const officialAppList = [
   "q-share",
   "q-support",
   "q-mail",
-  "qombo",
   "q-fund",
   "q-shop",
   "q-manager",

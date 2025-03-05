@@ -392,6 +392,7 @@ function App() {
   const [authenticatedMode, setAuthenticatedMode] = useState("qort");
   const [requestAuthentication, setRequestAuthentication] = useState<any>(null);
   const [isOpenDrawerLookup, setIsOpenDrawerLookup] = useState(false)
+  const [isRunningPublicNode, setIsRunningPublicNode] = useState(false)
 
   const [userInfo, setUserInfo] = useState<any>(null);
   const [balance, setBalance] = useState<any>(null);
@@ -591,6 +592,16 @@ function App() {
   const handleSetGlobalApikey = (key) => {
     globalApiKey = key;
   };
+
+  useEffect(()=> {
+    isRunningGateway().then((res)=> {
+      setIsRunningPublicNode(res)
+    }).catch((error)=> {
+      console.error(error)
+    })
+  }, [extState])
+
+
   useEffect(() => {
     try {
       setIsLoading(true);
@@ -1879,7 +1890,8 @@ function App() {
             isUserBlocked,
             addToBlockList,
             removeBlockFromList,
-            getAllBlockedUsers
+            getAllBlockedUsers,
+            isRunningPublicNode
           }}
         >
           <Box
