@@ -242,7 +242,7 @@ export const getForeignKey = async (foreignBlockchain)=> {
 
 export const pauseAllQueues = () => controlAllQueues("pause");
 export const resumeAllQueues = () => controlAllQueues("resume");
-const checkDifference = (createdTimestamp) => {
+export const checkDifference = (createdTimestamp) => {
   return (
     Date.now() - createdTimestamp < timeDifferenceForNotificationChatsBackground
   );
@@ -3383,6 +3383,143 @@ export const checkThreads = async (bringBack) => {
   }
 };
 
+export async function getTimestampLatestPayment() {
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  const key = `latest-payment-${address}`;
+  const res = await getData<any>(key).catch(() => null);
+  if (res) {
+    const parsedData = res;
+    return parsedData;
+  } else return 0
+}
+
+export async function addTimestampLatestPayment(timestamp) {
+  const wallet = await getSaveWallet();
+  const address = wallet.address0;
+  
+  return await new Promise((resolve, reject) => {
+    storeData(`latest-payment-${address}`, timestamp)
+      .then(() => resolve(true))
+      .catch((error) => {
+        reject(new Error(error.message || "Error saving data"));
+      });
+  });
+}
+
+
+export const checkPaymentsForNotifications = async (address, isBackground) => {
+  try {
+    const isDisableNotifications =
+    (await getUserSettings({ key: "disable-push-notifications" })) || false;
+    if(isDisableNotifications) return
+      let latestPayment = null
+          const savedtimestamp = await getTimestampLatestPayment();
+
+          const url = await createEndpoint(
+            `/transactions/search?txType=PAYMENT&address=${address}&confirmationStatus=CONFIRMED&limit=5&reverse=true`
+          );
+         
+         const response =   await fetch(url, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+        
+          const responseData = await response.json();
+
+          const latestTx = responseData.filter(
+            (tx) => tx?.creatorAddress !== address && tx?.recipient === address
+          )[0];
+          if (!latestTx) {
+            return; // continue to the next group
+          }
+          if (
+            checkDifference(latestTx.timestamp) &&
+            (!savedtimestamp ||
+              latestTx.timestamp >
+                savedtimestamp)
+          ) {
+            if(latestTx.timestamp){
+              latestPayment = latestTx
+              await addTimestampLatestPayment(latestTx.timestamp);
+            }
+           
+            // save new timestamp
+          }
+       
+        
+
+    if (
+      latestPayment
+    ) {
+      const title = "New payment!";
+      const body = `You have received a new payment of ${latestPayment?.amount} QORT`;
+      // Create a unique notification ID with type and group announcement details
+      const notificationId =
+      encodeURIComponent("payment_notification_" +
+        Date.now() +
+        "_type=payment-announcement");
+
+     
+      if(!isNative){
+          // Create and show the notification
+      const notification = new window.Notification(title, {
+        body,
+        icon: window.location.origin + "/qortal192.png",
+        data: { id: notificationId },
+      });
+
+      // Handle notification click with specific actions based on `notificationId`
+      notification.onclick = () => {
+        notification.close(); // Clean up the notification on click
+      };
+
+      // Automatically close the notification after 5 seconds if it’s not clicked
+      setTimeout(() => {
+        notification.close();
+      }, 10000); // Close after 5 seconds
+
+      } else {
+        const notificationId = generateId()
+        LocalNotifications.schedule({
+          notifications: [
+            {
+              title,
+              body,
+              id: notificationId,
+              schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
+              extra: {
+                type: 'payment',
+              }
+            }
+          ]
+        });
+
+
+      }
+    
+      
+      if(!isBackground){
+        const targetOrigin = window.location.origin;
+
+      window.postMessage(
+        {
+          action: "SET_PAYMENT_ANNOUNCEMENT",
+          payload: latestPayment,
+        },
+        targetOrigin
+      );
+      }
+      
+    }
+   
+  } catch (error) {
+    console.error(error)
+  } 
+};
+
 if(isNative){
 
   // Configure Background Fetch
@@ -3397,6 +3534,7 @@ BackgroundFetch.configure({
    checkActiveChatsForNotifications();
    checkNewMessages();
   checkThreads();
+  checkPaymentsForNotifications(address, true)
 
   await new Promise((res)=> {
     setTimeout(() => {
@@ -3461,3 +3599,26 @@ const initializeBackButton = () => {
 if(isNative){
   initializeBackButton();
 } 
+
+
+
+
+let paymentsCheckInterval
+
+
+
+  if (!paymentsCheckInterval) {
+    paymentsCheckInterval = setInterval(async () => {
+      try {
+        // This would replace the Chrome alarm callback
+        const wallet = await getSaveWallet();
+        const address = wallet?.address0;
+        if (!address) return;
+
+        checkPaymentsForNotifications(address);
+        
+      } catch (error) {
+        console.error('Error checking payments:', error);
+      }
+    }, 3 * 60 * 1000); // 3 minutes
+  }

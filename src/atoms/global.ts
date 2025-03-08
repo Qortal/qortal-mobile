@@ -171,3 +171,8 @@ export const lastEnteredGroupIdAtom = atom({
   key: 'lastEnteredGroupIdAtom', 
   default: null, 
 });
+
+export const lastPaymentSeenTimestampAtom = atom<null | number>({
+  key: 'lastPaymentSeenTimestampAtom', 
+  default: null, 
+});

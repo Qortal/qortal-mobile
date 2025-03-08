@@ -11,6 +11,7 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Card,
 } from "@mui/material";
 import { HomeIcon } from "../../assets/Icons/HomeIcon";
 import { LogoutIcon } from "../../assets/Icons/LogoutIcon";
@@ -24,6 +25,9 @@ import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import { useRecoilState } from "recoil";
 import { fullScreenAtom, hasSettingsChangedAtom } from "../../atoms/global";
 import { useAppFullScreen } from "../../useAppFullscreen";
+import { useHandlePaymentNotification } from "../../hooks/useHandlePaymentNotification";
+import { formatDate } from "../../utils/time";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 
 const Header = ({
   logoutFunc,
@@ -36,8 +40,14 @@ const Header = ({
   setMobileViewMode,
   myName,
   setSelectedDirect,
-  setNewChat
+  setNewChat,
+  address
 }) => {
+  const {latestTx,
+    getNameOrAddressOfSenderMiddle,
+    hasNewPayment,
+    setLastEnteredTimestampPayment,
+    nameAddressOfSender} = useHandlePaymentNotification(address)
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const [fullScreen, setFullScreen] = useRecoilState(fullScreenAtom);
@@ -48,6 +58,9 @@ const Header = ({
 
   const handleClose = () => {
     setAnchorEl(null);
+    if(hasNewPayment){
+      setLastEnteredTimestampPayment(Date.now())
+    }
   };
 
   if (isThin) {
@@ -92,7 +105,7 @@ const Header = ({
              
               onClick={handleClick}
             >
-              <NotificationIcon height={20} width={21} color={hasUnreadDirects || hasUnreadGroups ? "var(--unread)" : "rgba(145, 145, 147, 1)"} />
+              <NotificationIcon height={20} width={21} color={hasNewPayment || hasUnreadDirects || hasUnreadGroups ? "var(--unread)" : "rgba(145, 145, 147, 1)"} />
             </ButtonBase>
             {fullScreen && (
                <ButtonBase onClick={()=> {
@@ -171,9 +184,9 @@ const Header = ({
           slotProps={{
             paper: {
               sx: {
+                mnWidth: '148px',
                 backgroundColor: 'var(--bg-primary)',
                 color: '#fff',
-                width: '148px',
                 borderRadius: '5px'
               },
             },
@@ -228,6 +241,65 @@ const Header = ({
                   },
                 }} primary="Messaging" />
         </MenuItem>
+        {hasNewPayment && (
+                    <MenuItem
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "5px",
+                      width: "100%",
+                      alignItems: "flex-start",
+                      textWrap: "auto",
+                      cursor: 'default'
+                    }}
+                    onClick={(e) => {
+                           // executeEvent("addTab", { data: { service: 'APP', name: 'q-mail' } });
+                // executeEvent("open-apps-mode", { });
+                    }}
+                  >
+                    <Card sx={{
+                      padding: '10px',
+                      width: '100%',
+                      gap: '5px',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        justifyContent: "space-between",
+                         fontSize: '13px'
+                      }}
+                    >
+                      <AccountBalanceWalletIcon
+                        sx={{
+                          color: "var(--unread)",
+                        }}
+                      />{" "}
+                      {formatDate(latestTx?.timestamp)}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                     
+                      <Typography sx={{
+                      fontSize: '13px'
+                    }}>{latestTx?.amount}</Typography>
+                    </Box>
+                   <Typography sx={{
+                      fontSize: '13px'
+                    }}>{nameAddressOfSender.current[latestTx?.creatorAddress] || getNameOrAddressOfSenderMiddle(latestTx?.creatorAddress)}</Typography>
+                
+                    </Card>
+                  </MenuItem>
+                )}
        </Menu>
       </AppBar>
     );
@@ -358,7 +430,7 @@ const Header = ({
           }}
         >
           <IconButton  onClick={handleClick} color="inherit">
-            <NotificationIcon color={hasUnreadDirects || hasUnreadGroups ? "var(--unread)" : "rgba(255, 255, 255, 1)"} />
+            <NotificationIcon color={hasNewPayment || hasUnreadDirects || hasUnreadGroups ? "var(--unread)" : "rgba(255, 255, 255, 1)"} />
           </IconButton>
         </Box>
 
@@ -411,7 +483,7 @@ const Header = ({
               sx: {
                 backgroundColor: 'var(--bg-primary)',
                 color: '#fff',
-                width: '148px',
+                mnWidth: '148px',
                 borderRadius: '5px'
               },
             },
@@ -439,7 +511,7 @@ const Header = ({
                   "& .MuiTypography-root": {
                     fontSize: "12px",
                     fontWeight: 600,
-                    color: hasUnreadDirects ? "var(--unread)" :"rgba(250, 250, 250, 0.5)"
+                    color: hasUnreadGroups ? "var(--unread)" :"rgba(250, 250, 250, 0.5)"
                   },
                 }} primary="Groups" />
         </MenuItem>
@@ -464,6 +536,65 @@ const Header = ({
                   },
                 }} primary="Messaging" />
         </MenuItem>
+                {hasNewPayment && (
+                    <MenuItem
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "5px",
+                      width: "100%",
+                      alignItems: "flex-start",
+                      textWrap: "auto",
+                      cursor: 'default'
+                    }}
+                    onClick={(e) => {
+                           // executeEvent("addTab", { data: { service: 'APP', name: 'q-mail' } });
+                // executeEvent("open-apps-mode", { });
+                    }}
+                  >
+                    <Card sx={{
+                      padding: '10px',
+                      width: '100%',
+                      gap: '5px',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        justifyContent: "space-between",
+                         fontSize: '13px'
+                      }}
+                    >
+                      <AccountBalanceWalletIcon
+                        sx={{
+                          color: "var(--unread)",
+                        }}
+                      />{" "}
+                      {formatDate(latestTx?.timestamp)}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                     
+                      <Typography sx={{
+                      fontSize: '13px'
+                    }}>{latestTx?.amount}</Typography>
+                    </Box>
+                   <Typography sx={{
+                      fontSize: '13px'
+                    }}>{nameAddressOfSender.current[latestTx?.creatorAddress] || getNameOrAddressOfSenderMiddle(latestTx?.creatorAddress)}</Typography>
+                
+                    </Card>
+                  </MenuItem>
+                )}
        </Menu>
     </>
   );

@@ -2206,6 +2206,7 @@ export const Group = ({
       
       {isMobile && (
          <Header
+         address={userInfo?.address}
          isPrivate={isPrivate}
          setMobileViewModeKeepOpen={setMobileViewModeKeepOpen}
          isThin={
