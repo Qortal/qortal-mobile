@@ -20,6 +20,7 @@ import React, {
   useState,
 } from "react";
 import BlockIcon from '@mui/icons-material/Block';
+import { WalletsAppWrapper } from "./WalletsAppWrapper";
 
 import SettingsIcon from "@mui/icons-material/Settings";
 import { ChatGroup } from "../Chat/ChatGroup";
@@ -2226,7 +2227,9 @@ export const Group = ({
          setNewChat={setNewChat}
        />
       )}
-     
+
+      
+<WalletsAppWrapper />
 
       <div
         style={{

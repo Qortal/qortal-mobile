@@ -28,6 +28,7 @@ import { useAppFullScreen } from "../../useAppFullscreen";
 import { useHandlePaymentNotification } from "../../hooks/useHandlePaymentNotification";
 import { formatDate } from "../../utils/time";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { executeEvent } from "../../utils/events";
 
 const Header = ({
   logoutFunc,
@@ -545,12 +546,12 @@ const Header = ({
                       width: "100%",
                       alignItems: "flex-start",
                       textWrap: "auto",
-                      cursor: 'default'
                     }}
-                    onClick={(e) => {
-                           // executeEvent("addTab", { data: { service: 'APP', name: 'q-mail' } });
-                // executeEvent("open-apps-mode", { });
-                    }}
+                    onClick={() => {
+                      
+                        executeEvent('openWalletsApp', {})
+                        handleClose()
+                      }}
                   >
                     <Card sx={{
                       padding: '10px',

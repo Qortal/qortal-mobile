@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   Input,
   InputLabel,
   Popover,
@@ -27,6 +28,8 @@ import {
   Typography,
 } from "@mui/material";
 import { decryptStoredWallet } from "./utils/decryptWallet";
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+
 import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
@@ -1659,7 +1662,7 @@ function App() {
                   REGISTER NAME
                 </TextP>
               )}
-              <Spacer height="20px" />
+              {/* <Spacer height="20px" /> */}
               <CustomButton
                 onClick={() => {
                   setIsOpenSendQort(true);
@@ -1669,14 +1672,46 @@ function App() {
               >
                 Transfer QORT
               </CustomButton>
+              <Spacer height="20px" />
+              <ButtonBase
+        sx={{
+          "&:hover": { backgroundColor: "secondary.main" },
+          transition: "all 0.1s ease-in-out",
+          padding: "5px",
+          borderRadius: "5px",
+          gap: "5px",
+        }}
+        onClick={async () => {
+          setIsOpenDrawerProfile(false);
+            executeEvent("openWalletsApp", {
+           
+            });
+          }}
+      >
+        <AccountBalanceWalletIcon
+          sx={{
+            color: "white",
+          }}
+        />
+        <Typography
+          sx={{
+            fontSize: "1rem",
+          }}
+        >
+          See Wallets
+        </Typography>
+      </ButtonBase>
+      <Divider />
+          <Spacer height="10px" />
               <AddressQRCode targetAddress={rawWallet?.address0} />
             </>
           )}
+           <Spacer height="10px" />
           <TextP
             sx={{
               textAlign: "center",
               lineHeight: "24px",
-              fontSize: "12px",
+              fontSize: "14px",
               fontWeight: 500,
               cursor: "pointer",
               marginTop: "10px",

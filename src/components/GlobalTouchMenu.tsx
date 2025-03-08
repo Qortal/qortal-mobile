@@ -109,7 +109,13 @@ export const GlobalTouchMenu = () => {
                 executeEvent('openUserProfile',{})
                 handleClose()
             }}>
-                <Typography variant="inherit">Wallet</Typography>
+                <Typography variant="inherit">My Account</Typography>
+            </MenuItem>
+            <MenuItem onClick={()=> {
+                 executeEvent('openWalletsApp', {})
+                handleClose()
+            }}>
+                <Typography variant="inherit">Wallets</Typography>
             </MenuItem>
         </CustomStyledMenu>
     );

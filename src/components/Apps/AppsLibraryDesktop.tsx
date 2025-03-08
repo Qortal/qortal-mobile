@@ -55,7 +55,8 @@ const officialAppList = [
   "q-fund",
   "q-shop",
   "q-manager",
-  "q-mintership"
+  "q-mintership",
+   "q-wallets"
 ];
 
 const ScrollerStyled = styled("div")({
