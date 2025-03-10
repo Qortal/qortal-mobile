@@ -114,7 +114,7 @@ const htmlText = useMemo(()=> {
     ])
   }
   
-}, [])
+}, [message?.editTimestamp])
 
 
 
@@ -130,7 +130,7 @@ const htmlReply = useMemo(()=> {
     ])
   }
   
-}, [])
+}, [reply?.editTimestamp])
 
 const userAvatarUrl = useMemo(()=> {
   return message?.senderName ? `${getBaseApiReact()}/arbitrary/THUMBNAIL/${
