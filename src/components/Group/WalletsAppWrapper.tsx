@@ -29,7 +29,7 @@ export const WalletsAppWrapper = () => {
     tabId: "5558589",
     name: "Q-Wallets",
     service: "APP",
-    path: '/qortal'
+    path: '/qortal?authOnMount=true'
   });
 
   const isDisableBackButton = useMemo(() => {
