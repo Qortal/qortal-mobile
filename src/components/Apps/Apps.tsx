@@ -292,8 +292,8 @@ export const Apps = ({ mode, setMode, show , myName}) => {
   return (
     <AppsParent
       sx={{
-        position: !show && 'absolute',
-        left: !show && '10000000px',
+        position: !show && 'fixed',
+        left: !show && '-200vw',
       }}
     >
       {mode !== "viewer" && !selectedTab  && <Spacer height="30px" />}

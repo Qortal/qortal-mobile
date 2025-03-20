@@ -1828,6 +1828,7 @@ function App() {
         backgroundSize: desktopViewMode === "apps" && "cover",
         backgroundPosition: desktopViewMode === "apps" && "center",
         backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
+        overflow: "hidden"
       }}
     >
           
