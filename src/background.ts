@@ -272,7 +272,7 @@ export const getBaseApi = async (customApi?: string) => {
   }
 
   const apiKey = await getApiKeyFromStorage(); // Retrieve apiKey asynchronously
-  if (apiKey) {
+  if (apiKey?.url) {
     return apiKey?.url;
   } else {
     return groupApi;
@@ -280,7 +280,7 @@ export const getBaseApi = async (customApi?: string) => {
 };
 export const isUsingLocal = async () => {
   const apiKey = await getApiKeyFromStorage(); // Retrieve apiKey asynchronously
-  if (apiKey) {
+  if (apiKey?.url) {
     return true;
   } else {
     return false;
@@ -294,7 +294,7 @@ export const createEndpoint = async (endpoint, customApi?: string) => {
 
   const apiKey = await getApiKeyFromStorage(); // Retrieve apiKey asynchronously
 
-  if (apiKey) {
+  if (apiKey?.url) {
     // Check if the endpoint already contains a query string
     const separator = endpoint.includes("?") ? "&" : "?";
     return `${apiKey?.url}${endpoint}${separator}apiKey=${apiKey?.apikey}`;

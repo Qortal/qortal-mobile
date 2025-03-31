@@ -347,7 +347,7 @@ export const getBaseApiReact = (customApi?: string) => {
     return customApi;
   }
 
-  if (globalApiKey) {
+  if (globalApiKey?.url) {
     return globalApiKey?.url;
   } else {
     return groupApi;
@@ -373,7 +373,7 @@ export const getBaseApiReactSocket = (customApi?: string) => {
     return customApi;
   }
 
-  if (globalApiKey) {
+  if (globalApiKey?.url) {
     return `${
       getProtocol(globalApiKey?.url) === "http" ? "ws://" : "wss://"
     }${cleanUrl(globalApiKey?.url)}`;
