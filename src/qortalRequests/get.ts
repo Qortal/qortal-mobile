@@ -98,6 +98,30 @@ const sellerForeignFee = {
   },
 };
 
+const MAX_RETRIES = 3; // Set max number of retries
+
+
+export async function retryTransaction(fn, args, throwError, retries = MAX_RETRIES) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await fn(...args); 
+    } catch (error) {
+      console.error(`Attempt ${attempt + 1} failed: ${error.message}`);
+      attempt++;
+      if (attempt === retries) {
+        console.error("Max retries reached. Skipping transaction.");
+        if(throwError){
+          throw new Error(error?.message || "Unable to process transaction")
+        } else {
+          return null
+        }
+      }
+      await new Promise(res => setTimeout(res, 10000)); 
+    }
+  }
+}
+
 function roundUpToDecimals(number, decimals = 8) {
   const factor = Math.pow(10, decimals); // Create a factor based on the number of decimals
   return Math.ceil(+number * factor) / factor;
@@ -1276,8 +1300,9 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
       }
 
       try {
-        await publishData({
-          registeredName: encodeURIComponent(name),
+        await retryTransaction(publishData, [
+          {
+            registeredName: encodeURIComponent(name),
           file: data64,
           service: service,
           identifier: encodeURIComponent(identifier),
@@ -1294,7 +1319,8 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
           tag5,
           apiVersion: 2,
           withFee: true,
-        });
+          },
+        ], false);
         await new Promise((res) => {
           setTimeout(() => {
             res();

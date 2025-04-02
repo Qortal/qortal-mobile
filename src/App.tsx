@@ -152,6 +152,7 @@ import { RegisterName } from "./components/RegisterName";
 import { BuyQortInformation } from "./components/BuyQortInformation";
 import { InstallPWA } from "./components/InstallPWA";
 import { QortPayment } from "./components/QortPayment";
+import { PdfViewer } from "./common/PdfViewer";
 
 
 type extStates =
@@ -1831,7 +1832,7 @@ function App() {
         overflow: "hidden"
       }}
     >
-          
+           <PdfViewer />
               <div style={{
                 display: !isNative && extState === "not-authenticated" ? 'block' : 'none'
               }}>
