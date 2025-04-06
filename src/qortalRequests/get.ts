@@ -2740,7 +2740,7 @@ export const sendCoin = async (data, isFromExtension) => {
         
           if (accepted) {
             const makePayment = await sendCoinFunc({amount, password: null, receiver: recipient }, true)
-            return makePayment.res
+            return makePayment.res?.data
           } else {
             throw new Error("User declined request")
           }
