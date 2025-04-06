@@ -839,7 +839,7 @@ export const Group = ({
         const res = await fetch(
           `${getBaseApiReact()}/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${
             publish.identifier
-          }?encoding=base64`
+          }?encoding=base64&rebuild=true`
         );
         data = await res.text();
       }

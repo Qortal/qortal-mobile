@@ -480,7 +480,7 @@ export const encryptQortalGroupData = async (data, sender) => {
   if(publish === false) throw new Error('No group key found.')
   const url = await createEndpoint(`/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${
     publish.identifier
-  }?encoding=base64`);
+  }?encoding=base64&rebuild=true`);
 
   const res = await fetch(
 url
@@ -514,7 +514,7 @@ url
   if(publish === false) throw new Error('No group key found.')
   const url = await createEndpoint(`/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${
     publish.identifier
-  }?encoding=base64`);
+  }?encoding=base64&rebuild=true`);
 
   const res = await fetch(
 url
@@ -575,7 +575,7 @@ export const decryptQortalGroupData = async (data, sender) => {
   if(publish === false) throw new Error('No group key found.')
   const url = await createEndpoint(`/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${
     publish.identifier
-  }?encoding=base64`);
+  }?encoding=base64&rebuild=true`);
 
   const res = await fetch(
 url
@@ -606,7 +606,7 @@ url
   if(publish === false) throw new Error('No group key found.')
   const url = await createEndpoint(`/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${
     publish.identifier
-  }?encoding=base64`);
+  }?encoding=base64&rebuild=true`);
 
   const res = await fetch(
 url
