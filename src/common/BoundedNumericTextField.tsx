@@ -130,12 +130,17 @@ export const BoundedNumericTextField = ({
         ...props?.InputProps,
         endAdornment: addIconButtons ? (
           <InputAdornment position="end">
-            <IconButton size="small" onClick={() => changeValueWithIncDecButton(1)}>
+            <IconButton size="small" onClick={() => 
+               changeValueWithIncDecButton(1)
+            
+            } onTouchStart={(e)=> e.stopPropagation()}>
               <AddIcon sx={{
                 color: 'white'
               }} />{" "}
             </IconButton>
-            <IconButton size="small" onClick={() => changeValueWithIncDecButton(-1)}>
+            <IconButton onTouchStart={(e)=> e.stopPropagation()} size="small" onClick={() => 
+          changeValueWithIncDecButton(-1)
+            }>
               <RemoveIcon sx={{
                 color: 'white'
               }} />{" "}
