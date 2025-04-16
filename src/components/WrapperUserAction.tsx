@@ -167,12 +167,9 @@ useEffect(()=> {
     onClick={async () => {
       try {
         setIsLoading(true)
-        if(isAlreadyBlocked === true){
-          await removeBlockFromList(address, name)
-        } else if(isAlreadyBlocked === false) {
-          await addToBlockList(address, name)
-        }
-        executeEvent('updateChatMessagesWithBlocks', true)
+        executeEvent("blockUserFromOutside", {
+          user: address
+        })
       } catch (error) {
         console.error(error)
       } finally {

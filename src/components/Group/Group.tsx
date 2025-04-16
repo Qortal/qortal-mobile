@@ -19,7 +19,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import BlockIcon from '@mui/icons-material/Block';
+import PersonOffIcon from '@mui/icons-material/PersonOff';
+
 import { WalletsAppWrapper } from "./WalletsAppWrapper";
 
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -99,7 +100,7 @@ import { formatEmailDate } from "./QMailMessages";
 import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack";
 import { AdminSpace } from "../Chat/AdminSpace";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { addressInfoControllerAtom, groupsPropertiesAtom, lastEnteredGroupIdAtom, selectedGroupIdAtom } from "../../atoms/global";
+import { addressInfoControllerAtom, groupsPropertiesAtom, isOpenBlockedModalAtom, lastEnteredGroupIdAtom, selectedGroupIdAtom } from "../../atoms/global";
 import { sortArrayByTimestampAndGroupName } from "../../utils/time";
 import { BlockedUsersModal } from "./BlockedUsersModal";
 import { GlobalTouchMenu } from "../GlobalTouchMenu";
@@ -483,6 +484,8 @@ export const Group = ({
   const [groupAnnouncements, setGroupAnnouncements] = React.useState({});
   const [defaultThread, setDefaultThread] = React.useState(null);
   const [isOpenDrawer, setIsOpenDrawer] = React.useState(false);
+  const setIsOpenBlockedUserModal = useSetRecoilState(isOpenBlockedModalAtom)
+
   const [hideCommonKeyPopup, setHideCommonKeyPopup] = React.useState(false);
   const [isLoadingGroupMessage, setIsLoadingGroupMessage] = React.useState("");
   const [drawerMode, setDrawerMode] = React.useState("groups");
@@ -507,7 +510,6 @@ export const Group = ({
   const [isForceShowCreationKeyPopup, setIsForceShowCreationKeyPopup] = useState(false)
   const [groupsProperties, setGroupsProperties] = useRecoilState(groupsPropertiesAtom)
   const setUserInfoForLevels = useSetRecoilState(addressInfoControllerAtom);
-  const [isOpenBlockedUserModal, setIsOpenBlockedUserModal] = React.useState(false);
   const setLastEnteredGroupIdAtom = useSetRecoilState(lastEnteredGroupIdAtom)
   const isPrivate = useMemo(()=> {
     if(selectedGroup?.groupId === '0') return false
@@ -2159,7 +2161,7 @@ export const Group = ({
                    padding: '10px'
                  }}
                >
-                 <BlockIcon
+                 <PersonOffIcon
                    sx={{
                      color: "white",
                    }}
@@ -2656,11 +2658,9 @@ export const Group = ({
               )}
             </>
           )}
-             {isOpenBlockedUserModal && (
-        <BlockedUsersModal close={()=> {
-          setIsOpenBlockedUserModal(false)
-        }} />
-       )}
+            
+        <BlockedUsersModal />
+      
           {selectedDirect && !newChat && (
             <>
               <Box

@@ -255,7 +255,11 @@ export function openIndexedDB() {
     'GET_NODE_INFO',
     'GET_NODE_STATUS',
     'GET_ARRR_SYNC_STATUS',
-     'SHOW_PDF_READER'
+     'SHOW_PDF_READER',
+     'UPDATE_GROUP',
+     'SELL_NAME',
+  'CANCEL_SELL_NAME',
+  'BUY_NAME'
   ]
   
 
@@ -269,7 +273,9 @@ const UIQortalRequests = [
   'GET_SERVER_CONNECTION_HISTORY', 'SET_CURRENT_FOREIGN_SERVER',
   'ADD_FOREIGN_SERVER', 'REMOVE_FOREIGN_SERVER', 'GET_DAY_SUMMARY', 'CREATE_TRADE_BUY_ORDER',
   'CREATE_TRADE_SELL_ORDER', 'CANCEL_TRADE_SELL_ORDER', 'IS_USING_PUBLIC_NODE', 'SIGN_TRANSACTION', 'ADMIN_ACTION', 'OPEN_NEW_TAB', 'CREATE_AND_COPY_EMBED_LINK', 'DECRYPT_QORTAL_GROUP_DATA', 'DECRYPT_DATA_WITH_SHARING_KEY', 'DELETE_HOSTED_DATA', 'GET_HOSTED_DATA', 'SHOW_ACTIONS', 'REGISTER_NAME', 'UPDATE_NAME', 'LEAVE_GROUP', 'INVITE_TO_GROUP', 'KICK_FROM_GROUP', 'BAN_FROM_GROUP',  'CANCEL_GROUP_BAN', 'ADD_GROUP_ADMIN', 'REMOVE_GROUP_ADMIN','DECRYPT_AESGCM', 'CANCEL_GROUP_INVITE', 'CREATE_GROUP', 'GET_USER_WALLET_TRANSACTIONS', 'GET_NODE_INFO',
-  'GET_NODE_STATUS', 'GET_ARRR_SYNC_STATUS', 'SHOW_PDF_READER'
+  'GET_NODE_STATUS', 'GET_ARRR_SYNC_STATUS', 'SHOW_PDF_READER', 'UPDATE_GROUP', 'SELL_NAME',
+  'CANCEL_SELL_NAME',
+  'BUY_NAME'
 ];
 
 
@@ -551,7 +557,7 @@ isDOMContentLoaded: false
               result: null,
               error: {
                 error: response.error,
-                message: typeof response?.error === 'string' ? response.error : 'An error has occurred'
+                message: typeof response?.error === 'string' ? response?.error : typeof response?.message === 'string' ? response?.message : 'An error has occurred'
               },
             });
           } else {

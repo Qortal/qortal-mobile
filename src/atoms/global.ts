@@ -41,6 +41,14 @@ export const sortablePinnedAppsAtom = atom({
   {
     name: 'Q-Wallets',
     service: 'APP'
+  },
+  {
+    name: 'Q-Search',
+    service: 'APP'
+  },
+  {
+    name: 'Q-Nodecontrol',
+    service: 'APP'
   }
 ], 
 });
@@ -179,4 +187,9 @@ export const lastEnteredGroupIdAtom = atom({
 export const lastPaymentSeenTimestampAtom = atom<null | number>({
   key: 'lastPaymentSeenTimestampAtom', 
   default: null, 
+});
+
+export const isOpenBlockedModalAtom = atom({
+  key: 'isOpenBlockedModalAtom', 
+  default: false, 
 });

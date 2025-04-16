@@ -27,7 +27,12 @@ import {
   makeAdmin,
   removeAdmin,
   cancelInvitationToGroup,
-  createGroup
+  createGroup,
+  updateGroup,
+  getBaseApi,
+  buyName,
+  cancelSellName,
+  sellName
 } from "../background";
 import { getNameInfo, uint8ArrayToObject } from "../backgroundFunctions/encryption";
 import { showSaveFilePicker } from "../components/Apps/useQortalMessageListener";
@@ -373,7 +378,7 @@ async function getUserPermission(payload, isFromExtension) {
         responseResolvers.get(requestId)(false); // Resolve with `false` if no response
         responseResolvers.delete(requestId);
       }
-    }, 30000); // 30-second timeout
+    }, 60000); // 30-second timeout
   });
 }
 
@@ -1229,6 +1234,7 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
         failedPublishesIdentifiers.push({
           reason: errorMsg,
           identifier: resource.identifier,
+          service: resource.service,
         });
         continue;
       }
@@ -1237,6 +1243,7 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
         failedPublishesIdentifiers.push({
           reason: errorMsg,
           identifier: resource.identifier,
+          service: resource.service,
         });
         continue;
       }
@@ -1267,6 +1274,7 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
         failedPublishesIdentifiers.push({
           reason: errorMsg,
           identifier: resource.identifier,
+          service: resource.service,
         });
         continue;
       }
@@ -1294,6 +1302,7 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
           failedPublishesIdentifiers.push({
             reason: errorMsg,
             identifier: resource.identifier,
+            service: resource.service,
           });
           continue;
         }
@@ -1320,7 +1329,7 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
           apiVersion: 2,
           withFee: true,
           },
-        ], false);
+        ], true);
         await new Promise((res) => {
           setTimeout(() => {
             res();
@@ -1331,21 +1340,25 @@ export const publishMultipleQDNResources = async (data: any, sender, isFromExten
         failedPublishesIdentifiers.push({
           reason: errorMsg,
           identifier: resource.identifier,
+          service: resource.service,
         });
       }
     } catch (error) {
       failedPublishesIdentifiers.push({
         reason: error?.message || "Unknown error",
         identifier: resource.identifier,
+        service: resource.service,
       });
     }
   }
   if (failedPublishesIdentifiers.length > 0) {
-    const obj = {};
-    obj["error"] = {
-      unsuccessfulPublishes: failedPublishesIdentifiers,
-    };
-    return obj;
+    const obj = {
+      message: "Some resources have failed to publish.",
+   };
+   obj["error"] = {
+     unsuccessfulPublishes: failedPublishesIdentifiers,
+   };
+   return obj;
   }
   if(hasAppFee && checkbox1){
     sendCoinFunc({
@@ -2734,7 +2747,8 @@ export const sendCoin = async (data, isFromExtension) => {
             text1: "Do you give this application permission to send coins?",
             text2: `To: ${recipient}`, 
             highlightedText: `${amount} ${checkCoin}`,
-            fee: fee
+            fee: fee,
+            confirmCheckbox: true
           }, isFromExtension);
           const { accepted } = resPermission;
         
@@ -3829,6 +3843,11 @@ export const registerNameRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const fee = await getFee("REGISTER_NAME");
   const resPermission = await getUserPermission(
     {
@@ -3842,7 +3861,7 @@ export const registerNameRequest = async (data, isFromExtension) => {
   const { accepted } = resPermission;
   if (accepted) {
   const name = data.name
-  const description = data?.description
+  const description = data?.description || ""
   const response = await registerName({ name, description });
   return response
 
@@ -3859,9 +3878,14 @@ export const updateNameRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const oldName = data.oldName
   const newName = data.newName
-  const description = data?.description
+  const description = data?.description || ""
   const fee = await getFee("UPDATE_NAME");
   const resPermission = await getUserPermission(
     {
@@ -3890,6 +3914,11 @@ export const leaveGroupRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   let groupInfo = null;
   try {
@@ -3930,6 +3959,11 @@ export const inviteToGroupRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   const qortalAddress = data?.inviteeAddress
   const inviteTime = data?.inviteTime
@@ -3979,6 +4013,11 @@ export const kickFromGroupRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   const qortalAddress = data?.qortalAddress
   const reason = data?.reason
@@ -4028,6 +4067,11 @@ export const banFromGroupRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   const qortalAddress = data?.qortalAddress
   const rBanTime = data?.banTime
@@ -4078,6 +4122,11 @@ export const cancelGroupBanRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   const qortalAddress = data?.qortalAddress
 
@@ -4125,6 +4174,11 @@ export const addGroupAdminRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   const qortalAddress = data?.qortalAddress
 
@@ -4172,6 +4226,11 @@ export const removeGroupAdminRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   const qortalAddress = data?.qortalAddress
 
@@ -4219,6 +4278,11 @@ export const cancelGroupInviteRequest = async (data, isFromExtension) => {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupId = data.groupId
   const qortalAddress = data?.qortalAddress
 
@@ -4313,15 +4377,20 @@ export const decryptAESGCMRequest = async (data, isFromExtension) => {
 };
 
 export const createGroupRequest = async (data, isFromExtension) => {
-  const requiredFields = ["groupId", "qortalAddress"];
+  const requiredFields = ["groupId", "qortalAddress", "groupName", "type", "approvalThreshold", "minBlock", "maxBlock"];
   const missingFields: string[] = [];
   requiredFields.forEach((field) => {
-    if (!data[field]) {
+    if (data[field] !== undefined && data[field] !== null) {
       missingFields.push(field);
     }
   });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
   const groupName = data.groupName
-  const description = data?.description
+  const description = data?.description || ""
   const type = +data.type
   const approvalThreshold = +data?.approvalThreshold
   const minBlock = +data?.minBlock
@@ -4354,6 +4423,70 @@ export const createGroupRequest = async (data, isFromExtension) => {
   }
 };
 
+export const updateGroupRequest = async (data, isFromExtension) => {
+  const requiredFields = ["groupId", "newOwner",  "type", "approvalThreshold", "minBlock", "maxBlock"];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (data[field] !== undefined && data[field] !== null) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+  const groupId = +data.groupId
+  const newOwner = data.newOwner
+  const description = data?.description || ""
+  const type = +data.type
+  const approvalThreshold = +data?.approvalThreshold
+  const minBlock = +data?.minBlock
+  const maxBlock = +data.maxBlock
+
+  let groupInfo = null;
+  try {
+    const url = await createEndpoint(`/groups/${groupId}`);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to fetch group");
+
+    groupInfo = await response.json();
+  } catch (error) {
+    const errorMsg = (error && error.message) || "Group not found";
+    throw new Error(errorMsg);
+  }
+
+  const displayInvitee = await getNameInfoForOthers(newOwner)
+
+
+  const fee = await getFee("CREATE_GROUP");
+  const resPermission = await getUserPermission(
+    {
+      text1: `Do you give this application permission to update this group?`,
+      text2: `New owner: ${displayInvitee || newOwner}`,
+      highlightedText: `Group: ${groupInfo.groupName}`,
+      fee: fee.fee,
+    },
+    isFromExtension
+  );
+  const { accepted } = resPermission;
+  if (accepted) {
+  const response = await updateGroup({
+    groupId,
+    newOwner,
+    newIsOpen: type,
+    newDescription: description,
+    newApprovalThreshold: approvalThreshold,
+    newMinimumBlockDelay: minBlock,
+    newMaximumBlockDelay: maxBlock
+      })
+  return response
+
+  } else {
+    throw new Error("User declined request");
+  }
+};
+
 export const getUserWalletTransactions = async (data, isFromExtension, appInfo) => {
   const requiredFields = ["coin"];
   const missingFields: string[] = [];
@@ -4362,6 +4495,7 @@ export const getUserWalletTransactions = async (data, isFromExtension, appInfo) 
       missingFields.push(field);
     }
   });
+
   if (missingFields.length > 0) {
     const missingFieldsString = missingFields.join(", ");
     const errorMsg = `Missing fields: ${missingFieldsString}`;
@@ -4536,5 +4670,138 @@ export const getArrrSyncStatus = async () => {
     return res; // Return the full response
   } catch (error) {
     throw new Error(error?.message || "Error in retrieving arrr sync status");
+  }
+};
+
+export const sellNameRequest = async (data, isFromExtension) => {
+  const requiredFields = ["salePrice", "nameForSale"];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (data[field] !== undefined && data[field] !== null) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+  const name = data.nameForSale
+  const sellPrice = +data.salePrice
+
+  const validApi = await getBaseApi();
+
+  const response = await fetch(validApi + "/names/" + name);
+  const nameData = await response.json();
+if(!nameData) throw new Error("This name does not exist")
+
+if(nameData?.isForSale) throw new Error("This name is already for sale")
+  const fee = await getFee("SELL_NAME");
+  const resPermission = await getUserPermission(
+    {
+      text1: `Do you give this application permission to create a sell name transaction?`,
+      highlightedText: `Sell ${name} for ${sellPrice} QORT`,
+      fee: fee.fee,
+    },
+    isFromExtension
+  );
+  const { accepted } = resPermission;
+  if (accepted) {
+  const response = await sellName({
+        name,
+        sellPrice
+      })
+  return response
+
+  } else {
+    throw new Error("User declined request");
+  }
+};
+
+export const cancelSellNameRequest = async (data, isFromExtension) => {
+  const requiredFields = ["nameForSale"];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (data[field] !== undefined && data[field] !== null) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+  const name = data.nameForSale
+  const validApi = await getBaseApi();
+
+  const response = await fetch(validApi + "/names/" + name);
+  const nameData = await response.json();
+if(!nameData?.isForSale) throw new Error("This name is not for sale")
+
+  const fee = await getFee("CANCEL_SELL_NAME");
+  const resPermission = await getUserPermission(
+    {
+      text1: `Do you give this application permission to cancel the selling of a name?`,
+      highlightedText: `Name: ${name}`,
+      fee: fee.fee,
+    },
+    isFromExtension
+  );
+  const { accepted } = resPermission;
+  if (accepted) {
+  const response = await cancelSellName({
+        name
+      })
+  return response
+
+  } else {
+    throw new Error("User declined request");
+  }
+};
+
+export const buyNameRequest = async (data, isFromExtension) => {
+  const requiredFields = ["nameForSale"];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (data[field] !== undefined && data[field] !== null) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    const errorMsg = `Missing fields: ${missingFieldsString}`;
+    throw new Error(errorMsg);
+  }
+  const name = data.nameForSale
+
+  const validApi = await getBaseApi();
+  
+      const response = await fetch(validApi + "/names/" + name);
+      const nameData = await response.json();
+  if(!nameData?.isForSale) throw new Error("This name is not for sale")
+  const sellerAddress = nameData.owner
+  const sellPrice = +nameData.salePrice
+  
+
+  const fee = await getFee("BUY_NAME");
+  const resPermission = await getUserPermission(
+    {
+      text1: `Do you give this application permission to buy a name?`,
+      highlightedText: `Buying ${name} for ${sellPrice} QORT`,
+      fee: fee.fee,
+    },
+    isFromExtension
+  );
+  const { accepted } = resPermission;
+  if (accepted) {
+  const response = await buyName({
+        name,
+        sellerAddress,
+        sellPrice
+      })
+  return response
+
+  } else {
+    throw new Error("User declined request");
   }
 };

@@ -21,6 +21,7 @@ import {
   DialogContentText,
   DialogTitle,
   Divider,
+  FormControlLabel,
   Input,
   InputLabel,
   Popover,
@@ -29,6 +30,7 @@ import {
 } from "@mui/material";
 import { decryptStoredWallet } from "./utils/decryptWallet";
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 
 import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
@@ -486,6 +488,8 @@ function App() {
     url: "http://127.0.0.1:12391",
   });
     const [useLocalNode, setUseLocalNode] = useState(false);
+    const [confirmRequestRead, setConfirmRequestRead] = useState(false);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showSeed, setShowSeed] = useState(false)
   const [creationStep, setCreationStep] = useState(1)
@@ -878,6 +882,8 @@ function App() {
         if(message?.payload?.checkbox1){
           qortalRequestCheckbox1Ref.current = message?.payload?.checkbox1?.value || false
         }
+        setConfirmRequestRead(false)
+
         await showQortalRequestExtension(message?.payload);
         if (qortalRequestCheckbox1Ref.current) {
           event.source.postMessage(
@@ -3110,7 +3116,7 @@ await showInfo({
         >
           <CountdownCircleTimer
             isPlaying
-            duration={30}
+            duration={60}
             colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
             colorsTime={[7, 5, 2, 0]}
             onComplete={() => {
@@ -3341,6 +3347,35 @@ await showInfo({
                 </Typography>
               </Box>
             )}
+            {messageQortalRequestExtension?.confirmCheckbox && (
+              <FormControlLabel
+              control={
+                <Checkbox
+                  onChange={(e) => setConfirmRequestRead(e.target.checked)}
+                  checked={confirmRequestRead}
+                  edge="start"
+                  tabIndex={-1}
+                  disableRipple
+                  sx={{
+                    "&.Mui-checked": {
+                      color: "white",
+                    },
+                    "& .MuiSvgIcon-root": {
+                      color: "white",
+                    },
+                  }}
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography sx={{ fontSize: "14px" }}>
+                    I have read this request
+                  </Typography>
+                  <PriorityHighIcon color="warning" />
+                </Box>
+              }
+            />
+            )}
 
             <Spacer height="29px" />
             <Box
@@ -3350,13 +3385,21 @@ await showInfo({
                 gap: "14px",
               }}
             >
-             <CustomButtonAccept
+              <CustomButtonAccept
               color="black"
               bgColor="var(--green)"
                 sx={{
                   minWidth: "102px",
+                  opacity: messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead ? 0.1 : 0.7,
+                  cursor: messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead ? 'default' : 'pointer',
+                  "&:hover": {
+      opacity: messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead ? 0.1 : 1,
+    }
                 }}
-                onClick={() => onOkQortalRequestExtension("accepted")}
+                onClick={() => {
+                  if(messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead) return
+                  onOkQortalRequestExtension("accepted")
+                }}
               >
                 accept
               </CustomButtonAccept>
