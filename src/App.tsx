@@ -155,6 +155,7 @@ import { BuyQortInformation } from "./components/BuyQortInformation";
 import { InstallPWA } from "./components/InstallPWA";
 import { QortPayment } from "./components/QortPayment";
 import { PdfViewer } from "./common/PdfViewer";
+import { DownloadWallet } from "./components/Auth/DownloadWallet";
 
 
 type extStates =
@@ -2584,87 +2585,14 @@ function App() {
       )}
       {extState === "download-wallet" && (
         <>
-          <Spacer height="22px" />
-          <Box
-            sx={{
-              display: "flex",
-              width: "100%",
-              justifyContent: "flex-start",
-              paddingLeft: "22px",
-              boxSizing: "border-box",
-            }}
-          >
-            <img
-              style={{
-                cursor: "pointer",
-              }}
-              onClick={returnToMain}
-              src={Return}
-            />
-          </Box>
-          <Spacer height="10px" />
-          <div
-            className="image-container"
-            style={{
-              width: "136px",
-              height: "154px",
-            }}
-          >
-            <img src={Logo1Dark} className="base-image" />
-          </div>
-          <Spacer height="35px" />
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-            }}
-          >
-            <TextP
-              sx={{
-                textAlign: "start",
-                lineHeight: "24px",
-                fontSize: "20px",
-                fontWeight: 600,
-              }}
-            >
-              Download Account
-            </TextP>
-          </Box>
-          <Spacer height="35px" />
-          {!walletToBeDownloaded && (
-            <>
-              <CustomLabel htmlFor="standard-adornment-password">
-                Confirm Wallet Password
-              </CustomLabel>
-              <Spacer height="5px" />
-              <PasswordField
-                id="standard-adornment-password"
-                value={walletToBeDownloadedPassword}
-                onChange={(e) =>
-                  setWalletToBeDownloadedPassword(e.target.value)
-                }
-              />
-              <Spacer height="20px" />
-              <CustomButton onClick={confirmPasswordToDownload}>
-                Confirm password
-              </CustomButton>
-              <ErrorText>{walletToBeDownloadedError}</ErrorText>
-            </>
-          )}
-
-          {walletToBeDownloaded && (
-            <>
-              <CustomButton onClick={async ()=> {
-                await saveFileToDiskFunc()
-await showInfo({
-  message: isNative ? `Your account file was saved to internal storage, in the document folder. Keep that file secure.` : `Your account file was downloaded by your browser. Keep that file secure.` ,
- })
-              }}>
-                Download account
-              </CustomButton>
-            </>
-          )}
+         <DownloadWallet
+            returnToMain={returnToMain}
+            setIsLoading={setIsLoading}
+            showInfo={showInfo}
+            rawWallet={rawWallet}
+            setWalletToBeDownloaded={setWalletToBeDownloaded}
+            walletToBeDownloaded={walletToBeDownloaded}
+          />
         </>
       )}
       {extState === "create-wallet" && (

@@ -1,6 +1,6 @@
 import { gateways, getApiKeyFromStorage } from "./background";
 import { listOfAllQortalRequests } from "./components/Apps/useQortalMessageListener";
-import { addForeignServer, addGroupAdminRequest, addListItems, adminAction, banFromGroupRequest, buyNameRequest, cancelGroupBanRequest, cancelGroupInviteRequest, cancelSellNameRequest, cancelSellOrder, createAndCopyEmbedLink, createBuyOrder, createGroupRequest, createPoll, decryptAESGCMRequest, decryptData, decryptDataWithSharingKey, decryptQortalGroupData, deleteHostedData, deleteListItems, deployAt, encryptData, encryptDataWithSharingKey, encryptQortalGroupData, getArrrSyncStatus, getCrossChainServerInfo, getDaySummary, getForeignFee, getHostedData, getListItems, getNodeInfo, getNodeStatus, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getUserWalletTransactions, getWalletBalance, inviteToGroupRequest, joinGroup, kickFromGroupRequest, leaveGroupRequest, openNewTab, publishMultipleQDNResources, publishQDNResource, registerNameRequest, removeForeignServer, removeGroupAdminRequest, saveFile, sellNameRequest, sendChatMessage, sendCoin, setCurrentForeignServer, signTransaction, updateForeignFee, updateGroupRequest, updateNameRequest, voteOnPoll } from "./qortalRequests/get";
+import { addForeignServer, addGroupAdminRequest, addListItems, adminAction, banFromGroupRequest, buyNameRequest, cancelGroupBanRequest, cancelGroupInviteRequest, cancelSellNameRequest, cancelSellOrder, createAndCopyEmbedLink, createBuyOrder, createGroupRequest, createPoll, decryptAESGCMRequest, decryptData, decryptDataWithSharingKey, decryptQortalGroupData, deleteHostedData, deleteListItems, deployAt, encryptData, encryptDataWithSharingKey, encryptQortalGroupData, getArrrSyncStatus, getCrossChainServerInfo, getDaySummary, getForeignFee, getHostedData, getListItems, getNodeInfo, getNodeStatus, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getUserWalletTransactions, getWalletBalance, inviteToGroupRequest, joinGroup, kickFromGroupRequest, leaveGroupRequest, multiPaymentWithPrivateData, openNewTab, publishMultipleQDNResources, publishQDNResource, registerNameRequest, removeForeignServer, removeGroupAdminRequest, saveFile, sellNameRequest, sendChatMessage, sendCoin, setCurrentForeignServer, signForeignFees, signTransaction, transferAssetRequest, updateForeignFee, updateGroupRequest, updateNameRequest, voteOnPoll } from "./qortalRequests/get";
 import { getData, storeData } from "./utils/chromeStorage";
 import { executeEvent } from "./utils/events";
 
@@ -462,7 +462,7 @@ export const isRunningGateway = async ()=> {
   
         case "UPDATE_FOREIGN_FEE": {
           try {
-            const res = await updateForeignFee(request.payload);
+            const res = await updateForeignFee(request.payload, isFromExtension);
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
@@ -502,7 +502,7 @@ export const isRunningGateway = async ()=> {
   
         case "SET_CURRENT_FOREIGN_SERVER": {
           try {
-            const res = await setCurrentForeignServer(request.payload);
+            const res = await setCurrentForeignServer(request.payload, isFromExtension);
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
@@ -522,7 +522,7 @@ export const isRunningGateway = async ()=> {
   
         case "ADD_FOREIGN_SERVER": {
           try {
-            const res = await addForeignServer(request.payload);
+            const res = await addForeignServer(request.payload, isFromExtension);
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
@@ -542,7 +542,7 @@ export const isRunningGateway = async ()=> {
   
         case "REMOVE_FOREIGN_SERVER": {
           try {
-            const res = await removeForeignServer(request.payload);
+            const res = await removeForeignServer(request.payload, isFromExtension);
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,
@@ -1279,6 +1279,70 @@ export const isRunningGateway = async ()=> {
               error: error.message,
               type: "backgroundMessageResponse",
             }, event.origin);
+          }
+          break;
+        }
+        case "MULTI_ASSET_PAYMENT_WITH_PRIVATE_DATA" : {
+          try {
+            const res =  await multiPaymentWithPrivateData(request.payload, isFromExtension)
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error?.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+        case "TRANSFER_ASSET" : {
+          try {
+            const res =  await transferAssetRequest(request.payload, isFromExtension)
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          } catch (error) {
+            event.source.postMessage({
+              requestId: request.requestId,
+              action: request.action,
+              error: error?.message,
+              type: "backgroundMessageResponse",
+            }, event.origin);
+          }
+          break;
+        }
+
+        case 'SIGN_FOREIGN_FEES': {
+          try {
+            const res = await signForeignFees(request.payload, isFromExtension);
+            event.source.postMessage(
+              {
+                requestId: request.requestId,
+                action: request.action,
+                payload: res,
+                type: 'backgroundMessageResponse',
+              },
+              event.origin
+            );
+          } catch (error) {
+            event.source.postMessage(
+              {
+                requestId: request.requestId,
+                action: request.action,
+                error: error.message,
+                type: 'backgroundMessageResponse',
+              },
+              event.origin
+            );
           }
           break;
         }

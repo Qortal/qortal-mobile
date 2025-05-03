@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DrawerUserLookup } from "../Drawer/DrawerUserLookup";
 import {
   Avatar,
@@ -16,6 +16,7 @@ import {
   Typography,
   Table,
   CircularProgress,
+  Autocomplete,
 } from "@mui/material";
 import { getAddressInfo, getNameOrAddress } from "../../background";
 import { getBaseApiReact } from "../../App";
@@ -26,6 +27,7 @@ import { formatTimestamp } from "../../utils/time";
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import SearchIcon from '@mui/icons-material/Search';
 import { executeEvent, subscribeToEvent, unsubscribeFromEvent } from "../../utils/events";
+import { useNameSearch } from "../../hooks/useNameSearch";
 
 function formatAddress(str) {
   if (str.length <= 12) return str;
@@ -38,6 +40,9 @@ function formatAddress(str) {
 
 export const UserLookup = ({ isOpenDrawerLookup, setIsOpenDrawerLookup }) => {
   const [nameOrAddress, setNameOrAddress] = useState("");
+  const [inputValue, setInputValue] = useState('');
+  const { results, isLoading } = useNameSearch(inputValue);
+  const options = useMemo(() => results?.map((item) => item.name), [results]);
   const [errorMessage, setErrorMessage] = useState("");
   const [addressInfo, setAddressInfo] = useState(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
@@ -106,6 +111,7 @@ export const UserLookup = ({ isOpenDrawerLookup, setIsOpenDrawerLookup }) => {
     setIsOpenDrawerLookup(false)
     setNameOrAddress('')
     setErrorMessage('')
+    setInputValue('');
     setPayments([])
     setIsLoadingUser(false)
     setIsLoadingPayments(false)
@@ -134,27 +140,66 @@ export const UserLookup = ({ isOpenDrawerLookup, setIsOpenDrawerLookup }) => {
             flexShrink: 0,
           }}
         >
-          <TextField
-          autoFocus
+        <Autocomplete
             value={nameOrAddress}
-            onChange={(e) => setNameOrAddress(e.target.value)}
-            size="small"
-            placeholder="Address or Name"
-            autoComplete="off"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && nameOrAddress) {
-                lookupFunc();
+            onChange={(event: any, newValue: string | null) => {
+              if (!newValue) {
+                setNameOrAddress('');
+                return;
               }
+              setNameOrAddress(newValue);
+              lookupFunc(newValue);
             }}
+            inputValue={inputValue}
+            onInputChange={(event, newInputValue) => {
+              setInputValue(newInputValue);
+            }}
+            id="controllable-states-demo"
+            loading={isLoading}
+            options={options}
+            sx={{ width: 300 }}
+            size="small"
+            renderInput={(params) => (
+              <TextField
+                autoFocus
+                autoComplete="off"
+                {...params}
+                label="Address or Name"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && nameOrAddress) {
+                    lookupFunc(inputValue);
+                  }
+                }}
+
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'white',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'white',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'white',
+                    },
+                    '& input': {
+                      color: 'white',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'white',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'white',
+                  },
+                  '& .MuiAutocomplete-endAdornment svg': {
+                    color: 'white',
+                  },
+                }}
+              />
+            )}
           />
-          <ButtonBase onClick={()=> {
-            lookupFunc();
-          }} >
-           <SearchIcon sx={{
-            color: 'white',
-             marginRight: '20px'
-           }} />
-          </ButtonBase>
+
           <ButtonBase sx={{
             marginLeft: 'auto',
            
