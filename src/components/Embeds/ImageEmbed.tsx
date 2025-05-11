@@ -239,6 +239,9 @@ export const ImageCard = ({
               position: "relative",
               width: "100%",
               height: "100%",
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
               backgroundColor: "#000", 
             }}
           >

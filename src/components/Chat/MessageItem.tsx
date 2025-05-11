@@ -33,6 +33,8 @@ import level7Img from "../../assets/badges/level-7.png"
 import level8Img from "../../assets/badges/level-8.png"
 import level9Img from "../../assets/badges/level-9.png"
 import level10Img from "../../assets/badges/level-10.png"
+import { Embed } from "../Embeds/Embed";
+import { buildImageEmbedLink, messageHasImage } from "../../utils/chat";
 
 const getBadgeImg = (level)=> {
   switch(level?.toString()){
@@ -346,6 +348,9 @@ const onSeenFunc = useCallback(()=> {
         ) : (
           <MessageDisplay setMobileViewModeKeepOpen={setMobileViewModeKeepOpen} htmlContent={message.text} />
         )}
+         {message?.images && messageHasImage(message) && (
+                <Embed embedLink={buildImageEmbedLink(message.images[0])} />
+              )}
         <Box
           sx={{
             display: "flex",
