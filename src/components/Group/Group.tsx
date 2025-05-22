@@ -574,7 +574,7 @@ export const Group = ({
         
       });
     } catch (error) {
-      console.log("error", error);
+      console.error(error);
     }
   };
 
@@ -2756,7 +2756,7 @@ export const Group = ({
             />
           )}
           {isMobile  && (
-            <Apps mode={appsMode} setMode={setAppsMode} show={mobileViewMode === "apps"} myName={userInfo?.name} />
+            <Apps mode={appsMode} setMode={setAppsMode} show={mobileViewMode === "apps"} myName={userInfo?.name} myAddress={userInfo?.address} />
           )}
             {!isMobile  && (
             <AppsDesktop toggleSideViewGroups={toggleSideViewGroups} toggleSideViewDirects={toggleSideViewDirects} goToHome={goToHome} mode={appsMode} setMode={setAppsMode} setDesktopSideView={setDesktopSideView} hasUnreadDirects={directChatHasUnread} show={desktopViewMode === "apps"} myName={userInfo?.name}  isGroups={isOpenSideViewGroups}

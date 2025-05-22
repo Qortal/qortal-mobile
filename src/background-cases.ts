@@ -1329,6 +1329,7 @@ export async function publishOnQDNCase(request, event) {
   try {
     const {
       data,
+      name = "",
       identifier,
       service,
       title,
@@ -1346,6 +1347,7 @@ export async function publishOnQDNCase(request, event) {
       identifier,
       service,
       title,
+      name,
       description,
       category,
       tag1,

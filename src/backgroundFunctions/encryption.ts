@@ -59,6 +59,16 @@ export async function getNameInfo() {
       return "";
     }
   }
+
+  export async function getAllUserNames() {
+    const wallet = await getSaveWallet();
+    const address = wallet.address0;
+    const validApi = await getBaseApi();
+    const response = await fetch(validApi + '/names/address/' + address);
+    const nameData = await response.json();
+    return nameData.map((item) => item.name);
+  }
+
 async function getKeyPair() {
   const res = await getData<any>("keyPair").catch(() => null);
   if (res) {
@@ -151,7 +161,7 @@ async function getKeyPair() {
         if(encryptedData){
             const registeredName = await getNameInfo()
             const data = await publishData({
-                registeredName, file: encryptedData, service: 'DOCUMENT_PRIVATE', identifier: `admins-symmetric-qchat-group-${groupId}`, uploadType: 'file', isBase64: true, withFee: true
+                registeredName, data: encryptedData, service: 'DOCUMENT_PRIVATE', identifier: `admins-symmetric-qchat-group-${groupId}`, uploadType: 'base64', withFee: true
             })
             return {
               data,
@@ -202,7 +212,7 @@ export const encryptAndPublishSymmetricKeyGroupChat = async ({groupId, previousD
         if(encryptedData){
             const registeredName = await getNameInfo()
             const data = await publishData({
-                registeredName, file: encryptedData, service: 'DOCUMENT_PRIVATE', identifier: `symmetric-qchat-group-${groupId}`, uploadType: 'file', isBase64: true, withFee: true
+                registeredName, data: encryptedData, service: 'DOCUMENT_PRIVATE', identifier: `symmetric-qchat-group-${groupId}`, uploadType: 'base64',  withFee: true
             })
             return {
               data,
@@ -223,7 +233,7 @@ export const publishGroupEncryptedResource = async ({encryptedData, identifier})
           const registeredName = await getNameInfo()
           if(!registeredName) throw new Error('You need a name to publish')
           const data = await publishData({
-              registeredName, file: encryptedData, service: 'DOCUMENT', identifier, uploadType: 'file', isBase64: true, withFee: true
+              registeredName, data: encryptedData, service: 'DOCUMENT', identifier, uploadType: 'base64', withFee: true
           })
           return data
           
@@ -242,15 +252,16 @@ export const publishOnQDN = async ({data, identifier, service, title,
 	tag3,
 	tag4,
 	tag5,
+  name,
   uploadType = 'file'
 }) => {
 
       if(data &&  service){
-          const registeredName = await getNameInfo()
+          const registeredName = name || await getNameInfo()
           if(!registeredName) throw new Error('You need a name to publish')
          
             const res = await publishData({
-              registeredName, file: data, service, identifier, uploadType, isBase64: true, withFee: true, title,
+              registeredName, data, service, identifier, uploadType, withFee: true, title,
               description,
               category,
               tag1,

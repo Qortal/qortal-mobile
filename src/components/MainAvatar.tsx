@@ -67,6 +67,7 @@ const [isLoading, setIsLoading] = useState(false)
                 data: avatarBase64,
                 identifier: "qortal_avatar",
                 service: "THUMBNAIL",
+                uploadType: 'base64',
               })
                 .then((response) => {
                   if (!response?.error) {

@@ -20,7 +20,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import { useHandleTutorials } from "../Tutorials/useHandleTutorials";
 import { AppsPrivate } from "./AppsPrivate";
 
-export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps, myName  }) => {
+export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps, myName, myAddress  }) => {
   const [qortalUrl, setQortalUrl] = useState('')
   const { showTutorial } = useContext(GlobalContext);
 
@@ -146,7 +146,7 @@ export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps, myName  }
             <AppCircleLabel>Library</AppCircleLabel>
           </AppCircleContainer>
         </ButtonBase>
-        <AppsPrivate myName={myName} />
+        <AppsPrivate myName={myName} myAddress={myAddress} />
 
         <SortablePinnedApps availableQapps={availableQapps} myWebsite={myWebsite} myApp={myApp}  />
     

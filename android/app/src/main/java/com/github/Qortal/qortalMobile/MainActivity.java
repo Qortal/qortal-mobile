@@ -4,6 +4,8 @@ import com.getcapacitor.BridgeActivity;
 import com.github.Qortal.qortalMobile.NativeBcrypt;
 import com.github.Qortal.qortalMobile.NativePOW;
 import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 
 public class MainActivity extends BridgeActivity {
     @Override
@@ -12,6 +14,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativePOW.class);
         super.onCreate(savedInstanceState);
 
-      
+      // ✅ Enable mixed content mode for WebView
+      WebView webView = this.bridge.getWebView();
+      WebSettings webSettings = webView.getSettings();
+      webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
     }
 }

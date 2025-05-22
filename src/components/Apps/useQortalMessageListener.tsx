@@ -10,9 +10,99 @@ import { MyContext } from '../../App';
 import FileSaver from 'file-saver';
 
 import { Capacitor } from '@capacitor/core';
+import { createEndpoint } from '../../background';
+import { uint8ArrayToBase64 } from '../../backgroundFunctions/encryption';
 
 export const isNative = Capacitor.isNativePlatform();
 
+export const saveFileInChunksFromUrl = async (
+  location,
+) => {
+  let fileName = location.filename
+  let locationUrl = `/arbitrary/${location.service}/${location.name}`;
+  if (location.identifier) {
+    locationUrl = locationUrl + `/${location.identifier}`;
+  }
+  const endpoint = await createEndpoint(
+    locationUrl +
+      `?attachment=true&attachmentFilename=${location?.filename}`
+  );
+  const response = await fetch(endpoint);
+
+  if (!response.ok || !response.body) {
+    throw new Error('Failed to fetch file or no readable stream');
+  }
+
+  const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
+  const base64Prefix = `data:${contentType};base64,`;
+
+  const getExtensionFromFileName = (name: string): string => {
+    const lastDotIndex = name.lastIndexOf('.');
+    return lastDotIndex !== -1 ? name.substring(lastDotIndex) : '';
+  };
+
+  const existingExtension = getExtensionFromFileName(fileName);
+
+  if (existingExtension) {
+    fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+  }
+
+  const mimeTypeToExtension = (mimeType: string): string => {
+    return mimeToExtensionMap[mimeType] || existingExtension || '';
+  };
+
+  const extension = mimeTypeToExtension(contentType);
+  const fullFileName = `${fileName}_${Date.now()}${extension}`;
+  const reader = response.body.getReader();
+  let isFirstChunk = true;
+  let done = false;
+  
+  let buffer = new Uint8Array(0);
+  const preferredChunkSize = 1024 * 1024; // 1MB
+  
+  while (!done) {
+    const result = await reader.read();
+    done = result.done;
+  
+    if (result.value) {
+      // Combine new value with existing buffer
+      const newBuffer = new Uint8Array(buffer.length + result.value.length);
+      newBuffer.set(buffer);
+      newBuffer.set(result.value, buffer.length);
+      buffer = newBuffer;
+  
+      // While we have enough data, process 1MB chunks
+      while (buffer.length >= preferredChunkSize) {
+        const chunk = buffer.slice(0, preferredChunkSize);
+        buffer = buffer.slice(preferredChunkSize);
+  
+        const base64Chunk = uint8ArrayToBase64(chunk);
+        await Filesystem.writeFile({
+          path: fullFileName,
+          data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
+          directory: Directory.Documents,
+          recursive: true,
+          append: !isFirstChunk,
+        });
+  
+        isFirstChunk = false;
+      }
+    }
+  }
+  
+  // Write remaining buffer (if any)
+  if (buffer.length > 0) {
+    const base64Chunk = uint8ArrayToBase64(buffer);
+    await Filesystem.writeFile({
+      path: fullFileName,
+      data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
+      directory: Directory.Documents,
+      recursive: true,
+      append: !isFirstChunk,
+    });
+  
+}
+};
 
 export const saveFileInChunks = async (
   blob: Blob,
@@ -586,38 +676,26 @@ isDOMContentLoaded: false
       } else if(event?.data?.action === 'SAVE_FILE'
       ){
         try {
-          const res = await saveFile( event.data, null, true, {
-            openSnackGlobal, 
-    setOpenSnackGlobal,
-    infoSnackCustom,
-    setInfoSnackCustom
+          await saveFile(event.data, null, true, {
+            openSnackGlobal,
+            setOpenSnackGlobal,
+            infoSnackCustom,
+            setInfoSnackCustom,
           });
-
+          event.ports[0].postMessage({
+            result: true,
+            error: null,
+          });
         } catch (error) {
-          
+          event.ports[0].postMessage({
+            result: null,
+            error: error?.message || 'Failed to save file',
+          });
         }
       } else if (
-        event?.data?.action === 'PUBLISH_MULTIPLE_QDN_RESOURCES' ||
-        event?.data?.action === 'PUBLISH_QDN_RESOURCE' ||
         event?.data?.action === 'ENCRYPT_DATA' || event?.data?.action === 'ENCRYPT_DATA_WITH_SHARING_KEY' || event?.data?.action ===  'ENCRYPT_QORTAL_GROUP_DATA'
         
       ) {
-        if (
-          event?.data?.action === 'PUBLISH_MULTIPLE_QDN_RESOURCES' ||
-          event?.data?.action === 'PUBLISH_QDN_RESOURCE' 
-          
-        ){
-          try {
-            checkMobileSizeConstraints(event.data)
-          } catch (error) {
-            event.ports[0].postMessage({
-              result: null,
-              error: error?.message,
-            });
-            return;
-          }
-        }
-       
         let data;
         try {
           data = await storeFilesInIndexedDB(event.data);
@@ -632,6 +710,29 @@ isDOMContentLoaded: false
         if (data) {
           sendMessageToRuntime(
             { action: event.data.action, type: 'qortalRequest', payload: data, isExtension: true },
+            event.ports[0]
+          );
+        } else {
+          event.ports[0].postMessage({
+            result: null,
+            error: 'Failed to prepare data for publishing',
+          });
+        }
+      } else if (
+        event?.data?.action === 'PUBLISH_MULTIPLE_QDN_RESOURCES' ||
+        event?.data?.action === 'PUBLISH_QDN_RESOURCE' 
+      ) {
+       
+        const data = event.data;
+
+        if (data) {
+          sendMessageToRuntime(
+            {
+              action: event.data.action,
+              type: 'qortalRequest',
+              payload: data,
+              isExtension: true,
+            },
             event.ports[0]
           );
         } else {

@@ -17,7 +17,7 @@ import { AppsLibrary } from "./AppsLibrary";
 
 const uid = new ShortUniqueId({ length: 8 });
 
-export const Apps = ({ mode, setMode, show , myName}) => {
+export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
   const [availableQapps, setAvailableQapps] = useState([]);
   const [selectedAppInfo, setSelectedAppInfo] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null)
@@ -298,7 +298,7 @@ export const Apps = ({ mode, setMode, show , myName}) => {
     >
       {mode !== "viewer" && !selectedTab  && <Spacer height="30px" />}
       {mode === "home" && (
-        <AppsHome myName={myName} availableQapps={availableQapps}  setMode={setMode} myApp={myApp} myWebsite={myWebsite} />
+        <AppsHome myName={myName} availableQapps={availableQapps}  setMode={setMode} myApp={myApp} myWebsite={myWebsite} myAddress={myAddress} />
       )}
     
         <AppsLibrary
@@ -314,7 +314,7 @@ export const Apps = ({ mode, setMode, show , myName}) => {
       {mode === "appInfo" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
       {mode === "appInfo-from-category" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
       <AppsCategory  availableQapps={availableQapps} isShow={mode === 'category' && !selectedTab} category={selectedCategory} myName={myName} />
-      {mode === "publish" && !selectedTab &&  <AppPublish names={myName ?  [myName] : []} categories={categories} />}
+      {mode === "publish" && !selectedTab &&  <AppPublish  categories={categories} myAddress={myAddress} />}
 
       {tabs.map((tab) => {
           if (!iframeRefs.current[tab.tabId]) {
@@ -335,7 +335,7 @@ export const Apps = ({ mode, setMode, show , myName}) => {
       {isNewTabWindow && mode === "viewer" && (
         <>
           <Spacer height="30px" />
-          <AppsHome myName={myName} availableQapps={availableQapps} setMode={setMode} myApp={myApp} myWebsite={myWebsite}  />
+          <AppsHome myName={myName} availableQapps={availableQapps} setMode={setMode} myApp={myApp} myWebsite={myWebsite} myAddress={myAddress}  />
         </>
       )}
       {mode !== "viewer" && !selectedTab  && <Spacer height="180px" />}
