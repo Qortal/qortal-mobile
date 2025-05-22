@@ -1773,8 +1773,9 @@ export const joinGroup = async (data, isFromExtension) => {
 
 export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
   try {
+    if (!data?.filename) throw new Error('Missing filename');
     if (data?.location) {
-      const requiredFieldsLocation = ['service', 'name', 'filename'];
+      const requiredFieldsLocation = ['service', 'name'];
       const missingFieldsLocation: string[] = [];
       requiredFieldsLocation.forEach((field) => {
         if (!data?.location[field]) {
@@ -1789,7 +1790,7 @@ export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
       const resPermission = await getUserPermission(
         {
           text1: 'Would you like to download:',
-          highlightedText: `${data?.location?.filename}`,
+          highlightedText: `${data?.filename}`,
         },
         isFromExtension
       );
@@ -1811,10 +1812,10 @@ export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
       }
       const endpoint = await createEndpoint(
         locationUrl +
-          `?attachment=true&attachmentFilename=${data?.location?.filename}`
+          `?attachment=true&attachmentFilename=${data?.filename}`
       );
       a.href = endpoint;
-      a.download = data.location.filename;
+      a.download = data.filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
