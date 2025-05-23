@@ -314,7 +314,7 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
       {mode === "appInfo" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
       {mode === "appInfo-from-category" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
       <AppsCategory  availableQapps={availableQapps} isShow={mode === 'category' && !selectedTab} category={selectedCategory} myName={myName} />
-      {mode === "publish" && !selectedTab &&  <AppPublish  categories={categories} myAddress={myAddress} />}
+      {mode === "publish" && !selectedTab &&  <AppPublish  categories={categories} myAddress={myAddress} myName={myName} />}
 
       {tabs.map((tab) => {
           if (!iframeRefs.current[tab.tabId]) {
