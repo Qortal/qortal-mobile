@@ -352,6 +352,7 @@ export function openIndexedDB() {
   'BUY_NAME',  'MULTI_ASSET_PAYMENT_WITH_PRIVATE_DATA',
   'TRANSFER_ASSET',
   'SIGN_FOREIGN_FEES',
+  'GET_PRIMARY_NAME',
   ]
   
 
@@ -370,6 +371,7 @@ const UIQortalRequests = [
   'BUY_NAME',  'MULTI_ASSET_PAYMENT_WITH_PRIVATE_DATA',
   'TRANSFER_ASSET',
   'SIGN_FOREIGN_FEES',
+  'GET_PRIMARY_NAME',
 ];
 
 

@@ -1,4 +1,4 @@
-import { gateways, getApiKeyFromStorage } from "./background";
+import { gateways, getApiKeyFromStorage, getNameInfoForOthers } from "./background";
 import { listOfAllQortalRequests } from "./components/Apps/useQortalMessageListener";
 import { addForeignServer, addGroupAdminRequest, addListItems, adminAction, banFromGroupRequest, buyNameRequest, cancelGroupBanRequest, cancelGroupInviteRequest, cancelSellNameRequest, cancelSellOrder, createAndCopyEmbedLink, createBuyOrder, createGroupRequest, createPoll, decryptAESGCMRequest, decryptData, decryptDataWithSharingKey, decryptQortalGroupData, deleteHostedData, deleteListItems, deployAt, encryptData, encryptDataWithSharingKey, encryptQortalGroupData, getArrrSyncStatus, getCrossChainServerInfo, getDaySummary, getForeignFee, getHostedData, getListItems, getNodeInfo, getNodeStatus, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getUserWalletTransactions, getWalletBalance, inviteToGroupRequest, joinGroup, kickFromGroupRequest, leaveGroupRequest, multiPaymentWithPrivateData, openNewTab, publishMultipleQDNResources, publishQDNResource, registerNameRequest, removeForeignServer, removeGroupAdminRequest, saveFile, sellNameRequest, sendChatMessage, sendCoin, setCurrentForeignServer, signForeignFees, signTransaction, transferAssetRequest, updateForeignFee, updateGroupRequest, updateNameRequest, voteOnPoll } from "./qortalRequests/get";
 import { getData, storeData } from "./utils/chromeStorage";
@@ -1329,6 +1329,32 @@ export const isRunningGateway = async ()=> {
                 requestId: request.requestId,
                 action: request.action,
                 payload: res,
+                type: 'backgroundMessageResponse',
+              },
+              event.origin
+            );
+          } catch (error) {
+            event.source.postMessage(
+              {
+                requestId: request.requestId,
+                action: request.action,
+                error: error.message,
+                type: 'backgroundMessageResponse',
+              },
+              event.origin
+            );
+          }
+          break;
+        }
+        case 'GET_PRIMARY_NAME': {
+          try {
+            const res = await getNameInfoForOthers(request.payload?.address);
+            const resData = res ? res : null;
+            event.source.postMessage(
+              {
+                requestId: request.requestId,
+                action: request.action,
+                payload: resData,
                 type: 'backgroundMessageResponse',
               },
               event.origin

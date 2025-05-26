@@ -47,18 +47,19 @@ async function getSaveWallet() {
       throw new Error("No wallet saved");
     }
   }
-export async function getNameInfo() {
+  export async function getNameInfo() {
     const wallet = await getSaveWallet();
     const address = wallet.address0;
-    const validApi = await getBaseApi()
-    const response = await fetch(validApi + "/names/address/" + address);
+    const validApi = await getBaseApi();
+    const response = await fetch(validApi + '/names/primary/' + address);
     const nameData = await response.json();
-    if (nameData?.length > 0) {
-      return nameData[0].name;
+    if (nameData?.name) {
+      return nameData?.name;
     } else {
-      return "";
+      return '';
     }
   }
+  
 
   export async function getAllUserNames() {
     const wallet = await getSaveWallet();
