@@ -39,6 +39,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { generateHTML } from "@tiptap/react";
 import ErrorBoundary from "../../common/ErrorBoundary";
+import { isHtmlString } from "../../utils/chat";
 
 const extractTextFromHTML = (htmlString = '') => {
   return convert(htmlString, {
@@ -59,27 +60,30 @@ export const ChatOptions = ({ messages : untransformedMessages, goToMessage, mem
   const parentRefMentions = useRef();
   const [lastMentionTimestamp, setLastMentionTimestamp] = useState(null)
   const [debouncedValue, setDebouncedValue] = useState(""); // Debounced value
-  const messages = useMemo(()=> {
-    return untransformedMessages?.map((item)=> {
-      if(item?.messageText){
-        let transformedMessage = item?.messageText
+  const messages = useMemo(() => {
+    return untransformedMessages?.map((item) => {
+      if (item?.messageText) {
+        let transformedMessage = item?.messageText;
+        const isHtml = isHtmlString(item?.messageText);
         try {
-            transformedMessage = generateHTML(item?.messageText, [
-              StarterKit,
-              Underline,
-              Highlight,
-              Mention
-            ])
-            return {
-              ...item,
-              messageText: transformedMessage
-            }
+          transformedMessage = isHtml
+            ? item?.messageText
+            : generateHTML(item?.messageText, [
+                StarterKit,
+                Underline,
+                Highlight,
+                Mention,
+              ]);
+          return {
+            ...item,
+            messageText: transformedMessage,
+          };
         } catch (error) {
-          // error
+          console.log(error);
         }
-      } else return item
-    })
-  }, [untransformedMessages])
+      } else return item;
+    });
+  }, [untransformedMessages]);
 
   const getTimestampMention = async () => {
     try {
