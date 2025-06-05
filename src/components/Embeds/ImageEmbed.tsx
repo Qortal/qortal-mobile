@@ -52,6 +52,8 @@ export const ImageCard = ({
           backgroundColor: "#1F2023",
           height: height,
           transition: "height 0.6s ease-in-out",
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Box
@@ -170,8 +172,18 @@ export const ImageCard = ({
           )}
         </Box>
   
-        <Box>
-          <CardContent>
+        <Box
+          sx={{
+            maxHeight: '100%',
+            flexGrow: 1,
+            overflow: 'hidden',
+          }}
+      >
+        <CardContent
+          sx={{
+            height: '100%',
+          }}
+        >
             <ImageViewer  src={image}  />
           </CardContent>
         </Box>
@@ -203,6 +215,7 @@ export const ImageCard = ({
             display: "flex",
             justifyContent: "center",
             cursor: "pointer",
+            height: '100%',
           }}
           onClick={handleOpenFullscreen}
         >

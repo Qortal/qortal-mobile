@@ -48,7 +48,7 @@ export const useModal = () => {
     const onCancel = () => {
         const { reject } = promiseConfig.current;
         hide();
-        reject();
+        reject('Declined');
         setMessage({
             publishFee: "",
         message: ""

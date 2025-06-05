@@ -42,7 +42,7 @@ import {
 } from "../background";
 import { getNameInfo, uint8ArrayToObject,getAllUserNames } from "../backgroundFunctions/encryption";
 import { saveFileInChunksFromUrl, showSaveFilePicker } from "../components/Apps/useQortalMessageListener";
-import { QORT_DECIMALS } from "../constants/constants";
+import { MAX_SIZE_PUBLIC_NODE, MAX_SIZE_PUBLISH, QORT_DECIMALS } from "../constants/constants";
 import Base58 from "../deps/Base58";
 import {
   base64ToUint8Array,
@@ -955,6 +955,22 @@ export const publishQDNResource = async (
   const tags = data?.tags || [];
   const result = {};
 
+
+  if (file && file.size > MAX_SIZE_PUBLISH) {
+    throw new Error(
+      "Maximum file size allowed is 2 GB per file"
+    );
+  }
+
+  if (file && file.size > MAX_SIZE_PUBLIC_NODE) {
+    const isPublicNode = await isRunningGateway();
+    if (isPublicNode) {
+      throw new Error(
+        "Maximum file size allowed on the public node is 500 MB. Please use your local node for larger files."
+      );
+    }
+  }
+
   // Fill tags dynamically while maintaining backward compatibility
   for (let i = 0; i < 5; i++) {
     result[`tag${i + 1}`] = tags[i] || data[`tag${i + 1}`] || undefined;
@@ -1123,6 +1139,31 @@ export const publishMultipleQDNResources = async (
   }
   if (resources.length === 0) {
     throw new Error('No resources to publish');
+  }
+
+  const isPublicNode = await isRunningGateway();
+  if (isPublicNode) {
+    const hasOversizedFilePublicNode = resources.some((resource) => {
+      const file = resource?.file;
+      return file instanceof File && file.size > MAX_SIZE_PUBLIC_NODE;
+    });
+
+    if (hasOversizedFilePublicNode) {
+      throw new Error(
+       "Maximum file size allowed on the public node is 500 MB. Please use your local node for larger files."
+      );
+    }
+  }
+
+  const hasOversizedFile = resources.some((resource) => {
+    const file = resource?.file;
+    return file instanceof File && file.size > MAX_SIZE_PUBLISH;
+  });
+
+  if (hasOversizedFile) {
+    throw new Error(
+      "Maximum file size allowed is 2 GB per file"
+    );
   }
 
   const encrypt = data?.encrypt;

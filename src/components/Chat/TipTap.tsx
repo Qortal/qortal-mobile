@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditorProvider, useCurrentEditor, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Color } from "@tiptap/extension-color";
@@ -34,6 +34,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { ReactRenderer } from '@tiptap/react'
 import MentionList from './MentionList.jsx'
+import { fileToBase64 } from "../../utils/fileReading/index.js";
 
 function textMatcher(doc, from) {
   const textBeforeCursor = doc.textBetween(0, from, ' ', ' ');
@@ -110,13 +111,13 @@ const MenuBar = ({ setEditorRef, isChat }) => {
   };
 
   useEffect(() => {
-    if (editor) {
+    if (editor && !isChat) {
       editor.view.dom.addEventListener("paste", handlePaste);
       return () => {
         editor.view.dom.removeEventListener("paste", handlePaste);
       };
     }
-  }, [editor]);
+  }, [editor, isChat]);
 
   return (
     <div className="control-group">
@@ -299,7 +300,8 @@ export default ({
   customEditorHeight,
   membersWithNames,
   enableMentions,
-  isReply
+  isReply,
+  insertImage,
 }) => {
 
   const extensionsFiltered = isChat
@@ -329,7 +331,35 @@ export default ({
   }, [membersWithNames])
 
 
+  const handleImageUpload = useCallback(async (file) => {
+    try {
+      if (!file.type.includes('image')) return;
+      let compressedFile = file;
+      if (file.type !== 'image/gif') {
+        await new Promise<void>((resolve) => {
+          new Compressor(file, {
+            quality: 0.6,
+            maxWidth: 1200,
+            mimeType: 'image/webp',
+            success(result) {
+              compressedFile = result;
+              resolve();
+            },
+            error(err) {
+              console.error('Image compression error:', err);
+            },
+          });
+        });
+      }
 
+      if (compressedFile) {
+        const toBase64 = await fileToBase64(compressedFile);
+        insertImage(toBase64);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, [insertImage]);
 
 
   const usersRef = useRef([]);
@@ -469,6 +499,25 @@ export default ({
             }
           }
           return false;
+        },
+        handlePaste(view, event) {
+          if(!handleImageUpload) return
+          if (!isChat) return;
+          const items = event.clipboardData?.items;
+          if (!items) return false;
+
+          for (const item of items) {
+            if (item.type.startsWith('image/')) {
+              const file = item.getAsFile();
+              if (file) {
+                event.preventDefault(); // Block the default paste
+                handleImageUpload(file); // Custom handler
+                return true; // Let ProseMirror know we handled it
+              }
+            }
+          }
+
+          return false; // fallback to default behavior otherwise
         },
       }}
     />

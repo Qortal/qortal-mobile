@@ -54,35 +54,19 @@ export const NewUsersCTA = ({ balance }) => {
               textDecoration: "underline",
             }}
             onClick={() => {
-              if (chrome && chrome.tabs) {
-                chrome.tabs.create({ url: "https://link.qortal.dev/telegram-invite" }, (tab) => {
-                  if (chrome.runtime.lastError) {
-                    console.error("Error opening tab:", chrome.runtime.lastError);
-                  } else {
-                    console.log("Tab opened successfully:", tab);
-                  }
-                });
-              }
-          
+              window.open("https://link.qortal.dev/support", '_system')
             }}
           >
-            Telegram
+            Nextcloud
           </ButtonBase>
           <ButtonBase
             sx={{
               textDecoration: "underline",
             }}
             onClick={() => {
-              if (chrome && chrome.tabs) {
-                chrome.tabs.create({ url: "https://link.qortal.dev/discord-invite" }, (tab) => {
-                  if (chrome.runtime.lastError) {
-                    console.error("Error opening tab:", chrome.runtime.lastError);
-                  } else {
-                    console.log("Tab opened successfully:", tab);
-                  }
-                });
-              }
+              window.open("https://link.qortal.dev/discord-invite", '_system')
             }}
+            
           >
             Discord
           </ButtonBase>
