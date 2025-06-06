@@ -3187,6 +3187,7 @@ function setupMessageListener() {
         break;
       case "updateThreadActivity":
         updateThreadActivityCase(request, event);
+        break;
       case "decryptGroupEncryption":
         decryptGroupEncryptionCase(request, event);
         break;
