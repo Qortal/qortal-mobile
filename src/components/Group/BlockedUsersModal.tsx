@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   TextField,
   Typography,
 } from "@mui/material";
@@ -18,6 +19,8 @@ import { getNameInfo, requestQueueMemberNames } from "./Group";
 import { useModal } from "../../common/useModal";
 import { useRecoilState } from "recoil";
 import { isOpenBlockedModalAtom } from "../../atoms/global";
+import CloseIcon from '@mui/icons-material/Close';
+
 import InfoIcon from '@mui/icons-material/Info';
 export const BlockedUsersModal = () => {
   const [isOpenBlockedModal, setIsOpenBlockedModal] = useRecoilState(isOpenBlockedModalAtom)
@@ -314,6 +317,17 @@ export const BlockedUsersModal = () => {
         <DialogTitle id="alert-dialog-title">
           {"Decide what to block"}
         </DialogTitle>
+        <IconButton
+          onClick={onCancel}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: 'white',
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             Blocking {message?.userName || message?.userAddress}
