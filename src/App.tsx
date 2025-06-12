@@ -442,7 +442,7 @@ function App() {
   const { isShow, onCancel, onOk, show, message } = useModal();
   const {isUserBlocked,
     addToBlockList,
-    removeBlockFromList, getAllBlockedUsers} = useBlockedAddresses()
+    removeBlockFromList, getAllBlockedUsers} = useBlockedAddresses(extState === 'authenticated')
   const {
     isShow: isShowUnsavedChanges,
     onCancel: onCancelUnsavedChanges,
