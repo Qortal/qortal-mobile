@@ -3594,13 +3594,15 @@ export const createSellOrder = async (data, isFromExtension) => {
     throw new Error(errorMsg);
   }
 
+    const parsedForeignAmount = Number(data.foreignAmount)?.toFixed(8);
+
 const receivingAddress = await getUserWalletFunc(data.foreignBlockchain)
   try {
     const resPermission = await getUserPermission({
       text1: "Do you give this application permission to perform a sell order?",
       text2: `${data.qortAmount}${" "}
       ${`QORT`}`, 
-      text3: `FOR  ${data.foreignAmount} ${data.foreignBlockchain}`,
+      text3: `FOR  ${parsedForeignAmount} ${data.foreignBlockchain}`,
       fee: '0.02'
     }, isFromExtension);
     const { accepted } = resPermission;
@@ -3619,7 +3621,7 @@ const receivingAddress = await getUserWalletFunc(data.foreignBlockchain)
 				qortAmount: parseFloat(data.qortAmount),
 				fundingQortAmount: parseFloat(data.qortAmount) + 0.001,
 				foreignBlockchain: data.foreignBlockchain,
-				foreignAmount: parseFloat(data.foreignAmount),
+				foreignAmount: parsedForeignAmount,
 				tradeTimeout: 120,
 				receivingAddress: receivingAddress.address
       }, keyPair)
