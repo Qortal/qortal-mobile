@@ -1375,7 +1375,7 @@ export const isRunningGateway = async ()=> {
         case 'GET_PRIMARY_NAME': {
           try {
             const res = await getNameInfoForOthers(request.payload?.address);
-            const resData = res ? res : null;
+            const resData = res ? res : "";
             event.source.postMessage(
               {
                 requestId: request.requestId,
