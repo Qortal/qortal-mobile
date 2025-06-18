@@ -200,7 +200,7 @@ export const isRunningGateway = async ()=> {
   
         case "PUBLISH_QDN_RESOURCE": {
           try {
-            const res = await publishQDNResource(request.payload, event.source, isFromExtension);
+            const res = await publishQDNResource(request.payload, event.source, isFromExtension, appInfo);
             event.source.postMessage({
               requestId: request.requestId,
               action: request.action,

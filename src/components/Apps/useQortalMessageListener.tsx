@@ -645,7 +645,7 @@ isDOMContentLoaded: false
 
       const sendMessageToRuntime = (message, eventPort) => {
         window.sendMessage(message.action, message.payload, 300000, message.isExtension,  {
-          name: appName, service: appService
+          name: appName, service: appService,  tabId,
         }, skipAuth)
         .then((response) => {
           if (response.error) {
@@ -800,7 +800,7 @@ isDOMContentLoaded: false
     };
 
     
-  }, [appName, appService]); // Empty dependency array to run once when the component mounts
+  }, [appName, appService, tabId]); // Empty dependency array to run once when the component mounts
 
 
 

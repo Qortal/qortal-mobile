@@ -358,11 +358,12 @@ export async function sendCoinCase(request, event) {
 
 export async function inviteToGroupCase(request, event) {
   try {
-    const { groupId, qortalAddress, inviteTime } = request.payload;
+    const { groupId, qortalAddress, inviteTime, txGroupId = 0 } = request.payload;
     const response = await inviteToGroup({
       groupId,
       qortalAddress,
       inviteTime,
+      txGroupId
     });
 
     event.source.postMessage(
@@ -483,8 +484,8 @@ export async function createGroupCase(request, event) {
 
 export async function cancelInvitationToGroupCase(request, event) {
   try {
-    const { groupId, qortalAddress } = request.payload;
-    const response = await cancelInvitationToGroup({ groupId, qortalAddress });
+    const { groupId, qortalAddress,txGroupId = 0 } = request.payload;
+    const response = await cancelInvitationToGroup({ groupId, qortalAddress, txGroupId });
 
     event.source.postMessage(
       {
@@ -564,11 +565,12 @@ export async function joinGroupCase(request, event) {
 
 export async function kickFromGroupCase(request, event) {
   try {
-    const { groupId, qortalAddress, rBanReason } = request.payload;
+    const { groupId, qortalAddress, rBanReason, txGroupId = 0  } = request.payload;
     const response = await kickFromGroup({
       groupId,
       qortalAddress,
       rBanReason,
+      txGroupId
     });
 
     event.source.postMessage(
@@ -595,12 +597,13 @@ export async function kickFromGroupCase(request, event) {
 
 export async function banFromGroupCase(request, event) {
   try {
-    const { groupId, qortalAddress, rBanReason, rBanTime } = request.payload;
+    const { groupId, qortalAddress, rBanReason, rBanTime, txGroupId = 0 } = request.payload;
     const response = await banFromGroup({
       groupId,
       qortalAddress,
       rBanReason,
       rBanTime,
+      txGroupId
     });
 
     event.source.postMessage(
@@ -734,8 +737,8 @@ export async function getUserSettingsCase(request, event) {
 
 export async function cancelBanCase(request, event) {
   try {
-    const { groupId, qortalAddress } = request.payload;
-    const response = await cancelBan({ groupId, qortalAddress });
+    const { groupId, qortalAddress, txGroupId = 0  } = request.payload;
+    const response = await cancelBan({ groupId, qortalAddress, txGroupId });
 
     event.source.postMessage(
       {
@@ -788,8 +791,8 @@ export async function registerNameCase(request, event) {
 
 export async function makeAdminCase(request, event) {
   try {
-    const { groupId, qortalAddress } = request.payload;
-    const response = await makeAdmin({ groupId, qortalAddress });
+    const { groupId, qortalAddress,txGroupId = 0 } = request.payload;
+    const response = await makeAdmin({ groupId, qortalAddress, txGroupId });
 
     event.source.postMessage(
       {
@@ -815,8 +818,8 @@ export async function makeAdminCase(request, event) {
 
 export async function removeAdminCase(request, event) {
   try {
-    const { groupId, qortalAddress } = request.payload;
-    const response = await removeAdmin({ groupId, qortalAddress });
+    const { groupId, qortalAddress, txGroupId = 0  } = request.payload;
+    const response = await removeAdmin({ groupId, qortalAddress, txGroupId });
 
     event.source.postMessage(
       {

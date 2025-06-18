@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo,  useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo,  useState } from "react";
 
 import { Avatar, Box,  } from "@mui/material";
 import { Add } from "@mui/icons-material";
@@ -99,6 +99,49 @@ export const AppViewer = React.forwardRef(({ app , hide, isDevMode, skipAuth}, i
       unsubscribeFromEvent("copyLink", copyLinkFunc);
     };
   }, [app, path]);
+
+    const receiveChunksFunc = useCallback(
+      (e) => {
+        const iframe = iframeRef?.current;
+        if (!iframe || !iframe?.src) return;
+        if (app?.tabId !== e.detail?.tabId) return;
+        const publishLocation = e.detail?.publishLocation;
+        const chunksSubmitted = e.detail?.chunksSubmitted;
+        const totalChunks = e.detail?.totalChunks;
+        try {
+          if (publishLocation === undefined || publishLocation === null) return;
+          const dataToBeSent = {};
+          if (chunksSubmitted !== undefined && chunksSubmitted !== null) {
+            dataToBeSent.chunks = chunksSubmitted;
+          }
+          if (totalChunks !== undefined && totalChunks !== null) {
+            dataToBeSent.totalChunks = totalChunks;
+          }
+          const targetOrigin = new URL(iframe.src).origin;
+          iframe.contentWindow?.postMessage(
+            {
+              action: 'PUBLISH_STATUS',
+              publishLocation,
+              ...dataToBeSent,
+              requestedHandler: 'UI',
+              processed: e.detail?.processed || false,
+            },
+            targetOrigin
+          );
+        } catch (err) {
+          console.error('Failed to send theme change to iframe:', err);
+        }
+      },
+      [iframeRef, app?.tabId]
+    );
+
+    useEffect(() => {
+      subscribeToEvent('receiveChunks', receiveChunksFunc);
+
+      return () => {
+        unsubscribeFromEvent('receiveChunks', receiveChunksFunc);
+      };
+    }, [receiveChunksFunc]);
 
  // Function to navigate back in iframe
  const navigateBackInIframe = async () => {
