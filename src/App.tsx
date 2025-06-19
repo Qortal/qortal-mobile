@@ -129,6 +129,7 @@ import {
   isUsingImportExportSettingsAtom,
   lastEnteredGroupIdAtom,
   mailsAtom,
+  myGroupsWhereIAmAdminAtom,
   oldPinnedAppsAtom,
   qMailLastEnteredTimestampAtom,
   settingsLocalLastUpdatedAtom,
@@ -563,6 +564,9 @@ function App() {
   const resetAtomQMailLastEnteredTimestampAtom = useResetRecoilState(qMailLastEnteredTimestampAtom)
   const resetAtomMailsAtom = useResetRecoilState(mailsAtom)
   const resetLastEnteredGroupIdAtom = useResetRecoilState(lastEnteredGroupIdAtom)
+    const resetMyGroupsWhereIAmAdminAtom = useResetRecoilState(
+    myGroupsWhereIAmAdminAtom
+  );
   const resetAllRecoil = () => {
     resetAtomSortablePinnedAppsAtom();
     resetAtomCanSaveSettingToQdnAtom();
@@ -574,6 +578,7 @@ function App() {
     resetAtomMailsAtom()
     resetGroupPropertiesAtom()
     resetLastEnteredGroupIdAtom()
+    resetMyGroupsWhereIAmAdminAtom()
   };
   useEffect(() => {
     if (!isMobile) return;

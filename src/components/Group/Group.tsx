@@ -67,7 +67,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import CloseIcon from "@mui/icons-material/Close";
 
 import { ThingsToDoInitial } from "./ThingsToDoInitial";
-import { GroupJoinRequests } from "./GroupJoinRequests";
+import { GroupJoinRequests, requestQueueGroupJoinRequests } from "./GroupJoinRequests";
 import { GroupForum } from "../Chat/GroupForum";
 import { GroupInvites } from "./GroupInvites";
 import {
@@ -100,7 +100,7 @@ import { formatEmailDate } from "./QMailMessages";
 import { useHandleMobileNativeBack } from "../../hooks/useHandleMobileNativeBack";
 import { AdminSpace } from "../Chat/AdminSpace";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { addressInfoControllerAtom, groupsPropertiesAtom, isOpenBlockedModalAtom, lastEnteredGroupIdAtom, selectedGroupIdAtom } from "../../atoms/global";
+import { addressInfoControllerAtom, groupsPropertiesAtom, isOpenBlockedModalAtom, lastEnteredGroupIdAtom, myGroupsWhereIAmAdminAtom, selectedGroupIdAtom } from "../../atoms/global";
 import { sortArrayByTimestampAndGroupName } from "../../utils/time";
 import { BlockedUsersModal } from "./BlockedUsersModal";
 import { GlobalTouchMenu } from "../GlobalTouchMenu";
@@ -472,6 +472,9 @@ export const Group = ({
   const { setMemberGroups, memberGroups, rootHeight, isRunningPublicNode } = useContext(MyContext);
   const lastGroupNotification = useRef<null | number>(null);
   const [timestampEnterData, setTimestampEnterData] = useState({});
+    const groupsPropertiesRef = useRef({});
+  const setMyGroupsWhereIAmAdmin = useSetRecoilState(myGroupsWhereIAmAdminAtom);
+
   const [chatMode, setChatMode] = useState("groups");
   const [newChat, setNewChat] = useState(false);
   const [openSnack, setOpenSnack] = React.useState(false);
@@ -536,6 +539,9 @@ export const Group = ({
   useEffect(()=> {
     timestampEnterDataRef.current = timestampEnterData
   }, [timestampEnterData])
+   useEffect(() => {
+    groupsPropertiesRef.current = groupsProperties;
+  }, [groupsProperties]);
 
   useEffect(() => {
     isFocusedRef.current = isFocused;
@@ -988,15 +994,50 @@ export const Group = ({
     }
   }, [])
 
+ const getGroupsWhereIAmAMember = useCallback(async (groups) => {
+    try {
+      let groupsAsAdmin = [];
+      const getAllGroupsAsAdmin = groups
+        .filter((item) => item.groupId !== '0')
+        .map(async (group) => {
+          const isAdminResponse = await requestQueueGroupJoinRequests.enqueue(
+            () => {
+              return fetch(
+                `${getBaseApiReact()}/groups/members/${group.groupId}?limit=0&onlyAdmins=true`
+              );
+            }
+          );
+          const isAdminData = await isAdminResponse.json();
 
-  useEffect(()=> {
-    if(!myAddress) return
-    if(areKeysEqual(groups?.map((grp)=> grp?.groupId), Object.keys(groupsProperties))){
-    } else {
-      getGroupsProperties(myAddress)
+          const findMyself = isAdminData?.members?.find(
+            (member) => member.member === myAddress
+          );
+
+          if (findMyself) {
+            groupsAsAdmin.push(group);
+          }
+          return true;
+        });
+
+      await Promise.all(getAllGroupsAsAdmin);
+      setMyGroupsWhereIAmAdmin(groupsAsAdmin);
+    } catch (error) {
+      console.error();
     }
-  }, [groups, myAddress])
- 
+  }, []);
+
+  useEffect(() => {
+    if (!myAddress) return;
+    if (
+      !areKeysEqual(
+        groups?.map((grp) => grp?.groupId),
+        Object.keys(groupsPropertiesRef.current)
+      )
+    ) {
+      getGroupsProperties(myAddress);
+      getGroupsWhereIAmAMember(groups);
+    }
+  }, [groups, myAddress]);
 
   useEffect(() => {
     // Handler function for incoming messages

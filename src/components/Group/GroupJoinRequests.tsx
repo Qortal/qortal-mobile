@@ -17,7 +17,7 @@ import { CustomLoader } from "../../common/CustomLoader";
 import { getBaseApi } from "../../background";
 import { MyContext, getBaseApiReact, isMobile } from "../../App";
 import { myGroupsWhereIAmAdminAtom } from "../../atoms/global";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 export const requestQueueGroupJoinRequests = new RequestQueueWithPromise(2)
@@ -28,66 +28,44 @@ export const GroupJoinRequests = ({ myAddress, groups, setOpenManageMembers, get
   const [groupsWithJoinRequests, setGroupsWithJoinRequests] = React.useState([])
   const [loading, setLoading] = React.useState(true)
   const {txList, setTxList} = React.useContext(MyContext)
-  const setMyGroupsWhereIAmAdmin = useSetRecoilState(
-    myGroupsWhereIAmAdminAtom
-  );
+   const [myGroupsWhereIAmAdmin] = useRecoilState(myGroupsWhereIAmAdminAtom);
 
 
-  const getJoinRequests = async ()=> {
+
+  const getJoinRequests = async () => {
     try {
-      setLoading(true)
-   
-      let groupsAsAdmin = []
-      const getAllGroupsAsAdmin = groups.filter((item)=> item.groupId !== '0').map(async (group)=> {
-   
-        const isAdminResponse = await requestQueueGroupJoinRequests.enqueue(()=> {
-          return fetch(
-            `${getBaseApiReact()}/groups/members/${group.groupId}?limit=0&onlyAdmins=true`
-          );
-        }) 
-        const isAdminData = await isAdminResponse.json()
-   
+      setLoading(true);
+      const res = await Promise.all(
+        myGroupsWhereIAmAdmin.map(async (group) => {
+          const joinRequestResponse =
+            await requestQueueGroupJoinRequests.enqueue(() => {
+              return fetch(
+                `${getBaseApiReact()}/groups/joinrequests/${group.groupId}`
+              );
+            });
 
-        const findMyself = isAdminData?.members?.find((member)=> member.member === myAddress)
-      
-        if(findMyself){
-          groupsAsAdmin.push(group)
-        }
-        return true
-      })
-
-     
-      await Promise.all(getAllGroupsAsAdmin)
-      setMyGroupsWhereIAmAdmin(groupsAsAdmin)
-     const res = await Promise.all(groupsAsAdmin.map(async (group)=> {
-
-      const joinRequestResponse = await requestQueueGroupJoinRequests.enqueue(()=> {
-        return  fetch(
-          `${getBaseApiReact()}/groups/joinrequests/${group.groupId}`
-        );
-      }) 
-
-      const joinRequestData = await joinRequestResponse.json()
-      return {
-        group,
-        data: joinRequestData
-      }
-    }))
-     setGroupsWithJoinRequests(res)
+          const joinRequestData = await joinRequestResponse.json();
+          return {
+            group,
+            data: joinRequestData,
+          };
+        })
+      );
+      setGroupsWithJoinRequests(res);
     } catch (error) {
-      
+      console.log(error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   React.useEffect(() => {
-    if (myAddress && groups.length > 0) {
-      getJoinRequests()
+    if (myAddress && myGroupsWhereIAmAdmin.length > 0) {
+      getJoinRequests();
     } else {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [myAddress, groups]);
+  }, [myAddress, myGroupsWhereIAmAdmin]);
 
   const filteredJoinRequests = React.useMemo(()=> {
     return groupsWithJoinRequests.map((group)=> {
