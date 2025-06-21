@@ -1120,7 +1120,8 @@ export const checkArrrSyncStatus = async (seed) => {
 export const publishMultipleQDNResources = async (
   data: any,
   sender,
-  isFromExtension
+  isFromExtension,
+  appInfo
 ) => {
   const requiredFields = ['resources'];
   const missingFields: string[] = [];
@@ -1166,6 +1167,23 @@ export const publishMultipleQDNResources = async (
     throw new Error(
       "Maximum file size allowed is 2 GB per file"
     );
+  }
+
+   const totalFileSize = resources.reduce((acc, resource) => {
+    const file = resource?.file;
+    if (file && file?.size && !isNaN(file?.size)) {
+      return acc + file.size;
+    }
+    return acc;
+  }, 0);
+  if (totalFileSize > 0) {
+    const urlCheck = `/arbitrary/check/tmp?totalSize=${totalFileSize}`;
+
+    const checkEndpoint = await createEndpoint(urlCheck);
+    const checkRes = await fetch(checkEndpoint);
+    if (!checkRes.ok) {
+      throw new Error('Not enough space on your hard drive');
+    }
   }
 
   const encrypt = data?.encrypt;
@@ -1289,6 +1307,7 @@ export const publishMultipleQDNResources = async (
     throw new Error('User declined request');
   }
   let failedPublishesIdentifiers = [];
+  const publishedResponses = [];
   for (const resource of resources) {
     try {
       const requiredFields = ['service'];
@@ -1389,30 +1408,28 @@ export const publishMultipleQDNResources = async (
           resource?.base64 || resource?.data64 || resourceEncrypt
             ? 'base64'
             : 'file';
-        await retryTransaction(
-          publishData,
-          [
-            {
-              data: rawData,
-              registeredName: encodeURIComponent(resource?.name || name),
-              service: service,
-              identifier: encodeURIComponent(identifier),
-              uploadType: dataType,
-              filename: filename,
-              title,
-              description,
-              category,
-              tag1,
-              tag2,
-              tag3,
-              tag4,
-              tag5,
-              apiVersion: 2,
-              withFee: true,
-            },
-          ],
-          true
-        );
+       const response = await publishData({
+          apiVersion: 2,
+          category,
+          data: rawData,
+          description,
+          filename: filename,
+          identifier: encodeURIComponent(identifier),
+          registeredName: encodeURIComponent(resource?.name || name),
+          service: service,
+          tag1,
+          tag2,
+          tag3,
+          tag4,
+          tag5,
+          title,
+          uploadType: dataType,
+          withFee: true,
+          appInfo,
+        });
+        if (response?.signature) {
+          publishedResponses.push(response);
+        }
         await new Promise((res) => {
           setTimeout(() => {
             res();
@@ -1454,7 +1471,7 @@ export const publishMultipleQDNResources = async (
       true
     );
   }
-  return true;
+  return publishedResponses;
 };
 
 export const voteOnPoll = async (data, isFromExtension) => {

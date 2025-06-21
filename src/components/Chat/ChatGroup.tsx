@@ -753,7 +753,7 @@ const sendMessage = async () => {
           240000,
           true
         );
-        if (res !== true)
+        if (res?.error)
           throw new Error(
             "Unable to publish image"
           );
