@@ -407,7 +407,7 @@ export const publishData = async ({
     }
 
     const chunkUrl = uploadDataUrl + `/chunk`;
-    const chunkSize = 1 * 1024 * 1024; // 1MB
+    const chunkSize = 5 * 1024 * 1024; // 5MB
 
     const totalChunks = Math.ceil(file.size / chunkSize);
   if (appInfo?.tabId) {
