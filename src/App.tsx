@@ -28,6 +28,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { ScreenOrientation } from '@capacitor/screen-orientation';
+
 import { decryptStoredWallet } from "./utils/decryptWallet";
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
@@ -518,6 +520,15 @@ function App() {
     }
   
   }
+
+  useEffect(() => {
+    try {
+        ScreenOrientation.lock({ orientation: 'portrait' });
+
+    } catch (error) {
+      console.error(error)
+    }
+}, []);
   useEffect(()=> {
     if(!shownTutorialsInitiated) return
     if(extState === 'not-authenticated'){

@@ -353,6 +353,7 @@ export function openIndexedDB() {
   'TRANSFER_ASSET',
   'SIGN_FOREIGN_FEES',
   'GET_PRIMARY_NAME',
+  'SCREEN-ORIENTATION'
   ]
   
 
@@ -372,6 +373,7 @@ const UIQortalRequests = [
   'TRANSFER_ASSET',
   'SIGN_FOREIGN_FEES',
   'GET_PRIMARY_NAME',
+  'SCREEN_ORIENTATION'
 ];
 
 

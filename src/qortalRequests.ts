@@ -4,6 +4,7 @@ import { addForeignServer, addGroupAdminRequest, addListItems, adminAction, banF
 import { getData, storeData } from "./utils/chromeStorage";
 import { executeEvent } from "./utils/events";
 
+import { ScreenOrientation } from '@capacitor/screen-orientation';
 
 
 function getLocalStorage(key) {
@@ -1381,6 +1382,40 @@ export const isRunningGateway = async ()=> {
                 requestId: request.requestId,
                 action: request.action,
                 payload: resData,
+                type: 'backgroundMessageResponse',
+              },
+              event.origin
+            );
+          } catch (error) {
+            event.source.postMessage(
+              {
+                requestId: request.requestId,
+                action: request.action,
+                error: error.message,
+                type: 'backgroundMessageResponse',
+              },
+              event.origin
+            );
+          }
+          break;
+        }
+        case 'SCREEN_ORIENTATION': {
+          try {
+            const mode = request.payload?.mode
+              if(mode === 'unlock'){
+                await ScreenOrientation.unlock();
+
+              } else {
+               await ScreenOrientation.lock({ orientation: mode });
+
+              }
+
+            
+            event.source.postMessage(
+              {
+                requestId: request.requestId,
+                action: request.action,
+                payload: true,
                 type: 'backgroundMessageResponse',
               },
               event.origin
