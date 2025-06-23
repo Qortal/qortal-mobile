@@ -28,6 +28,7 @@ import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import SearchIcon from '@mui/icons-material/Search';
 import { executeEvent, subscribeToEvent, unsubscribeFromEvent } from "../../utils/events";
 import { useNameSearch } from "../../hooks/useNameSearch";
+import { validateAddress } from "../../utils/validateAddress";
 
 function formatAddress(str) {
   if (str.length <= 12) return str;
@@ -42,7 +43,11 @@ export const UserLookup = ({ isOpenDrawerLookup, setIsOpenDrawerLookup }) => {
   const [nameOrAddress, setNameOrAddress] = useState("");
   const [inputValue, setInputValue] = useState('');
   const { results, isLoading } = useNameSearch(inputValue);
-  const options = useMemo(() => results?.map((item) => item.name), [results]);
+    const options = useMemo(() => {
+    const isAddress = validateAddress(inputValue);
+    if (isAddress) return [inputValue];
+    return results?.map((item) => item.name);
+  }, [results, inputValue]);
   const [errorMessage, setErrorMessage] = useState("");
   const [addressInfo, setAddressInfo] = useState(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
@@ -63,7 +68,10 @@ export const UserLookup = ({ isOpenDrawerLookup, setIsOpenDrawerLookup }) => {
       if (!addressInfoRes?.publicKey) {
         throw new Error("Address does not exist on blockchain");
       }
-      const name = await getNameInfo(owner);
+      const isAddress = validateAddress(messageAddressOrName);
+        const name = !isAddress
+          ? messageAddressOrName
+          : await getNameInfo(owner);
       const balanceRes = await fetch(
         `${getBaseApiReact()}/addresses/balance/${owner}`
       );
@@ -166,7 +174,7 @@ export const UserLookup = ({ isOpenDrawerLookup, setIsOpenDrawerLookup }) => {
                 {...params}
                 label="Address or Name"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && nameOrAddress) {
+                  if (e.key === 'Enter' && inputValue) {
                     lookupFunc(inputValue);
                   }
                 }}
