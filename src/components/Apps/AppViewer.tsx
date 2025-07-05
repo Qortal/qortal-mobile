@@ -75,7 +75,7 @@ export const AppViewer = React.forwardRef(({ app , hide, isDevMode, skipAuth}, i
   const copyLinkFunc = (e) => {
     const {tabId} = e.detail
     if(tabId === app?.tabId){
-      let link = 'qortal://' + app?.service + '/' + app?.name 
+      let link = 'qortal://' + app?.service + '/' + app?.name.replace(/ /g, '%20');
       if(path && path.startsWith('/')){
         link = link +  removeTrailingSlash(path)
       }
