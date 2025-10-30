@@ -1,4 +1,4 @@
-import { atom, selectorFamily } from 'recoil';
+import { atom, selectorFamily, useRecoilCallback } from 'recoil';
 
 
 export const sortablePinnedAppsAtom = atom({
@@ -193,3 +193,16 @@ export const isOpenBlockedModalAtom = atom({
   key: 'isOpenBlockedModalAtom', 
   default: false, 
 });
+
+export function useGetResourceStatus() {
+  return useRecoilCallback(
+    ({ snapshot }) =>
+      async (id: string) => {
+        const resources = (await snapshot.getPromise(
+          resourceDownloadControllerAtom,
+        )) as Record<string, unknown> | undefined;
+        return resources?.[id];
+      },
+    [],
+  );
+};
