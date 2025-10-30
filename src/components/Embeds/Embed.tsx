@@ -13,6 +13,7 @@ import { blobControllerAtom, blobKeySelector, resourceKeySelector, selectedGroup
 import { parseQortalLink } from "./embed-utils";
 import { PollCard } from "./PollEmbed";
 import { ImageCard } from "./ImageEmbed";
+import { VideoCard } from './VideoEmbed';
 import { AttachmentCard } from "./AttachmentEmbed";
 
 const getPoll = async (name) => {
@@ -263,12 +264,13 @@ export const Embed = ({ embedLink }) => {
           break;
         case "IMAGE":
           setType("IMAGE");
-
           break;
-          case "ATTACHMENT":
-            setType("ATTACHMENT");
-            
-            break;
+        case 'VIDEO':
+          setType('VIDEO');
+          break;
+        case "ATTACHMENT":
+          setType("ATTACHMENT");
+          break;
         default:
           break;
       }
@@ -360,6 +362,14 @@ export const Embed = ({ embedLink }) => {
           encryptionType={encryptionType}
           selectedGroupId={selectedGroupId}
 
+        />
+      )}
+      {parsedType === 'VIDEO' && resourceData && (
+        <VideoCard
+          resourceData={resourceData}
+          owner={parsedData?.name}
+          openExternal={openExternal}
+          external={external}
         />
       )}
       <CustomizedSnackbars

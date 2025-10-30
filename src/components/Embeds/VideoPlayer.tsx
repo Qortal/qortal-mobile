@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import ReactDOM from 'react-dom'
-import { Box, IconButton, Slider } from '@mui/material'
+import { Box, Button, IconButton, Slider } from '@mui/material'
 import { CircularProgress, Typography } from '@mui/material'
 import { Key } from 'ts-key-enum'
 import {
@@ -16,8 +16,11 @@ import { Refresh } from '@mui/icons-material'
 import { Menu, MenuItem } from '@mui/material'
 import { MoreVert as MoreIcon } from '@mui/icons-material'
 import { GlobalContext, getBaseApiReact } from '../../App'
-import { resourceKeySelector } from '../../atoms/global'
-import { useRecoilValue } from 'recoil'
+import {
+  resourceDownloadControllerAtom,
+  resourceKeySelector,
+} from '../../atoms/global'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
 const VideoContainer = styled(Box)`
   position: relative;
   display: flex;
@@ -96,6 +99,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [playbackRate, setPlaybackRate] = useState(1)
   const [anchorEl, setAnchorEl] = useState(null)
   const reDownload = useRef<boolean>(false)
+  const setResources = useSetRecoilState(resourceDownloadControllerAtom)
 
   const resetVideoState = () => {
     // Reset all states to their initial values
@@ -440,6 +444,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }
 
+  const retry = () => {
+    downloadResource({
+      name,
+      service,
+      identifier,
+    })
+  }
+
   return (
     <VideoContainer
       tabIndex={0}
@@ -470,7 +482,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             gap: '10px'
           }}
         >
-          <CircularProgress color="secondary" />
+          {resourceStatus?.status !== 'FAILED_TO_DOWNLOAD' && (
+            <CircularProgress color="secondary" />
+          )}
           {resourceStatus && (
             <Typography
               variant="subtitle2"
@@ -481,7 +495,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 textAlign: 'center'
               }}
             >
-              {resourceStatus?.status === 'REFETCHING' ? (
+              {resourceStatus?.status === 'FAILED_TO_DOWNLOAD' ? (
+              <>
+                <>Failed to download</>
+
+                <Button onClick={retry}>Retry</Button>
+              </>
+            ) : resourceStatus?.status === 'REFETCHING' ? (
                 <>
                   <>
                     {getDownloadProgress(resourceStatus?.localChunkCount, resourceStatus?.totalChunkCount)}
