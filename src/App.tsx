@@ -520,6 +520,12 @@ function App() {
     }
   
   }
+  const passwordRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (extState === "wallet-dropped" && passwordRef.current) {
+      passwordRef.current.focus();
+    }
+  }, [extState]);
 
   useEffect(() => {
     try {
@@ -2585,6 +2591,7 @@ function App() {
                   authenticateWallet();
                 }
               }}
+              ref={passwordRef}
             />
              {useLocalNode ? (
               <>
