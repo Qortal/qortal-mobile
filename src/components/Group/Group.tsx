@@ -1760,6 +1760,12 @@ export const Group = ({
     }
   };
 
+  const getUserAvatarUrl = useCallback((name?: string) => {
+    return name
+      ? `${getBaseApiReact()}/arbitrary/THUMBNAIL/${name}/qortal_avatar?async=true`
+      : '';
+  }, []);
+
   const renderDirects = () => {
     return (
       <div
@@ -1893,7 +1899,7 @@ export const Group = ({
                         color: "white",
                       }}
                       alt={direct?.name || direct?.address}
-                      //  src={`${getBaseApiReact()}/arbitrary/THUMBNAIL/${groupOwner?.name}/qortal_group_avatar_${group.groupId}?async=true`}
+                      src={getUserAvatarUrl(direct?.name)}
                     >
                       {(direct?.name || direct?.address)?.charAt(0)}
                     </Avatar>
