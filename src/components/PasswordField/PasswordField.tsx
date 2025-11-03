@@ -1,5 +1,5 @@
 import { Button, ButtonBase, InputAdornment, TextField, TextFieldProps, styled } from "@mui/material";
-import { useState } from 'react'
+import React, { forwardRef, useState } from 'react'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 export const CustomInput = styled(TextField)({
@@ -42,7 +42,7 @@ export const CustomInput = styled(TextField)({
 });
 
 
-export const PasswordField: React.FunctionComponent<TextFieldProps> = ({ ...props }) => {
+export const PasswordField = forwardRef<HTMLInputElement, TextFieldProps>( ({ ...props }, ref) => {
     const [canViewPassword, setCanViewPassword] = useState(false);
     return (
             <CustomInput
@@ -60,7 +60,8 @@ export const PasswordField: React.FunctionComponent<TextFieldProps> = ({ ...prop
                         </InputAdornment>
                     )
                 }}
+                inputRef={ref}
                 {...props}
             />
     )
-}
+});
