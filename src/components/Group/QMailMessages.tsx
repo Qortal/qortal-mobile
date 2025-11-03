@@ -142,10 +142,13 @@ export const QMailMessages = ({userName, userAddress}) => {
         }}
       >
         Latest Q-Mails
-      </Typography>
-      <MarkEmailUnreadIcon sx={{
-        color: anyUnread ? 'var(--unread)' : 'white'
-      }}/>
+      </Typography>  
+        <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+          {anyUnread ?
+            <MarkEmailUnreadIcon sx={{ color: 'var(--unread)' }}/>
+            : <MailIcon sx={{ color: 'white'}}/>
+          }
+        </Box>
      {isExpanded ? <ExpandLessIcon sx={{
       marginLeft: 'auto'
      }} /> : (
