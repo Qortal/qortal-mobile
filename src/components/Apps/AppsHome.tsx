@@ -21,7 +21,7 @@ import { useHandleTutorials } from "../Tutorials/useHandleTutorials";
 import { AppsPrivate } from "./AppsPrivate";
 
 export const AppsHome = ({  setMode, myApp, myWebsite, availableQapps, myName, myAddress  }) => {
-  const [qortalUrl, setQortalUrl] = useState('')
+  const [qortalUrl, setQortalUrl] = useState('qortal://')
   const { showTutorial } = useContext(GlobalContext);
 
 
