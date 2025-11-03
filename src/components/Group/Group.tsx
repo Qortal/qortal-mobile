@@ -512,6 +512,7 @@ export const Group = ({
   const [isOpenSideViewDirects, setIsOpenSideViewDirects] = useState(false)
   const [isOpenSideViewGroups, setIsOpenSideViewGroups] = useState(false)
   const [isForceShowCreationKeyPopup, setIsForceShowCreationKeyPopup] = useState(false)
+  const [disableGeneralChat, setDisableGeneralChat] = useState(false);
   const [groupsProperties, setGroupsProperties] = useRecoilState(groupsPropertiesAtom)
   const setUserInfoForLevels = useSetRecoilState(addressInfoControllerAtom);
   const setLastEnteredGroupIdAtom = useSetRecoilState(lastEnteredGroupIdAtom)
@@ -561,7 +562,7 @@ export const Group = ({
     selectedDirectRef.current = selectedDirect;
   }, [selectedDirect]);
 
-  const getUserSettings = async () => {
+  const getUserSettings = useCallback(async () => {
     try {
       return new Promise((res, rej) => {
         window.sendMessage("getUserSettings", {
@@ -583,11 +584,35 @@ export const Group = ({
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
+
+  const getDisableGeneralChatSetting = useCallback(async () => {
+    try {
+      return new Promise((res, rej) => {
+        window.sendMessage("getUserSettings", {
+          key: "disable-general-chat",
+        })
+          .then((response) => {
+            if (!response?.error) {
+              setDisableGeneralChat(response || false);
+              res(response);
+              return;
+            }
+            rej(response.error);
+          })
+          .catch((error) => {
+            rej(error?.message || "An error occurred");
+          });
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
 
   useEffect(() => {
     getUserSettings();
-  }, []);
+    getDisableGeneralChatSetting();
+  }, [getUserSettings, getDisableGeneralChatSetting]);
 
   const getTimestampEnterChat = async () => {
     try {
@@ -736,8 +761,9 @@ export const Group = ({
   const groupChatHasUnread = useMemo(() => {
     let hasUnread = false;
     groups.forEach((group) => {
-     
-
+      if (group?.groupId === '0' && disableGeneralChat) {
+        return;
+      }
       if (
         group?.data &&
         group?.sender !== myAddress &&
@@ -750,7 +776,13 @@ export const Group = ({
       }
     });
     return hasUnread;
-  }, [timestampEnterData, groups, myAddress, groupChatTimestamps]);
+  }, [
+    timestampEnterData,
+    groups,
+    myAddress,
+    groupChatTimestamps,
+    disableGeneralChat,
+  ]);
 
   const groupsAnnHasUnread = useMemo(() => {
     let hasUnread = false;
@@ -1052,6 +1084,8 @@ export const Group = ({
         setGroups(sortArrayByTimestampAndGroupName(message.payload));
         getLatestRegularChat(message.payload);
         setMemberGroups(message.payload?.filter((item)=> item?.groupId !== '0'));
+        // Refresh general chat visibility preference when groups update
+        getDisableGeneralChatSetting();
   
         if (selectedGroupRef.current && groupSectionRef.current === "chat") {
           window.sendMessage("addTimestampEnterChat", {
@@ -1989,6 +2023,72 @@ export const Group = ({
     );
   };
 
+  const selectGroup = useCallback(
+    (group) => {
+      setMobileViewMode("group");
+      setDesktopSideView("groups");
+      setDesktopViewMode("home");
+      initiatedGetMembers.current = false;
+      clearAllQueues();
+      setSelectedDirect(null);
+      setTriedToFetchSecretKey(false);
+      setNewChat(false);
+      setSelectedGroup(null);
+      setUserInfoForLevels({});
+      setSecretKey(null);
+      lastFetchedSecretKey.current = null;
+      setSecretKeyPublishDate(null);
+      setAdmins([]);
+      setSecretKeyDetails(null);
+      setAdminsWithNames([]);
+      setGroupOwner(null);
+      setMembers([]);
+      setMemberCountFromSecretKeyData(null);
+      setHideCommonKeyPopup(false);
+      setFirstSecretKeyInCreation(false);
+      // setGroupSection("announcement");
+      setGroupSection("chat");
+      setIsOpenDrawer(false);
+      setTimeout(() => {
+        setSelectedGroup(group);
+        setLastEnteredGroupIdAtom(group?.groupId)
+        // getTimestampEnterChat();
+      }, 200);
+    },
+    [
+      setMobileViewMode,
+      setDesktopSideView,
+      setDesktopViewMode,
+      clearAllQueues,
+      setSelectedDirect,
+      setTriedToFetchSecretKey,
+      setNewChat,
+      setSelectedGroup,
+      setUserInfoForLevels,
+      setSecretKey,
+      setSecretKeyPublishDate,
+      setAdmins,
+      setSecretKeyDetails,
+      setAdminsWithNames,
+      setGroupOwner,
+      setMembers,
+      setMemberCountFromSecretKeyData,
+      setHideCommonKeyPopup,
+      setFirstSecretKeyInCreation,
+      setGroupSection,
+      setIsOpenDrawer,
+      setLastEnteredGroupIdAtom,
+    ]
+  );
+
+  const visibleGroups = useMemo(
+    () =>
+      disableGeneralChat
+        ? groups.filter((group) => group?.groupId !== "0")
+        : groups,
+    [disableGeneralChat, groups]
+  );
+
   const renderGroups = () => {
     return (
       <div
@@ -2016,7 +2116,7 @@ export const Group = ({
             left: chatMode === "directs" && "-1000px",
           }}
         >
-          {groups.map((group: any) => (
+          {visibleGroups.map((group: any) => (
             <List
               sx={{
                 width: "100%",
@@ -2031,37 +2131,7 @@ export const Group = ({
                 //     </IconButton>
                 //   }
                 onClick={() => {
-                  setMobileViewMode("group");
-                  setDesktopSideView('groups')
-                  setDesktopViewMode('home')
-                  initiatedGetMembers.current = false;
-                  clearAllQueues();
-                  setSelectedDirect(null);
-                  setTriedToFetchSecretKey(false);
-                  setNewChat(false);
-                  setSelectedGroup(null);
-                  setUserInfoForLevels({})
-                  setSecretKey(null);
-                  lastFetchedSecretKey.current = null;
-                  setSecretKeyPublishDate(null);
-                  setAdmins([]);
-                  setSecretKeyDetails(null);
-                  setAdminsWithNames([]);
-                  setGroupOwner(null)
-                  setMembers([]);
-                  setMemberCountFromSecretKeyData(null);
-                  setHideCommonKeyPopup(false);
-                  setFirstSecretKeyInCreation(false);
-                  // setGroupSection("announcement");
-                  setGroupSection("chat");
-                  setIsOpenDrawer(false);
-                  setTimeout(() => {
-                    setSelectedGroup(group);
-                    setLastEnteredGroupIdAtom(group?.groupId)
-
-
-                    // getTimestampEnterChat();
-                  }, 200);
+                  selectGroup(group);
 
                   // window.sendMessage("addTimestampEnterChat", {
                   //   timestamp: Date.now(),
@@ -2252,6 +2322,33 @@ export const Group = ({
       </div>
     );
   };
+
+  // Apply general chat visibility changes immediately without app reload
+  useEffect(() => {
+    const onGeneralChatVisibilityChanged = (e) => {
+      const disabled = !!e.detail?.disabled;
+      setDisableGeneralChat(disabled);
+      if (disabled && selectedGroupRef.current?.groupId === '0') {
+        const next = groups.find((g) => g.groupId !== '0');
+        if (next) {
+          selectGroup(next);
+        } else {
+          setSelectedGroup(null);
+        }
+      }
+    };
+
+    subscribeToEvent(
+      'generalChatVisibilityChanged',
+      onGeneralChatVisibilityChanged
+    );
+    return () => {
+      unsubscribeFromEvent(
+        'generalChatVisibilityChanged',
+        onGeneralChatVisibilityChanged
+      );
+    };
+  }, [groups, selectGroup]);
   
   return (
     <>
@@ -2806,7 +2903,7 @@ export const Group = ({
               isLoadingGroups={isLoadingGroups}
               balance={balance}
               userInfo={userInfo}
-              groups={groups}
+              groups={disableGeneralChat ? groups.filter((g) => g.groupId !== '0') : groups}
               setGroupSection={setGroupSection}
               setSelectedGroup={setSelectedGroup}
               getTimestampEnterChat={getTimestampEnterChat}
@@ -2833,7 +2930,7 @@ export const Group = ({
   isLoadingGroups={isLoadingGroups}
   balance={balance}
   userInfo={userInfo}
-  groups={groups}
+  groups={disableGeneralChat ? groups.filter((g) => g.groupId !== '0') : groups}
   setGroupSection={setGroupSection}
   setSelectedGroup={setSelectedGroup}
   getTimestampEnterChat={getTimestampEnterChat}
@@ -2925,5 +3022,3 @@ export const Group = ({
     </>
   );
 };
-
-
