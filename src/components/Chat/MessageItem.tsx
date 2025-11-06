@@ -65,6 +65,7 @@ export const MessageItem = React.memo(({
   isShowingAsReply,
   reply,
   replyIndex,
+  replyExpiredMeta,
   scrollToItem,
   handleReaction,
   reactions,
@@ -132,6 +133,22 @@ const htmlReply = useMemo(() => {
     ]);
   }
 }, [reply?.editTimestamp]);
+
+const htmlReplyExpired = useMemo(() => {
+  if (!replyExpiredMeta) return null;
+  if (replyExpiredMeta?.messageText) {
+    const isHtml = isHtmlString(replyExpiredMeta?.messageText);
+    if (isHtml) return replyExpiredMeta?.messageText;
+    return generateHTML(replyExpiredMeta?.messageText, [
+      StarterKit,
+      Underline,
+      Highlight,
+      Mention,
+      TextStyle,
+    ]);
+  }
+  return null;
+}, [replyExpiredMeta?.editTimestamp]);
 
 const userAvatarUrl = useMemo(()=> {
   return message?.senderName ? `${getBaseApiReact()}/arbitrary/THUMBNAIL/${
@@ -343,6 +360,46 @@ const hasNoMessage =
           </Box>
           </>
         )}
+
+        {!reply && (replyExpiredMeta || message?.repliedTo) && (
+          <>
+            <Spacer height="20px" />
+            <Box
+              sx={{
+                width: "100%",
+                borderRadius: "5px",
+                backgroundColor: "var(--bg-primary)",
+                overflow: 'hidden',
+                display: 'flex',
+                gap: '20px',
+                maxHeight: '90px',
+              }}
+            >
+              <Box
+                sx={{
+                  height: '100%',
+                  width: '5px',
+                  background: 'white'
+                }}
+              />
+              <Box sx={{ padding: '5px' }}>
+                <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>
+                  {replyExpiredMeta?.senderName || replyExpiredMeta?.sender
+                    ? `Replied to ${reply?.senderName || reply?.senderAddress}`
+                    : `Replied to missing message`
+                  }
+                </Typography>
+                {replyExpiredMeta?.messageText && (
+                  <MessageDisplay htmlContent={htmlReplyExpired} />
+                )}
+                {replyExpiredMeta?.text && (
+                  <MessageDisplay isReply htmlContent={replyExpiredMeta.text} />
+                )}
+              </Box>
+            </Box>
+          </>
+        )}
+
         {htmlText && !hasNoMessage && (
           <MessageDisplay
             htmlContent={htmlText}

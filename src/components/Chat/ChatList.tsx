@@ -221,6 +221,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
            let message = messages[index] || null; // Safeguard against undefined
            let replyIndex = -1;
            let reply = null;
+           let replyExpiredMeta = null;
            let reactions = null;
            let isUpdating = false;
          
@@ -238,6 +239,27 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
                    reply.decryptedData = chatReferences[reply?.signature]?.edit;
                    reply.text = chatReferences[reply?.signature]?.edit?.message;
                    reply.editTimestamp = chatReferences[reply?.signature]?.edit?.timestamp
+                 }
+               } else if (message?.repliedTo && replyIndex === -1) {
+                 // If original message is missing, attempt to use any edit metadata as minimal context
+                 const editMeta = chatReferences?.[message?.repliedTo]?.edit;
+                 if (editMeta) {
+                   replyExpiredMeta = {
+                     senderName: editMeta?.senderName,
+                     sender: editMeta?.sender,
+                     messageText:
+                       editMeta?.messageText !== undefined
+                         ? editMeta?.messageText
+                         : undefined,
+                     text:
+                       editMeta?.message !== undefined
+                         ? editMeta?.message
+                         : undefined,
+                     decryptedData: editMeta,
+                     editTimestamp: editMeta?.timestamp,
+                   };
+                 } else {
+                   replyExpiredMeta = { missing: true };
                  }
                }
          
@@ -351,6 +373,7 @@ export const ChatList = ({ initialMessages, myAddress, tempMessages, chatId, onR
                 onEdit={onEdit}
                 reply={reply}
                 replyIndex={replyIndex}
+                replyExpiredMeta={replyExpiredMeta}
                 scrollToItem={(idx) => rowVirtualizer.scrollToIndex(idx)}
                 handleReaction={handleReaction}
                 reactions={reactions}
