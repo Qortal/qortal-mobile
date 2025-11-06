@@ -42,12 +42,12 @@ const officialAppList = [
   "q-fund",
   "q-shop",
   "q-trade",
-  "q-support",
   "q-manager",
   "q-mintership",
    "q-wallets",
    "q-search",
-   "q-node"
+   "q-node",
+   'q-assets',
 ];
 
 const ScrollerStyled = styled('div')({
