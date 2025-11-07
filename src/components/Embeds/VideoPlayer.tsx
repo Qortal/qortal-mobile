@@ -510,14 +510,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   <> Refetching data in 25 seconds</>
                 </>
               ) : resourceStatus?.status === 'DOWNLOADED' ? (
-                <>Download Completed: building tutorial video...</>
+                <>Download Completed: building video...</>
               ) : resourceStatus?.status !== 'READY' ? (
                 <>
                   {getDownloadProgress(resourceStatus?.localChunkCount || 0, resourceStatus?.totalChunkCount || 100)}
 
                 </>
               ) : (
-                <>Fetching tutorial from the Qortal Network...</>
+                <>Fetching video from the Qortal Network...</>
               )}
             </Typography>
           )}
