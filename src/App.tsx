@@ -2562,7 +2562,7 @@ function App() {
               alignItems: "center",
             }}
           >
-            <Typography>{rawWallet?.name ? rawWallet?.name : rawWallet?.address0}</Typography>
+            <Typography>{rawWallet?.name || rawWallet?.filename || rawWallet?.address0}</Typography>
             <Spacer height="10px" />
             <TextP
               sx={{
