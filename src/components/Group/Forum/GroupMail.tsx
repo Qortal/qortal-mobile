@@ -521,11 +521,13 @@ export const GroupMail = ({
     });
   
     // Convert the map back to an array and sort by "created" timestamp in descending order
-    const sortedList = Array.from(uniqueItems.values()).sort((a, b) =>
-  filterMode === 'Oldest'
-    ? a.threadData?.createdAt - b.threadData?.createdAt
-    : b.threadData?.createdAt - a.threadData?.createdAt
-);
+const sortedList = Array.from(uniqueItems.values()).sort((a, b) =>
+      filterMode === 'Oldest'
+        ? a.threadData?.createdAt - b.threadData?.createdAt
+        : filterMode === 'Recently active'
+          ? b?.created - a?.created
+          : b.threadData?.createdAt - a.threadData?.createdAt
+    );
   
     return sortedList;
   }, [tempPublishedList, listOfThreadsToDisplay, filterMode]);
