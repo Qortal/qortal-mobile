@@ -33,8 +33,8 @@ export const manifestData = {
 
 
 
-function removeTrailingSlash(url) {
-  return url.replace(/\/+$/, '');
+function removeTrailingSlash(url: string) {
+  return url.trim().replace(/\/+$/, '');
 }
 
 
