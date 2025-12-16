@@ -3342,7 +3342,7 @@ function App() {
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Typography sx={{ fontSize: "14px" }}>
-                    I have read this request
+                      {messageQortalRequestExtension?.confirmCheckboxLabel || 'I have read this request'}
                   </Typography>
                   <PriorityHighIcon color="warning" />
                 </Box>

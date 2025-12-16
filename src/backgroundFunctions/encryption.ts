@@ -178,18 +178,21 @@ async function getKeyPair() {
   }
 
 
-export const encryptAndPublishSymmetricKeyGroupChat = async ({groupId, previousData}: {
+export const encryptAndPublishSymmetricKeyGroupChat = async ({groupId, previousData, addKey = true}: {
     groupId: number,
-    previousData: Object,
+    previousData: Object | null,
+    addKey?: boolean
 }) => {
     try {
-      
+         let shouldAddKey = addKey || false;
         let highestKey = 0
         if(previousData){
            highestKey = Math.max(...Object.keys((previousData || {})).filter(item=> !isNaN(+item)).map(Number));
     
         }
-       
+        if (!previousData) {
+          shouldAddKey = true;
+         } 
         const resKeyPair = await getKeyPair()
         const parsedData = resKeyPair
         const privateKey = parsedData.privateKey
@@ -197,10 +200,10 @@ export const encryptAndPublishSymmetricKeyGroupChat = async ({groupId, previousD
         const groupmemberPublicKeys = await getPublicKeys(groupId)
         const symmetricKey = createSymmetricKeyAndNonce()
         const nextNumber = highestKey + 1
-        const objectToSave = {
-            ...previousData,
+        const objectToSave = shouldAddKey ? {
+            ...(previousData || {}),
             [nextNumber]: symmetricKey
-        }
+        } : previousData
     
         const symmetricKeyAndNonceBase64 = await objectToBase64(objectToSave)
         
@@ -280,6 +283,18 @@ export const publishOnQDN = async ({data, identifier, service, title,
           throw new Error('Cannot publish content')
       }
 
+}
+
+export function uint8ArrayToBase64Version2(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000; // 32KB — safe for apply / char limits
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const subarray = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...subarray);
+  }
+
+  return btoa(binary);
 }
 
 export function uint8ArrayToBase64(uint8Array: any) {

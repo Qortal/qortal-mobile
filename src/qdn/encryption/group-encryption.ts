@@ -505,3 +505,37 @@ export const decryptGroupEncryptionWithSharingKey = async ({ data64EncryptedData
 	// Convert the decrypted Uint8Array back to a Base64 string
 	return uint8ArrayToBase64(decryptedData);
   };
+
+export function hasPrivateString(base64: string) {
+  try {
+    const allCombined = base64ToUint8Array(base64);
+    const strEncoder = new TextEncoder();
+
+    // Check for both possible markers
+    const markers = ['qortalGroupEncryptedData', 'qortalEncryptedData'];
+
+    for (const marker of markers) {
+      const markerUint8Array = strEncoder.encode(marker);
+
+      // Check if the data is long enough to contain the marker
+      if (allCombined.length >= markerUint8Array.length) {
+        // Check if the beginning matches the marker string
+        let matches = true;
+        for (let i = 0; i < markerUint8Array.length; i++) {
+          if (allCombined[i] !== markerUint8Array[i]) {
+            matches = false;
+            break;
+          }
+        }
+
+        if (matches) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  } catch (error) {
+    return false;
+  }
+}
