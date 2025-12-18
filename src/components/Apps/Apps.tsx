@@ -448,7 +448,9 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseTabDialogCancel} color="primary">
+          <Button onClick={handleCloseTabDialogCancel} sx={{
+            color: 'white'
+          }}>
             Cancel
           </Button>
           <Button
