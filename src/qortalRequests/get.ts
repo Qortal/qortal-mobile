@@ -42,6 +42,8 @@ import {
   sendChatNotification,
   sendChatGroup,
 } from "../background";
+import { EncryptedMediaManager } from "../plugins/EncryptedMediaServer";
+import { Capacitor } from "@capacitor/core";
 import {
   getNameInfo,
   uint8ArrayToObject,
@@ -460,7 +462,7 @@ export const getUserAccount = async ({
       hasSessionPermission(appInfo.tabId, appInfo.name, "GET_USER_ACCOUNT")
     ) {
       skip = true;
-      hadSessionPermissions = true
+      hadSessionPermissions = true;
     }
     let resPermission;
     if (!skip) {
@@ -657,7 +659,7 @@ export const decryptQortalGroupData = async (data, sender) => {
     ) {
       secretKeyObject = groupSecretkeys[groupId].secretKeyObject;
     }
-     if (secretKeyObject) {
+    if (secretKeyObject) {
       const decodeForNumber = atob(data64);
 
       // Extract the key (assuming it's always the first 10 characters)
@@ -665,7 +667,7 @@ export const decryptQortalGroupData = async (data, sender) => {
 
       // Convert the key string back to a number
       const highestKey = parseInt(keyStr, 10);
-   
+
       if (!secretKeyObject[highestKey]) {
         secretKeyObject = null;
       }
@@ -2107,7 +2109,6 @@ export async function decryptAesCtrChunk(
   // Try WebCrypto first
   if (crypto?.subtle) {
     try {
-  
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
         keyBytes,
@@ -6449,13 +6450,12 @@ export const sessionPermissions = async (data, isFromExtension, appInfo) => {
   }
 };
 
-
 const lastReEncryptionTime = new Map<number, number>();
 const RE_ENCRYPTION_COOLDOWN_MS = 150000; // 2.5 minutes in milliseconds
 
 export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
-  const requiredFields = ['groupId'];
- const missingFields: string[] = [];
+  const requiredFields = ["groupId"];
+  const missingFields: string[] = [];
   requiredFields.forEach((field) => {
     if (!data[field]) {
       missingFields.push(field);
@@ -6483,16 +6483,13 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
 
   const urlGroupInfo = await createEndpoint(`/groups/${data?.groupId}`);
   const response = await fetch(urlGroupInfo);
-  if (!response.ok)
-    throw new Error(
-      'Unable to fetch group info'
-    );
+  if (!response.ok) throw new Error("Unable to fetch group info");
 
   const groupInfo = await response.json();
   const wallet = await getSaveWallet();
   const address = wallet.address0;
   if (groupInfo?.owner !== address) {
-    throw new Error('Only the group owner can perform this request');
+    throw new Error("Only the group owner can perform this request");
   }
   let skip = false;
   let acceptedVar = false;
@@ -6500,7 +6497,7 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
     !skip &&
     appInfo?.tabId &&
     appInfo?.name &&
-    hasSessionPermission(appInfo.tabId, appInfo.name, 'REENCRYPT_GROUP_KEYS')
+    hasSessionPermission(appInfo.tabId, appInfo.name, "REENCRYPT_GROUP_KEYS")
   ) {
     skip = true;
   }
@@ -6510,7 +6507,7 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
     resPermission = await getUserPermission(
       {
         text1:
-          'Do you give this application permission to re-encrypt group keys?',
+          "Do you give this application permission to re-encrypt group keys?",
         highlightedText: `Group: ${groupName}`,
       },
       isFromExtension
@@ -6548,9 +6545,7 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
     }
 
     const url = await createEndpoint(
-      `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${
-        publish.identifier
-      }?encoding=base64&rebuild=true`
+      `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`
     );
 
     const res = await fetch(url);
@@ -6561,9 +6556,7 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
     const dataint8Array = base64ToUint8Array(decryptedKey.data);
     const decryptedKeyToObject = uint8ArrayToObject(dataint8Array);
     if (!validateSecretKey(decryptedKeyToObject))
-      throw new Error(
-        'Invalid secret key object'
-      );
+      throw new Error("Invalid secret key object");
     const { data: responseData, numberOfMembers } =
       await encryptAndPublishSymmetricKeyGroupChat({
         groupId,
@@ -6582,8 +6575,182 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
     lastReEncryptionTime.set(groupId, Date.now());
     return true;
   } else {
+    throw new Error("User declined request");
+  }
+};
+
+// Track media IDs by tab for automatic cleanup
+const mediaIdsByTabId = new Map<string, Set<string>>();
+
+/**
+ * Cleanup all media registered for a specific tab
+ * Call this when a tab is closed
+ */
+export const cleanupMediaForTab = async (tabId: string) => {
+  const mediaIds = mediaIdsByTabId.get(tabId);
+  if (mediaIds) {
+    const manager = EncryptedMediaManager.getInstance();
+    for (const mediaId of mediaIds) {
+      try {
+        await manager.cleanupMedia(mediaId);
+        console.log(
+          `[cleanupMediaForTab] Cleaned up media: ${mediaId} for tab: ${tabId}`
+        );
+      } catch (error) {
+        console.error(
+          `[cleanupMediaForTab] Failed to cleanup media ${mediaId}:`,
+          error
+        );
+      }
+    }
+    mediaIdsByTabId.delete(tabId);
+  }
+};
+
+/**
+ * Play encrypted media using the Capacitor plugin
+ * This allows apps to stream encrypted video/audio with on-the-fly decryption
+ */
+export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
+  const requiredFields = ["mediaId", "key", "iv", "location"];
+  requiredFields.forEach((field) => {
+    if (data[field] === undefined || data[field] === null) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  });
+
+  // Validate location object structure
+  if (
+    !data.location.service ||
+    !data.location.name ||
+    !data.location.identifier
+  ) {
+    throw new Error("Location must include service, name, and identifier");
+  }
+
+  // Construct resourceUrl from location object
+  const resourceUrl = await createEndpoint(
+    `/arbitrary/${data.location.service}/${data.location.name}/${data.location.identifier}`
+  );
+
+  // Check if we're in Capacitor (native mobile)
+  if (!Capacitor.isNativePlatform()) {
     throw new Error(
-      'User declined request'
+      "This feature is only available in the mobile app. For desktop, use the Electron version."
     );
+  }
+
+  // Helper to convert base64 to Uint8Array (browser-compatible)
+  const base64ToUint8Array = (base64: string): Uint8Array => {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  };
+
+  // Validate key and iv lengths
+  let keyBuffer: Uint8Array;
+  let ivBuffer: Uint8Array;
+
+  try {
+    keyBuffer = base64ToUint8Array(data.key);
+    ivBuffer = base64ToUint8Array(data.iv);
+  } catch (error) {
+    throw new Error("Invalid base64 encoding for key or iv");
+  }
+
+  if (keyBuffer.length !== 32) {
+    throw new Error("Key must be 32 bytes (256 bits) for AES-256");
+  }
+  if (ivBuffer.length !== 16) {
+    throw new Error("IV must be 16 bytes (128 bits)");
+  }
+
+  // Get totalSize - either from data or fetch via HEAD request
+  let totalSize = data.totalSize;
+  if (!totalSize) {
+    try {
+      console.log(
+        `[playEncryptedMedia] Auto-detecting file size for: ${resourceUrl}`
+      );
+      const headResponse = await fetch(resourceUrl, { method: "HEAD" });
+      const contentLength = headResponse.headers.get("content-length");
+      if (contentLength) {
+        totalSize = parseInt(contentLength, 10);
+        console.log(
+          `[playEncryptedMedia] Auto-detected totalSize: ${totalSize}`
+        );
+      } else {
+        throw new Error(
+          "Could not determine file size from server. Please provide totalSize parameter."
+        );
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch file size: ${error.message}. Please provide totalSize parameter manually.`
+      );
+    }
+  }
+
+  // Ensure totalSize is a number (not string)
+  totalSize = Number(totalSize);
+
+  console.log(
+    `[playEncryptedMedia] totalSize before validation: ${totalSize}, type: ${typeof totalSize}`
+  );
+
+  // Validate totalSize
+  if (!totalSize || totalSize <= 0 || isNaN(totalSize)) {
+    console.log("totalSize error", totalSize);
+    throw new Error("Invalid totalSize. Must be greater than 0.");
+  }
+
+  // No permission required - play media directly using Capacitor plugin
+  try {
+    // Get the manager instance
+    const manager = EncryptedMediaManager.getInstance();
+    console.log("manager", manager);
+    // Initialize server if not running
+    const isRunning = await manager.isRunning();
+    if (!isRunning) {
+      console.log("[playEncryptedMedia] Starting encrypted media server...");
+      await manager.initialize(57000);
+    }
+
+    // Register media with the plugin
+    const streamUrl = await manager.registerMedia(
+      data.mediaId,
+      data.key,
+      data.iv,
+      resourceUrl,
+      totalSize,
+      data.mimeType || "video/mp4"
+    );
+
+    console.log(
+      `[playEncryptedMedia] Successfully registered media: ${data.mediaId} -> ${streamUrl}`
+    );
+
+    // Track this mediaId by tabId for automatic cleanup
+    if (appInfo?.tabId) {
+      if (!mediaIdsByTabId.has(appInfo.tabId)) {
+        mediaIdsByTabId.set(appInfo.tabId, new Set());
+      }
+      mediaIdsByTabId.get(appInfo.tabId)!.add(data.mediaId);
+      console.log(
+        `[playEncryptedMedia] Tracking mediaId ${data.mediaId} for tabId ${appInfo.tabId}`
+      );
+    }
+
+    return {
+      success: true,
+      mediaId: data.mediaId,
+      streamUrl: streamUrl,
+    };
+  } catch (error) {
+    console.error("[playEncryptedMedia] Error:", error);
+    throw new Error(`Failed to play encrypted media: ${error.message}`);
   }
 };

@@ -26,7 +26,10 @@ export const saveFileInChunksFromUrl = async (
 ) => {
   // const isEncrypted = encryption?.encryptionType === "streamed-v1";
 
-  if(encryption) throw new Error('Saving encrypted files is not available yet on Qortal Go. Please use Qortal Hub to save this file.')
+  if (encryption)
+    throw new Error(
+      "Saving encrypted files is not available yet on Qortal Go. Please use Qortal Hub to save this file."
+    );
 
   // Validate encryption if present
   // let ivBytes, keyBytes;
@@ -184,93 +187,91 @@ export const saveFileInChunksFromUrl = async (
   //     });
   //   }
 
- 
-
   //   return true;
   // } else {
-    let fileName = filename;
-    let locationUrl = `/arbitrary/${location.service}/${location.name}`;
-    if (location.identifier) {
-      locationUrl = locationUrl + `/${location.identifier}`;
-    }
-    const endpoint = await createEndpoint(
-      locationUrl + `?attachment=true&attachmentFilename=${filename}`
-    );
-    const response = await fetch(endpoint);
+  let fileName = filename;
+  let locationUrl = `/arbitrary/${location.service}/${location.name}`;
+  if (location.identifier) {
+    locationUrl = locationUrl + `/${location.identifier}`;
+  }
+  const endpoint = await createEndpoint(
+    locationUrl + `?attachment=true&attachmentFilename=${filename}`
+  );
+  const response = await fetch(endpoint);
 
-    if (!response.ok || !response.body) {
-      throw new Error("Failed to fetch file or no readable stream");
-    }
+  if (!response.ok || !response.body) {
+    throw new Error("Failed to fetch file or no readable stream");
+  }
 
-    const contentType =
-      response.headers.get("Content-Type") || "application/octet-stream";
-    const base64Prefix = `data:${contentType};base64,`;
-   
-    const getExtensionFromFileName = (name: string): string => {
-      const lastDotIndex = name.lastIndexOf(".");
-      return lastDotIndex !== -1 ? name.substring(lastDotIndex) : "";
-    };
+  const contentType =
+    response.headers.get("Content-Type") || "application/octet-stream";
+  const base64Prefix = `data:${contentType};base64,`;
 
-    const existingExtension = getExtensionFromFileName(fileName);
+  const getExtensionFromFileName = (name: string): string => {
+    const lastDotIndex = name.lastIndexOf(".");
+    return lastDotIndex !== -1 ? name.substring(lastDotIndex) : "";
+  };
 
-    if (existingExtension) {
-      fileName = fileName.substring(0, fileName.lastIndexOf("."));
-    }
+  const existingExtension = getExtensionFromFileName(fileName);
 
-    const mimeTypeToExtension = (mimeType: string): string => {
-      return mimeToExtensionMap[mimeType] || existingExtension || "";
-    };
+  if (existingExtension) {
+    fileName = fileName.substring(0, fileName.lastIndexOf("."));
+  }
 
-    const extension = mimeTypeToExtension(contentType);
-    const fullFileName = `${fileName}_${Date.now()}${extension}`;
-    const reader = response.body.getReader();
-    let isFirstChunk = true;
-    let done = false;
+  const mimeTypeToExtension = (mimeType: string): string => {
+    return mimeToExtensionMap[mimeType] || existingExtension || "";
+  };
 
-    let buffer = new Uint8Array(0);
-    const preferredChunkSize = 1024 * 1024; // 1MB
+  const extension = mimeTypeToExtension(contentType);
+  const fullFileName = `${fileName}_${Date.now()}${extension}`;
+  const reader = response.body.getReader();
+  let isFirstChunk = true;
+  let done = false;
 
-    while (!done) {
-      const result = await reader.read();
-      done = result.done;
+  let buffer = new Uint8Array(0);
+  const preferredChunkSize = 1024 * 1024; // 1MB
 
-      if (result.value) {
-        // Combine new value with existing buffer
-        const newBuffer = new Uint8Array(buffer.length + result.value.length);
-        newBuffer.set(buffer);
-        newBuffer.set(result.value, buffer.length);
-        buffer = newBuffer;
+  while (!done) {
+    const result = await reader.read();
+    done = result.done;
 
-        // While we have enough data, process 1MB chunks
-        while (buffer.length >= preferredChunkSize) {
-          const chunk = buffer.slice(0, preferredChunkSize);
-          buffer = buffer.slice(preferredChunkSize);
+    if (result.value) {
+      // Combine new value with existing buffer
+      const newBuffer = new Uint8Array(buffer.length + result.value.length);
+      newBuffer.set(buffer);
+      newBuffer.set(result.value, buffer.length);
+      buffer = newBuffer;
 
-          const base64Chunk = uint8ArrayToBase64(chunk);
-          await Filesystem.writeFile({
-            path: fullFileName,
-            data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
-            directory: Directory.Documents,
-            recursive: true,
-            append: !isFirstChunk,
-          });
+      // While we have enough data, process 1MB chunks
+      while (buffer.length >= preferredChunkSize) {
+        const chunk = buffer.slice(0, preferredChunkSize);
+        buffer = buffer.slice(preferredChunkSize);
 
-          isFirstChunk = false;
-        }
+        const base64Chunk = uint8ArrayToBase64(chunk);
+        await Filesystem.writeFile({
+          path: fullFileName,
+          data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
+          directory: Directory.Documents,
+          recursive: true,
+          append: !isFirstChunk,
+        });
+
+        isFirstChunk = false;
       }
     }
+  }
 
-    // Write remaining buffer (if any)
-    if (buffer.length > 0) {
-      const base64Chunk = uint8ArrayToBase64(buffer);
-      await Filesystem.writeFile({
-        path: fullFileName,
-        data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
-        directory: Directory.Documents,
-        recursive: true,
-        append: !isFirstChunk,
-      });
-    }
+  // Write remaining buffer (if any)
+  if (buffer.length > 0) {
+    const base64Chunk = uint8ArrayToBase64(buffer);
+    await Filesystem.writeFile({
+      path: fullFileName,
+      data: isFirstChunk ? base64Prefix + base64Chunk : base64Chunk,
+      directory: Directory.Documents,
+      recursive: true,
+      append: !isFirstChunk,
+    });
+  }
   // }
 };
 
@@ -524,7 +525,8 @@ export const listOfAllQortalRequests = [
   "LOCK_TAB",
   "UNLOCK_TAB",
   "WHICH_UI",
-   'REENCRYPT_GROUP_KEYS',
+  "REENCRYPT_GROUP_KEYS",
+  "PLAY_ENCRYPTED_MEDIA",
 ];
 
 const UIQortalRequests = [
@@ -594,7 +596,8 @@ const UIQortalRequests = [
   "LOCK_TAB",
   "UNLOCK_TAB",
   "WHICH_UI",
-   'REENCRYPT_GROUP_KEYS',
+  "REENCRYPT_GROUP_KEYS",
+  "PLAY_ENCRYPTED_MEDIA",
 ];
 
 async function retrieveFileFromIndexedDB(fileId) {

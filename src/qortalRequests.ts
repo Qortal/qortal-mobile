@@ -1,11 +1,85 @@
-import { gateways, getApiKeyFromStorage, getNameInfoForOthers } from "./background";
+import {
+  gateways,
+  getApiKeyFromStorage,
+  getNameInfoForOthers,
+} from "./background";
 import { listOfAllQortalRequests } from "./components/Apps/useQortalMessageListener";
-import { addForeignServer, addGroupAdminRequest, addListItems, adminAction, banFromGroupRequest, buyNameRequest, cancelGroupBanRequest, cancelGroupInviteRequest, cancelSellNameRequest, cancelSellOrder, createAndCopyEmbedLink, createBuyOrder, createGroupRequest, createPoll, createSellOrder, decryptAESGCMRequest, decryptData, decryptDataWithSharingKey, decryptQortalGroupData, deleteHostedData, deleteListItems, deployAt, encryptData, encryptDataWithSharingKey, encryptQortalGroupData, getArrrSyncStatus, getCrossChainServerInfo, getDaySummary, getForeignFee, getHostedData, getListItems, getNodeInfo, getNodeStatus, getServerConnectionHistory, getTxActivitySummary, getUserAccount, getUserWallet, getUserWalletInfo, getUserWalletTransactions, getWalletBalance, getWhichUI, inviteToGroupRequest, joinGroup, kickFromGroupRequest, leaveGroupRequest, lockTab, multiPaymentWithPrivateData, openNewTab, publishMultipleQDNResources, publishQDNResource, reEncryptQortalKeys, registerNameRequest, removeForeignServer, removeGroupAdminRequest, saveFile, sellNameRequest, sendChatMessage, sendCoin, sessionPermissions, setCurrentForeignServer, signForeignFees, signTransaction, transferAssetRequest, unlockTab, updateForeignFee, updateGroupRequest, updateNameRequest, voteOnPoll } from "./qortalRequests/get";
+import {
+  addForeignServer,
+  addGroupAdminRequest,
+  addListItems,
+  adminAction,
+  banFromGroupRequest,
+  buyNameRequest,
+  cancelGroupBanRequest,
+  cancelGroupInviteRequest,
+  cancelSellNameRequest,
+  cancelSellOrder,
+  cleanupMediaForTab,
+  createAndCopyEmbedLink,
+  createBuyOrder,
+  createGroupRequest,
+  createPoll,
+  createSellOrder,
+  decryptAESGCMRequest,
+  decryptData,
+  decryptDataWithSharingKey,
+  decryptQortalGroupData,
+  deleteHostedData,
+  deleteListItems,
+  deployAt,
+  encryptData,
+  encryptDataWithSharingKey,
+  encryptQortalGroupData,
+  getArrrSyncStatus,
+  getCrossChainServerInfo,
+  getDaySummary,
+  getForeignFee,
+  getHostedData,
+  getListItems,
+  getNodeInfo,
+  getNodeStatus,
+  getServerConnectionHistory,
+  getTxActivitySummary,
+  getUserAccount,
+  getUserWallet,
+  getUserWalletInfo,
+  getUserWalletTransactions,
+  getWalletBalance,
+  getWhichUI,
+  inviteToGroupRequest,
+  joinGroup,
+  kickFromGroupRequest,
+  leaveGroupRequest,
+  lockTab,
+  multiPaymentWithPrivateData,
+  openNewTab,
+  playEncryptedMedia,
+  publishMultipleQDNResources,
+  publishQDNResource,
+  reEncryptQortalKeys,
+  registerNameRequest,
+  removeForeignServer,
+  removeGroupAdminRequest,
+  saveFile,
+  sellNameRequest,
+  sendChatMessage,
+  sendCoin,
+  sessionPermissions,
+  setCurrentForeignServer,
+  signForeignFees,
+  signTransaction,
+  transferAssetRequest,
+  unlockTab,
+  updateForeignFee,
+  updateGroupRequest,
+  updateNameRequest,
+  voteOnPoll,
+} from "./qortalRequests/get";
 import { getData, storeData } from "./utils/chromeStorage";
 import { executeEvent } from "./utils/events";
 
-import { ScreenOrientation } from '@capacitor/screen-orientation';
-
+import { ScreenOrientation } from "@capacitor/screen-orientation";
 
 function getLocalStorage(key) {
   return getData(key).catch((error) => {
@@ -22,47 +96,51 @@ function setLocalStorage(key, data) {
   });
 }
 
-export const isRunningGateway = async ()=> {
+export const isRunningGateway = async () => {
   let isGateway = true;
   const apiKey = await getApiKeyFromStorage();
-  if (apiKey && (apiKey?.url && !gateways.some(gateway => apiKey?.url?.includes(gateway)))) {
+  if (
+    apiKey &&
+    apiKey?.url &&
+    !gateways.some((gateway) => apiKey?.url?.includes(gateway))
+  ) {
     isGateway = false;
   }
 
-  return isGateway
+  return isGateway;
+};
+
+export async function setPermission(key, value) {
+  try {
+    // Get the existing qortalRequestPermissions object
+    const qortalRequestPermissions =
+      (await getLocalStorage("qortalRequestPermissions")) || {};
+
+    // Update the permission
+    qortalRequestPermissions[key] = value;
+
+    // Save the updated object back to storage
+    await setLocalStorage("qortalRequestPermissions", qortalRequestPermissions);
+  } catch (error) {
+    console.error("Error setting permission:", error);
+  }
 }
 
-  
-  export async function setPermission(key, value) {
-    try {
-      // Get the existing qortalRequestPermissions object
-      const qortalRequestPermissions = (await getLocalStorage('qortalRequestPermissions')) || {};
-      
-      // Update the permission
-      qortalRequestPermissions[key] = value;
-      
-      // Save the updated object back to storage
-      await setLocalStorage('qortalRequestPermissions', qortalRequestPermissions );
-      
-    } catch (error) {
-      console.error('Error setting permission:', error);
-    }
-  }
+export async function getPermission(key) {
+  try {
+    // Get the qortalRequestPermissions object from storage
+    const qortalRequestPermissions =
+      (await getLocalStorage("qortalRequestPermissions")) || {};
 
-  export async function getPermission(key) {
-    try {
-      // Get the qortalRequestPermissions object from storage
-      const qortalRequestPermissions = (await getLocalStorage('qortalRequestPermissions')) || {};
-      
-      // Return the value for the given key, or null if it doesn't exist
-      return qortalRequestPermissions[key] || null;
-    } catch (error) {
-      console.error('Error getting permission:', error);
-      return null;
-    }
+    // Return the value for the given key, or null if it doesn't exist
+    return qortalRequestPermissions[key] || null;
+  } catch (error) {
+    console.error("Error getting permission:", error);
+    return null;
   }
+}
 
-    // In-memory storage for session permissions
+// In-memory storage for session permissions
 const sessionPermissionsStore = new Map<
   string,
   {
@@ -73,42 +151,42 @@ const sessionPermissionsStore = new Map<
 
 // Valid permissions that can be granted in a session
 export const VALID_SESSION_PERMISSIONS = [
-  'JOIN_GROUP',
-  'GET_USER_WALLET',
-  'GET_WALLET_BALANCE',
-  'GET_USER_WALLET_TRANSACTIONS',
-  'GET_USER_WALLET_INFO',
-  'UPDATE_FOREIGN_FEE',
-  'GET_SERVER_CONNECTION_HISTORY',
-  'SET_CURRENT_FOREIGN_SERVER',
-  'ADD_FOREIGN_SERVER',
-  'REMOVE_FOREIGN_SERVER',
-  'LOCK_TAB',
-  'INVITE_TO_GROUP',
-  'KICK_FROM_GROUP',
-  'BAN_FROM_GROUP',
-  'CANCEL_GROUP_BAN',
-  'REMOVE_GROUP_ADMIN',
-  'ADD_GROUP_ADMIN',
-  'CREATE_GROUP',
-  'PUBLISH_QDN_RESOURCE',
-  'PUBLISH_MULTIPLE_QDN_RESOURCES',
-  'GET_USER_ACCOUNT',
-  'GET_LIST_ITEMS',
-  'SIGN_FOREIGN_FEES',
-     'REENCRYPT_GROUP_KEYS'
+  "JOIN_GROUP",
+  "GET_USER_WALLET",
+  "GET_WALLET_BALANCE",
+  "GET_USER_WALLET_TRANSACTIONS",
+  "GET_USER_WALLET_INFO",
+  "UPDATE_FOREIGN_FEE",
+  "GET_SERVER_CONNECTION_HISTORY",
+  "SET_CURRENT_FOREIGN_SERVER",
+  "ADD_FOREIGN_SERVER",
+  "REMOVE_FOREIGN_SERVER",
+  "LOCK_TAB",
+  "INVITE_TO_GROUP",
+  "KICK_FROM_GROUP",
+  "BAN_FROM_GROUP",
+  "CANCEL_GROUP_BAN",
+  "REMOVE_GROUP_ADMIN",
+  "ADD_GROUP_ADMIN",
+  "CREATE_GROUP",
+  "PUBLISH_QDN_RESOURCE",
+  "PUBLISH_MULTIPLE_QDN_RESOURCES",
+  "GET_USER_ACCOUNT",
+  "GET_LIST_ITEMS",
+  "SIGN_FOREIGN_FEES",
+  "REENCRYPT_GROUP_KEYS",
 ];
 
 // Permissions automatically granted for the session when GET_USER_ACCOUNT is accepted
 // These are read-only, low-risk permissions
 export const AUTO_GRANTED_PERMISSIONS_ON_AUTH = [
-  'GET_USER_ACCOUNT',
-  'GET_USER_WALLET',
-  'GET_WALLET_BALANCE',
-  'GET_USER_WALLET_INFO',
-  'GET_USER_WALLET_TRANSACTIONS',
-  'GET_LIST_ITEMS',
-  'SIGN_FOREIGN_FEES',
+  "GET_USER_ACCOUNT",
+  "GET_USER_WALLET",
+  "GET_WALLET_BALANCE",
+  "GET_USER_WALLET_INFO",
+  "GET_USER_WALLET_TRANSACTIONS",
+  "GET_LIST_ITEMS",
+  "SIGN_FOREIGN_FEES",
 ];
 
 export function setSessionPermissions(tabId, qapName, permissions) {
@@ -136,7 +214,7 @@ export function setSessionPermissions(tabId, qapName, permissions) {
 
     return mergedPermissions;
   } catch (error) {
-    console.error('Error setting session permissions:', error);
+    console.error("Error setting session permissions:", error);
     throw error;
   }
 }
@@ -148,7 +226,7 @@ export function getSessionPermissions(tabId, qapName) {
 
     return sessionData?.permissions || [];
   } catch (error) {
-    console.error('Error getting session permissions:', error);
+    console.error("Error getting session permissions:", error);
     return [];
   }
 }
@@ -158,7 +236,7 @@ export function hasSessionPermission(tabId, qapName, requestType) {
     const permissions = getSessionPermissions(tabId, qapName);
     return permissions.includes(requestType);
   } catch (error) {
-    console.error('Error checking session permission:', error);
+    console.error("Error checking session permission:", error);
     return false;
   }
 }
@@ -168,7 +246,7 @@ export function clearSessionPermissions(tabId, qapName) {
     const key = `${tabId}-${qapName}`;
     sessionPermissionsStore.delete(key);
   } catch (error) {
-    console.error('Error clearing session permissions:', error);
+    console.error("Error clearing session permissions:", error);
     throw error;
   }
 }
@@ -177,7 +255,7 @@ export function clearAllSessionPermissions() {
   try {
     sessionPermissionsStore.clear();
   } catch (error) {
-    console.error('Error clearing all session permissions:', error);
+    console.error("Error clearing all session permissions:", error);
     throw error;
   }
 }
@@ -193,571 +271,787 @@ export function clearSessionPermissionsByTabId(tabId) {
     }
     keysToDelete.forEach((key) => sessionPermissionsStore.delete(key));
   } catch (error) {
-    console.error('Error clearing session permissions by tabId:', error);
+    console.error("Error clearing session permissions by tabId:", error);
     throw error;
   }
 }
 
+// Re-export cleanupMediaForTab for convenience
+export { cleanupMediaForTab };
 
-  // TODO: GET_FRIENDS_LIST
-  // NOT SURE IF TO IMPLEMENT: LINK_TO_QDN_RESOURCE, QDN_RESOURCE_DISPLAYED, SET_TAB_NOTIFICATIONS
+// TODO: GET_FRIENDS_LIST
+// NOT SURE IF TO IMPLEMENT: LINK_TO_QDN_RESOURCE, QDN_RESOURCE_DISPLAYED, SET_TAB_NOTIFICATIONS
 
-  function setupMessageListenerQortalRequest() {
-    window.addEventListener("message", async (event) => {
-      const request = event.data;
-      
-      // Ensure the message is from a trusted source
-      const isFromExtension = request?.isExtension;
-      const appInfo = request?.appInfo;
-      const skipAuth = request?.skipAuth || false
-      if (request?.type !== "backgroundMessage") return; // Only process messages of type 'backgroundMessage'
-  
-  
-      // Handle actions based on the `request.action` value
-      switch (request.action) {
-        case "GET_USER_ACCOUNT": {
-          try {
-            const res = await getUserAccount({isFromExtension, appInfo, skipAuth});
-            event.source.postMessage({
+function setupMessageListenerQortalRequest() {
+  window.addEventListener("message", async (event) => {
+    const request = event.data;
+
+    // Ensure the message is from a trusted source
+    const isFromExtension = request?.isExtension;
+    const appInfo = request?.appInfo;
+    const skipAuth = request?.skipAuth || false;
+    if (request?.type !== "backgroundMessage") return; // Only process messages of type 'backgroundMessage'
+
+    // Handle actions based on the `request.action` value
+    switch (request.action) {
+      case "GET_USER_ACCOUNT": {
+        try {
+          const res = await getUserAccount({
+            isFromExtension,
+            appInfo,
+            skipAuth,
+          });
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: "Unable to get user account",
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-  
-        case "ENCRYPT_DATA": {
-          try {
-            const res = await encryptData(request.payload, event.source);
-            event.source.postMessage({
+        break;
+      }
+
+      case "ENCRYPT_DATA": {
+        try {
+          const res = await encryptData(request.payload, event.source);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-  
-        case "DECRYPT_DATA": {
-          try {
-            const res = await decryptData(request.payload);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_LIST_ITEMS": {
-          try {
-            const res = await getListItems(request.payload, appInfo, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "ADD_LIST_ITEMS": {
-          try {
-            const res = await addListItems(request.payload, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "DELETE_LIST_ITEM": {
-          try {
-            const res = await deleteListItems(request.payload, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "PUBLISH_QDN_RESOURCE": {
-          try {
-            const res = await publishQDNResource(request.payload, event.source, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "PUBLISH_MULTIPLE_QDN_RESOURCES": {
-          try {
-            const res = await publishMultipleQDNResources(request.payload, event.source, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "VOTE_ON_POLL": {
-          try {
-            const res = await voteOnPoll(request.payload, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "CREATE_POLL": {
-          try {
-            const res = await createPoll(request.payload, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "SEND_CHAT_MESSAGE": {
-          try {
-            const res = await sendChatMessage(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "JOIN_GROUP": {
-          try {
-            const res = await joinGroup(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-     
-  
-        case "DEPLOY_AT": {
-          try {
-            const res = await deployAt(request.payload, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_USER_WALLET": {
-          try {
-            const res = await getUserWallet(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_WALLET_BALANCE": {
-          try {
-            const res = await getWalletBalance(request.payload, false, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_USER_WALLET_INFO": {
-          try {
-            const res = await getUserWalletInfo(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_CROSSCHAIN_SERVER_INFO": {
-          try {
-            const res = await getCrossChainServerInfo(request.payload);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_TX_ACTIVITY_SUMMARY": {
-          try {
-            const res = await getTxActivitySummary(request.payload);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_FOREIGN_FEE": {
-          try {
-            const res = await getForeignFee(request.payload);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "UPDATE_FOREIGN_FEE": {
-          try {
-            const res = await updateForeignFee(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_SERVER_CONNECTION_HISTORY": {
-          try {
-            const res = await getServerConnectionHistory(request.payload);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "SET_CURRENT_FOREIGN_SERVER": {
-          try {
-            const res = await setCurrentForeignServer(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "ADD_FOREIGN_SERVER": {
-          try {
-            const res = await addForeignServer(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "REMOVE_FOREIGN_SERVER": {
-          try {
-            const res = await removeForeignServer(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "GET_DAY_SUMMARY": {
-          try {
-            const res = await getDaySummary(request.payload);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
-  
-        case "SEND_COIN": {
-          try {
-            const res = await sendCoin(request.payload, isFromExtension);
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              payload: res,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
-              requestId: request.requestId,
-              action: request.action,
-              error: error.message,
-              type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
-        }
+        break;
+      }
 
-        case "CREATE_TRADE_BUY_ORDER": {
-          try {
-            const res = await createBuyOrder(request.payload, isFromExtension);
-            event.source.postMessage({
+      case "DECRYPT_DATA": {
+        try {
+          const res = await decryptData(request.payload);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-         case 'CREATE_TRADE_SELL_ORDER': {
+      case "GET_LIST_ITEMS": {
+        try {
+          const res = await getListItems(
+            request.payload,
+            appInfo,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "ADD_LIST_ITEMS": {
+        try {
+          const res = await addListItems(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "DELETE_LIST_ITEM": {
+        try {
+          const res = await deleteListItems(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "PUBLISH_QDN_RESOURCE": {
+        try {
+          const res = await publishQDNResource(
+            request.payload,
+            event.source,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "PUBLISH_MULTIPLE_QDN_RESOURCES": {
+        try {
+          const res = await publishMultipleQDNResources(
+            request.payload,
+            event.source,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "VOTE_ON_POLL": {
+        try {
+          const res = await voteOnPoll(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "CREATE_POLL": {
+        try {
+          const res = await createPoll(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "SEND_CHAT_MESSAGE": {
+        try {
+          const res = await sendChatMessage(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "JOIN_GROUP": {
+        try {
+          const res = await joinGroup(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "DEPLOY_AT": {
+        try {
+          const res = await deployAt(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_USER_WALLET": {
+        try {
+          const res = await getUserWallet(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_WALLET_BALANCE": {
+        try {
+          const res = await getWalletBalance(
+            request.payload,
+            false,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_USER_WALLET_INFO": {
+        try {
+          const res = await getUserWalletInfo(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_CROSSCHAIN_SERVER_INFO": {
+        try {
+          const res = await getCrossChainServerInfo(request.payload);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_TX_ACTIVITY_SUMMARY": {
+        try {
+          const res = await getTxActivitySummary(request.payload);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_FOREIGN_FEE": {
+        try {
+          const res = await getForeignFee(request.payload);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "UPDATE_FOREIGN_FEE": {
+        try {
+          const res = await updateForeignFee(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_SERVER_CONNECTION_HISTORY": {
+        try {
+          const res = await getServerConnectionHistory(request.payload);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "SET_CURRENT_FOREIGN_SERVER": {
+        try {
+          const res = await setCurrentForeignServer(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "ADD_FOREIGN_SERVER": {
+        try {
+          const res = await addForeignServer(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "REMOVE_FOREIGN_SERVER": {
+        try {
+          const res = await removeForeignServer(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "GET_DAY_SUMMARY": {
+        try {
+          const res = await getDaySummary(request.payload);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "SEND_COIN": {
+        try {
+          const res = await sendCoin(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "CREATE_TRADE_BUY_ORDER": {
+        try {
+          const res = await createBuyOrder(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "CREATE_TRADE_SELL_ORDER": {
         try {
           const res = await createSellOrder(request.payload, isFromExtension);
           event.source.postMessage(
@@ -765,7 +1059,7 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               payload: res,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
@@ -775,7 +1069,7 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
@@ -783,849 +1077,1127 @@ export function clearSessionPermissionsByTabId(tabId) {
         break;
       }
 
-        case "CANCEL_TRADE_SELL_ORDER": {
-          try {
-            const res = await cancelSellOrder(request.payload, isFromExtension);
-            event.source.postMessage({
+      case "CANCEL_TRADE_SELL_ORDER": {
+        try {
+          const res = await cancelSellOrder(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "IS_USING_PUBLIC_NODE": {
-          try {
-            let isGateway =  await isRunningGateway()
-            event.source.postMessage({
+        break;
+      }
+      case "IS_USING_PUBLIC_NODE": {
+        try {
+          let isGateway = await isRunningGateway();
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: isGateway,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "ADMIN_ACTION": {
-          try {
-            const res =  await adminAction(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "ADMIN_ACTION": {
+        try {
+          const res = await adminAction(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "SIGN_TRANSACTION": {
-          try {
-            const res =  await signTransaction(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "SIGN_TRANSACTION": {
+        try {
+          const res = await signTransaction(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "OPEN_NEW_TAB": {
-          try {
-            const res =  await openNewTab(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "OPEN_NEW_TAB": {
+        try {
+          const res = await openNewTab(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "CREATE_AND_COPY_EMBED_LINK": {
-          try {
-            const res =  await createAndCopyEmbedLink(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "CREATE_AND_COPY_EMBED_LINK": {
+        try {
+          const res = await createAndCopyEmbedLink(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "ENCRYPT_QORTAL_GROUP_DATA": {
-          try {
-            const res = await encryptQortalGroupData(request.payload, event.source);
-            event.source.postMessage({
+      case "ENCRYPT_QORTAL_GROUP_DATA": {
+        try {
+          const res = await encryptQortalGroupData(
+            request.payload,
+            event.source
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "DECRYPT_QORTAL_GROUP_DATA": {
-          try {
-            const res = await decryptQortalGroupData(request.payload, event.source);
-            event.source.postMessage({
+        break;
+      }
+      case "DECRYPT_QORTAL_GROUP_DATA": {
+        try {
+          const res = await decryptQortalGroupData(
+            request.payload,
+            event.source
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "ENCRYPT_DATA_WITH_SHARING_KEY": {
-          try {
-            const res =  await encryptDataWithSharingKey(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "ENCRYPT_DATA_WITH_SHARING_KEY": {
+        try {
+          const res = await encryptDataWithSharingKey(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "DECRYPT_DATA_WITH_SHARING_KEY": {
-          try {
-            const res =  await decryptDataWithSharingKey(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "DECRYPT_DATA_WITH_SHARING_KEY": {
+        try {
+          const res = await decryptDataWithSharingKey(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "DELETE_HOSTED_DATA" : {
-          try {
-            const res =  await deleteHostedData(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "DELETE_HOSTED_DATA": {
+        try {
+          const res = await deleteHostedData(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "GET_HOSTED_DATA" : {
-          try {
-            const res =  await getHostedData(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "GET_HOSTED_DATA": {
+        try {
+          const res = await getHostedData(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "SHOW_ACTIONS" : {
-          try {
-           
-            event.source.postMessage({
+      case "SHOW_ACTIONS": {
+        try {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: listOfAllQortalRequests,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "REGISTER_NAME" : {
-          try {
-            const res =  await registerNameRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "REGISTER_NAME": {
+        try {
+          const res = await registerNameRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "UPDATE_NAME" : {
-          try {
-            const res =  await updateNameRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "UPDATE_NAME": {
+        try {
+          const res = await updateNameRequest(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "LEAVE_GROUP" : {
-          try {
-            const res =  await leaveGroupRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "LEAVE_GROUP": {
+        try {
+          const res = await leaveGroupRequest(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "INVITE_TO_GROUP" : {
-          try {
-            const res =  await inviteToGroupRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "INVITE_TO_GROUP": {
+        try {
+          const res = await inviteToGroupRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "KICK_FROM_GROUP" : {
-          try {
-            const res =  await kickFromGroupRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "KICK_FROM_GROUP": {
+        try {
+          const res = await kickFromGroupRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "BAN_FROM_GROUP" : {
-          try {
-            const res =  await banFromGroupRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "BAN_FROM_GROUP": {
+        try {
+          const res = await banFromGroupRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "CANCEL_GROUP_BAN" : {
-          try {
-            const res =  await cancelGroupBanRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "CANCEL_GROUP_BAN": {
+        try {
+          const res = await cancelGroupBanRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "ADD_GROUP_ADMIN" : {
-          try {
-            const res =  await addGroupAdminRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "ADD_GROUP_ADMIN": {
+        try {
+          const res = await addGroupAdminRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "REMOVE_GROUP_ADMIN" : {
-          try {
-            const res =  await removeGroupAdminRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "REMOVE_GROUP_ADMIN": {
+        try {
+          const res = await removeGroupAdminRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "CANCEL_GROUP_INVITE" : {
-          try {
-            const res =  await cancelGroupInviteRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "CANCEL_GROUP_INVITE": {
+        try {
+          const res = await cancelGroupInviteRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "DECRYPT_AESGCM" : {
-          try {
-            const res =  await decryptAESGCMRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "DECRYPT_AESGCM": {
+        try {
+          const res = await decryptAESGCMRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "CREATE_GROUP" : {
-          try {
-            const res =  await createGroupRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+      case "CREATE_GROUP": {
+        try {
+          const res = await createGroupRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "GET_USER_WALLET_TRANSACTIONS": {
-          try {
-            const res = await getUserWalletTransactions(request.payload, isFromExtension, appInfo);
-            event.source.postMessage({
+        break;
+      }
+      case "GET_USER_WALLET_TRANSACTIONS": {
+        try {
+          const res = await getUserWalletTransactions(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "GET_NODE_INFO": {
-          try {
-            const res = await getNodeInfo();
-            event.source.postMessage({
+        break;
+      }
+      case "GET_NODE_INFO": {
+        try {
+          const res = await getNodeInfo();
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "GET_NODE_STATUS": {
-          try {
-            const res = await getNodeStatus();
-            event.source.postMessage({
+      case "GET_NODE_STATUS": {
+        try {
+          const res = await getNodeStatus();
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
+        break;
+      }
 
-        case "GET_ARRR_SYNC_STATUS": {
-          try {
-            const res = await getArrrSyncStatus(request.payload);
-            event.source.postMessage({
+      case "GET_ARRR_SYNC_STATUS": {
+        try {
+          const res = await getArrrSyncStatus(request.payload);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "SHOW_PDF_READER" : {
-          try {
-            if(!request.payload?.blob){
-              throw new Error('Missing blob')
-            }
-            if(request.payload?.blob?.type !== "application/pdf") throw new Error('blob type must be application/pdf')
-              executeEvent("openPdf", { blob:  request.payload?.blob});
-            event.source.postMessage({
+        break;
+      }
+      case "SHOW_PDF_READER": {
+        try {
+          if (!request.payload?.blob) {
+            throw new Error("Missing blob");
+          }
+          if (request.payload?.blob?.type !== "application/pdf")
+            throw new Error("blob type must be application/pdf");
+          executeEvent("openPdf", { blob: request.payload?.blob });
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: true,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "UPDATE_GROUP" : {
-          try {
-            const res =  await updateGroupRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "UPDATE_GROUP": {
+        try {
+          const res = await updateGroupRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "BUY_NAME": {
-          try {
-            const res = await buyNameRequest(request.payload, isFromExtension);
-            event.source.postMessage({
+        break;
+      }
+      case "BUY_NAME": {
+        try {
+          const res = await buyNameRequest(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "SELL_NAME": {
-          try {
-            const res = await sellNameRequest(request.payload, isFromExtension);
-            event.source.postMessage({
+        break;
+      }
+      case "SELL_NAME": {
+        try {
+          const res = await sellNameRequest(request.payload, isFromExtension);
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "CANCEL_SELL_NAME": {
-          try {
-            const res = await cancelSellNameRequest(request.payload, isFromExtension);
-            event.source.postMessage({
+        break;
+      }
+      case "CANCEL_SELL_NAME": {
+        try {
+          const res = await cancelSellNameRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "MULTI_ASSET_PAYMENT_WITH_PRIVATE_DATA" : {
-          try {
-            const res =  await multiPaymentWithPrivateData(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "MULTI_ASSET_PAYMENT_WITH_PRIVATE_DATA": {
+        try {
+          const res = await multiPaymentWithPrivateData(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-        case "TRANSFER_ASSET" : {
-          try {
-            const res =  await transferAssetRequest(request.payload, isFromExtension)
-            event.source.postMessage({
+        break;
+      }
+      case "TRANSFER_ASSET": {
+        try {
+          const res = await transferAssetRequest(
+            request.payload,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               payload: res,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          } catch (error) {
-            event.source.postMessage({
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
               type: "backgroundMessageResponse",
-            }, event.origin);
-          }
-          break;
+            },
+            event.origin
+          );
         }
-
-        case 'SIGN_FOREIGN_FEES': {
-          try {
-            const res = await signForeignFees(request.payload, appInfo, isFromExtension);
-            event.source.postMessage(
-              {
-                requestId: request.requestId,
-                action: request.action,
-                payload: res,
-                type: 'backgroundMessageResponse',
-              },
-              event.origin
-            );
-          } catch (error) {
-            event.source.postMessage(
-              {
-                requestId: request.requestId,
-                action: request.action,
-                error: error.message,
-                type: 'backgroundMessageResponse',
-              },
-              event.origin
-            );
-          }
-          break;
-        }
-        case 'GET_PRIMARY_NAME': {
-          try {
-            const res = await getNameInfoForOthers(request.payload?.address);
-            const resData = res ? res : "";
-            event.source.postMessage(
-              {
-                requestId: request.requestId,
-                action: request.action,
-                payload: resData,
-                type: 'backgroundMessageResponse',
-              },
-              event.origin
-            );
-          } catch (error) {
-            event.source.postMessage(
-              {
-                requestId: request.requestId,
-                action: request.action,
-                error: error.message,
-                type: 'backgroundMessageResponse',
-              },
-              event.origin
-            );
-          }
-          break;
-        }
-        case 'SCREEN_ORIENTATION': {
-          try {
-            const mode = request.payload?.mode
-              if(mode === 'unlock'){
-                await ScreenOrientation.unlock();
-
-              } else {
-               await ScreenOrientation.lock({ orientation: mode });
-
-              }
-
-            
-            event.source.postMessage(
-              {
-                requestId: request.requestId,
-                action: request.action,
-                payload: true,
-                type: 'backgroundMessageResponse',
-              },
-              event.origin
-            );
-          } catch (error) {
-            event.source.postMessage(
-              {
-                requestId: request.requestId,
-                action: request.action,
-                error: error.message,
-                type: 'backgroundMessageResponse',
-              },
-              event.origin
-            );
-          }
-          break;
-        }
-         case 'WHICH_UI': {
-            try {
-              const res = await getWhichUI();
-              event.source!.postMessage(
-                {
-                  requestId: request.requestId,
-                  action: request.action,
-                  payload: res,
-                  type: 'backgroundMessageResponse',
-                },
-                event.origin
-              );
-            } catch (error) {
-              event.source!.postMessage(
-                {
-                  requestId: request.requestId,
-                  action: request.action,
-                  error: 'Unable to determine UI type',
-                  type: 'backgroundMessageResponse',
-                },
-                event.origin
-              );
-            }
-            break;
-          }
-            
-        case 'SESSION_PERMISSIONS': {
-            try {
-              const res = await sessionPermissions(
-                request.payload,
-                isFromExtension,
-                appInfo
-              );
-              event.source.postMessage(
-                {
-                  requestId: request.requestId,
-                  action: request.action,
-                  payload: res,
-                  type: 'backgroundMessageResponse',
-                },
-                event.origin
-              );
-            } catch (error) {
-              event.source.postMessage(
-                {
-                  requestId: request.requestId,
-                  action: request.action,
-                  error: error.message,
-                  type: 'backgroundMessageResponse',
-                },
-                event.origin
-              );
-            }
         break;
       }
 
-      case 'LOCK_TAB': {
+      case "SIGN_FOREIGN_FEES": {
+        try {
+          const res = await signForeignFees(
+            request.payload,
+            appInfo,
+            isFromExtension
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+      case "GET_PRIMARY_NAME": {
+        try {
+          const res = await getNameInfoForOthers(request.payload?.address);
+          const resData = res ? res : "";
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: resData,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+      case "SCREEN_ORIENTATION": {
+        try {
+          const mode = request.payload?.mode;
+          if (mode === "unlock") {
+            await ScreenOrientation.unlock();
+          } else {
+            await ScreenOrientation.lock({ orientation: mode });
+          }
+
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: true,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+      case "WHICH_UI": {
+        try {
+          const res = await getWhichUI();
+          event.source!.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source!.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: "Unable to determine UI type",
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "SESSION_PERMISSIONS": {
+        try {
+          const res = await sessionPermissions(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "LOCK_TAB": {
         try {
           const res = await lockTab(request.payload, isFromExtension, appInfo);
           event.source.postMessage(
@@ -1633,7 +2205,7 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               payload: res,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
@@ -1643,7 +2215,7 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
@@ -1651,7 +2223,7 @@ export function clearSessionPermissionsByTabId(tabId) {
         break;
       }
 
-      case 'UNLOCK_TAB': {
+      case "UNLOCK_TAB": {
         try {
           const res = await unlockTab(
             request.payload,
@@ -1663,7 +2235,7 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               payload: res,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
@@ -1673,7 +2245,7 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               error: error?.message,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
@@ -1681,7 +2253,7 @@ export function clearSessionPermissionsByTabId(tabId) {
         break;
       }
 
-       case 'REENCRYPT_GROUP_KEYS': {
+      case "REENCRYPT_GROUP_KEYS": {
         try {
           const res = await reEncryptQortalKeys(
             request.payload,
@@ -1693,7 +2265,7 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               payload: res,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
@@ -1703,19 +2275,49 @@ export function clearSessionPermissionsByTabId(tabId) {
               requestId: request.requestId,
               action: request.action,
               error: error.message,
-              type: 'backgroundMessageResponse',
+              type: "backgroundMessageResponse",
             },
             event.origin
           );
         }
         break;
       }
-        default:
-          break;
+
+      case "PLAY_ENCRYPTED_MEDIA": {
+        try {
+          const res = await playEncryptedMedia(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error?.message || "Failed to play encrypted media",
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
       }
-    });
-  }
-  
-  // Initialize the message listener
-  setupMessageListenerQortalRequest();
-  
+
+      default:
+        break;
+    }
+  });
+}
+
+// Initialize the message listener
+setupMessageListenerQortalRequest();

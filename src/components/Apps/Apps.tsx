@@ -1,7 +1,7 @@
-import React, {  useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppsHome } from "./AppsHome";
 import { Spacer } from "../../common/Spacer";
-import {  GlobalContext, getBaseApiReact } from "../../App";
+import { GlobalContext, getBaseApiReact } from "../../App";
 import { AppInfo } from "./AppInfo";
 import {
   executeEvent,
@@ -21,36 +21,41 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from '@mui/material';
-import { clearSessionPermissionsByTabId } from "../../qortalRequests";
+} from "@mui/material";
+import {
+  clearSessionPermissionsByTabId,
+  cleanupMediaForTab,
+} from "../../qortalRequests";
 const uid = new ShortUniqueId({ length: 8 });
 
-export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
+export const Apps = ({ mode, setMode, show, myName, myAddress }) => {
   const [availableQapps, setAvailableQapps] = useState([]);
   const [selectedAppInfo, setSelectedAppInfo] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [tabs, setTabs] = useState([]);
   const [selectedTab, setSelectedTab] = useState(null);
   const [isNewTabWindow, setIsNewTabWindow] = useState(false);
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState([]);
   const { showTutorial } = useContext(GlobalContext);
-    const [showCloseTabDialog, setShowCloseTabDialog] = useState(false);
+  const [showCloseTabDialog, setShowCloseTabDialog] = useState(false);
   const [pendingTabToRemove, setPendingTabToRemove] = useState(null);
   const iframeRefs = useRef({});
 
-  useEffect(()=> {
-    if(show){
-      showTutorial('qapps')
+  useEffect(() => {
+    if (show) {
+      showTutorial("qapps");
     }
-  }, [show])
-  const myApp = useMemo(()=> {
-   
-   return availableQapps.find((app)=> app.name === myName && app.service === 'APP')
-  }, [myName, availableQapps])
-  const myWebsite = useMemo(()=> {
-   
-    return availableQapps.find((app)=> app.name === myName && app.service === 'WEBSITE')
-   }, [myName, availableQapps])
+  }, [show]);
+  const myApp = useMemo(() => {
+    return availableQapps.find(
+      (app) => app.name === myName && app.service === "APP"
+    );
+  }, [myName, availableQapps]);
+  const myWebsite = useMemo(() => {
+    return availableQapps.find(
+      (app) => app.name === myName && app.service === "WEBSITE"
+    );
+  }, [myName, availableQapps]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -76,9 +81,8 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
       });
       if (!response?.ok) return;
       const responseData = await response.json();
-     
+
       setCategories(responseData);
-     
     } catch (error) {
     } finally {
       // dispatch(setIsLoadingGlobal(false))
@@ -110,7 +114,7 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
       });
       if (!responseWebsites?.ok) return;
       const responseDataWebsites = await responseWebsites.json();
-    
+
       apps = responseData;
       websites = responseDataWebsites;
       const combine = [...apps, ...websites];
@@ -121,7 +125,7 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
     }
   }, []);
   useEffect(() => {
-   getCategories()
+    getCategories();
   }, [getCategories]);
 
   useEffect(() => {
@@ -158,11 +162,12 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
     subscribeToEvent("selectedAppInfoCategory", selectedAppInfoCategoryFunc);
 
     return () => {
-      unsubscribeFromEvent("selectedAppInfoCategory", selectedAppInfoCategoryFunc);
+      unsubscribeFromEvent(
+        "selectedAppInfoCategory",
+        selectedAppInfoCategoryFunc
+      );
     };
   }, []);
-
-  
 
   const selectedCategoryFunc = (e) => {
     const data = e.detail?.data;
@@ -178,28 +183,35 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
     };
   }, []);
 
-  
   const navigateBackFunc = (e) => {
-    if (['category', 'appInfo-from-category', 'appInfo', 'library', 'publish'].includes(mode)) {
+    if (
+      [
+        "category",
+        "appInfo-from-category",
+        "appInfo",
+        "library",
+        "publish",
+      ].includes(mode)
+    ) {
       // Handle the various modes as needed
-      if (mode === 'category') {
-        setMode('library');
+      if (mode === "category") {
+        setMode("library");
         setSelectedCategory(null);
-      } else if (mode === 'appInfo-from-category') {
-        setMode('category');
-      } else if (mode === 'appInfo') {
-        setMode('library');
-      } else if (mode === 'library') {
+      } else if (mode === "appInfo-from-category") {
+        setMode("category");
+      } else if (mode === "appInfo") {
+        setMode("library");
+      } else if (mode === "library") {
         if (isNewTabWindow) {
-          setMode('viewer');
+          setMode("viewer");
         } else {
-          setMode('home');
+          setMode("home");
         }
-      } else if (mode === 'publish') {
-        setMode('library');
+      } else if (mode === "publish") {
+        setMode("library");
       }
-    } else if(selectedTab?.tabId) {
-      executeEvent(`navigateBackApp-${selectedTab?.tabId}`, {})
+    } else if (selectedTab?.tabId) {
+      executeEvent(`navigateBackApp-${selectedTab?.tabId}`, {});
     }
   };
 
@@ -256,9 +268,9 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
     };
   }, [tabs, isNewTabWindow]);
 
-     const addLockFunc = (e) => {
+  const addLockFunc = (e) => {
     const data = e.detail?.data;
-    const { tabId, lockMessage = '' } = data;
+    const { tabId, lockMessage = "" } = data;
 
     setTabs((prevTabs) =>
       prevTabs.map((tab) =>
@@ -268,10 +280,10 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
   };
 
   useEffect(() => {
-    subscribeToEvent('addLock', addLockFunc);
+    subscribeToEvent("addLock", addLockFunc);
 
     return () => {
-      unsubscribeFromEvent('addLock', addLockFunc);
+      unsubscribeFromEvent("addLock", addLockFunc);
     };
   }, []);
 
@@ -291,27 +303,32 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
   };
 
   useEffect(() => {
-    subscribeToEvent('removeLock', removeLockFunc);
+    subscribeToEvent("removeLock", removeLockFunc);
 
     return () => {
-      unsubscribeFromEvent('removeLock', removeLockFunc);
+      unsubscribeFromEvent("removeLock", removeLockFunc);
     };
   }, []);
 
-    const performTabRemoval = (tabId) => {
+  const performTabRemoval = (tabId) => {
     // Clear session permissions for this tab
     clearSessionPermissionsByTabId(tabId);
-    
+
+    // Cleanup encrypted media for this tab
+    cleanupMediaForTab(tabId).catch((error) => {
+      console.error("Failed to cleanup media for tab:", tabId, error);
+    });
+
     const copyTabs = [...tabs].filter((tab) => tab?.tabId !== tabId);
     if (copyTabs?.length === 0) {
-      setMode('home');
+      setMode("home");
     } else {
       setSelectedTab(copyTabs[0]);
     }
     setTabs(copyTabs);
     setSelectedTab(copyTabs[0]);
     setTimeout(() => {
-      executeEvent('setTabsToNav', {
+      executeEvent("setTabsToNav", {
         data: {
           tabs: copyTabs,
           selectedTab: copyTabs[0],
@@ -334,8 +351,6 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
     // Proceed with removal if no lock
     performTabRemoval(data?.tabId);
   };
-
-
 
   const handleCloseTabDialogConfirm = () => {
     if (pendingTabToRemove) {
@@ -360,7 +375,7 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
 
   const setNewTabWindowFunc = (e) => {
     setIsNewTabWindow(true);
-    setSelectedTab(null)
+    setSelectedTab(null);
   };
 
   useEffect(() => {
@@ -371,41 +386,62 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
     };
   }, [tabs]);
 
-
   return (
     <AppsParent
       sx={{
-        position: !show && 'fixed',
-        left: !show && '-200vw',
+        position: !show && "fixed",
+        left: !show && "-200vw",
       }}
     >
-      {mode !== "viewer" && !selectedTab  && <Spacer height="30px" />}
+      {mode !== "viewer" && !selectedTab && <Spacer height="30px" />}
       {mode === "home" && (
-        <AppsHome myName={myName} availableQapps={availableQapps}  setMode={setMode} myApp={myApp} myWebsite={myWebsite} myAddress={myAddress} />
-      )}
-    
-        <AppsLibrary
-        isShow={mode === "library" && !selectedTab}
+        <AppsHome
+          myName={myName}
           availableQapps={availableQapps}
           setMode={setMode}
-          myName={myName}
-          hasPublishApp={!!(myApp || myWebsite)}
-          categories={categories}
-          getQapps={getQapps}
+          myApp={myApp}
+          myWebsite={myWebsite}
+          myAddress={myAddress}
         />
-   
-      {mode === "appInfo" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
-      {mode === "appInfo-from-category" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
-      <AppsCategory  availableQapps={availableQapps} isShow={mode === 'category' && !selectedTab} category={selectedCategory} myName={myName} />
-      {mode === "publish" && !selectedTab &&  <AppPublish  categories={categories} myAddress={myAddress} myName={myName} />}
+      )}
+
+      <AppsLibrary
+        isShow={mode === "library" && !selectedTab}
+        availableQapps={availableQapps}
+        setMode={setMode}
+        myName={myName}
+        hasPublishApp={!!(myApp || myWebsite)}
+        categories={categories}
+        getQapps={getQapps}
+      />
+
+      {mode === "appInfo" && !selectedTab && (
+        <AppInfo app={selectedAppInfo} myName={myName} />
+      )}
+      {mode === "appInfo-from-category" && !selectedTab && (
+        <AppInfo app={selectedAppInfo} myName={myName} />
+      )}
+      <AppsCategory
+        availableQapps={availableQapps}
+        isShow={mode === "category" && !selectedTab}
+        category={selectedCategory}
+        myName={myName}
+      />
+      {mode === "publish" && !selectedTab && (
+        <AppPublish
+          categories={categories}
+          myAddress={myAddress}
+          myName={myName}
+        />
+      )}
 
       {tabs.map((tab) => {
-          if (!iframeRefs.current[tab.tabId]) {
-            iframeRefs.current[tab.tabId] = React.createRef();
-          }
+        if (!iframeRefs.current[tab.tabId]) {
+          iframeRefs.current[tab.tabId] = React.createRef();
+        }
         return (
           <AppViewerContainer
-          key={tab?.tabId}
+            key={tab?.tabId}
             hide={isNewTabWindow}
             isSelected={tab?.tabId === selectedTab?.tabId}
             app={tab}
@@ -418,12 +454,19 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
       {isNewTabWindow && mode === "viewer" && (
         <>
           <Spacer height="30px" />
-          <AppsHome myName={myName} availableQapps={availableQapps} setMode={setMode} myApp={myApp} myWebsite={myWebsite} myAddress={myAddress}  />
+          <AppsHome
+            myName={myName}
+            availableQapps={availableQapps}
+            setMode={setMode}
+            myApp={myApp}
+            myWebsite={myWebsite}
+            myAddress={myAddress}
+          />
         </>
       )}
-      {mode !== "viewer" && !selectedTab  && <Spacer height="180px" />}
+      {mode !== "viewer" && !selectedTab && <Spacer height="180px" />}
 
-          <Dialog
+      <Dialog
         open={showCloseTabDialog}
         onClose={handleCloseTabDialogCancel}
         aria-labelledby="close-tab-dialog-title"
@@ -440,7 +483,7 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
             <DialogContentText
               sx={{
                 marginTop: 2,
-                fontWeight: 500
+                fontWeight: 500,
               }}
             >
               {pendingTabToRemove.lockMessage}
@@ -448,9 +491,12 @@ export const Apps = ({ mode, setMode, show , myName, myAddress}) => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseTabDialogCancel} sx={{
-            color: 'white'
-          }}>
+          <Button
+            onClick={handleCloseTabDialogCancel}
+            sx={{
+              color: "white",
+            }}
+          >
             Cancel
           </Button>
           <Button

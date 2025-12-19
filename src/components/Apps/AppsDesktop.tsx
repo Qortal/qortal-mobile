@@ -1,4 +1,11 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AppsHomeDesktop } from "./AppsHomeDesktop";
 import { Spacer } from "../../common/Spacer";
 import { MyContext, getBaseApiReact } from "../../App";
@@ -23,23 +30,38 @@ import { HubsIcon } from "../../assets/Icons/HubsIcon";
 
 const uid = new ShortUniqueId({ length: 8 });
 
-export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktopSideView, hasUnreadDirects, isDirects, isGroups, hasUnreadGroups, toggleSideViewGroups, toggleSideViewDirects}) => {
+export const AppsDesktop = ({
+  mode,
+  setMode,
+  show,
+  myName,
+  goToHome,
+  setDesktopSideView,
+  hasUnreadDirects,
+  isDirects,
+  isGroups,
+  hasUnreadGroups,
+  toggleSideViewGroups,
+  toggleSideViewDirects,
+}) => {
   const [availableQapps, setAvailableQapps] = useState([]);
   const [selectedAppInfo, setSelectedAppInfo] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [tabs, setTabs] = useState([]);
   const [selectedTab, setSelectedTab] = useState(null);
   const [isNewTabWindow, setIsNewTabWindow] = useState(false);
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState([]);
   const iframeRefs = useRef({});
-  const myApp = useMemo(()=> {
-   
-   return availableQapps.find((app)=> app.name === myName && app.service === 'APP')
-  }, [myName, availableQapps])
-  const myWebsite = useMemo(()=> {
-   
-    return availableQapps.find((app)=> app.name === myName && app.service === 'WEBSITE')
-   }, [myName, availableQapps])
+  const myApp = useMemo(() => {
+    return availableQapps.find(
+      (app) => app.name === myName && app.service === "APP"
+    );
+  }, [myName, availableQapps]);
+  const myWebsite = useMemo(() => {
+    return availableQapps.find(
+      (app) => app.name === myName && app.service === "WEBSITE"
+    );
+  }, [myName, availableQapps]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -65,9 +87,8 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
       });
       if (!response?.ok) return;
       const responseData = await response.json();
-     
+
       setCategories(responseData);
-     
     } catch (error) {
     } finally {
       // dispatch(setIsLoadingGlobal(false))
@@ -99,7 +120,7 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
       });
       if (!responseWebsites?.ok) return;
       const responseDataWebsites = await responseWebsites.json();
-    
+
       apps = responseData;
       websites = responseDataWebsites;
       const combine = [...apps, ...websites];
@@ -111,7 +132,7 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
   }, []);
   useEffect(() => {
     getQapps();
-    getCategories()
+    getCategories();
   }, [getQapps, getCategories]);
 
   const selectedAppInfoFunc = (e) => {
@@ -138,11 +159,12 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
     subscribeToEvent("selectedAppInfoCategory", selectedAppInfoCategoryFunc);
 
     return () => {
-      unsubscribeFromEvent("selectedAppInfoCategory", selectedAppInfoCategoryFunc);
+      unsubscribeFromEvent(
+        "selectedAppInfoCategory",
+        selectedAppInfoCategoryFunc
+      );
     };
   }, []);
-
-  
 
   const selectedCategoryFunc = (e) => {
     const data = e.detail?.data;
@@ -158,35 +180,37 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
     };
   }, []);
 
-
-
-
-
-  
   const navigateBackFunc = (e) => {
-    if (['category', 'appInfo-from-category', 'appInfo', 'library', 'publish'].includes(mode)) {
+    if (
+      [
+        "category",
+        "appInfo-from-category",
+        "appInfo",
+        "library",
+        "publish",
+      ].includes(mode)
+    ) {
       // Handle the various modes as needed
-      if (mode === 'category') {
-        setMode('library');
+      if (mode === "category") {
+        setMode("library");
         setSelectedCategory(null);
-      } else if (mode === 'appInfo-from-category') {
-        setMode('category');
-      } else if (mode === 'appInfo') {
-        setMode('library');
-      } else if (mode === 'library') {
+      } else if (mode === "appInfo-from-category") {
+        setMode("category");
+      } else if (mode === "appInfo") {
+        setMode("library");
+      } else if (mode === "library") {
         if (isNewTabWindow) {
-          setMode('viewer');
+          setMode("viewer");
         } else {
-          setMode('home');
+          setMode("home");
         }
-      } else if (mode === 'publish') {
-        setMode('library');
+      } else if (mode === "publish") {
+        setMode("library");
       }
-    } else if(selectedTab?.tabId) {
-      executeEvent(`navigateBackApp-${selectedTab?.tabId}`, {})
+    } else if (selectedTab?.tabId) {
+      executeEvent(`navigateBackApp-${selectedTab?.tabId}`, {});
     }
   };
-  
 
   useEffect(() => {
     subscribeToEvent("navigateBack", navigateBackFunc);
@@ -208,8 +232,6 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
 
     setIsNewTabWindow(false);
   };
-
-
 
   useEffect(() => {
     subscribeToEvent("addTab", addTabFunc);
@@ -233,7 +255,6 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
     }, 100);
     setIsNewTabWindow(false);
   };
-  
 
   useEffect(() => {
     subscribeToEvent("setSelectedTab", setSelectedTabFunc);
@@ -245,6 +266,14 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
 
   const removeTabFunc = (e) => {
     const data = e.detail?.data;
+
+    // Cleanup encrypted media for this tab
+    if (data?.tabId) {
+      cleanupMediaForTab(data.tabId).catch((error) => {
+        console.error("Failed to cleanup media for tab:", data.tabId, error);
+      });
+    }
+
     const copyTabs = [...tabs].filter((tab) => tab?.tabId !== data?.tabId);
     if (copyTabs?.length === 0) {
       setMode("home");
@@ -273,7 +302,7 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
 
   const setNewTabWindowFunc = (e) => {
     setIsNewTabWindow(true);
-    setSelectedTab(null)
+    setSelectedTab(null);
   };
 
   useEffect(() => {
@@ -284,121 +313,124 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
     };
   }, [tabs]);
 
-
   return (
     <AppsParent
       sx={{
         display: !show && "none",
-        flexDirection:  'row' 
+        flexDirection: "row",
       }}
     >
-     
-       <Box sx={{
-        width: '60px',
-        flexDirection: 'column',
-        height: '100vh',
-        alignItems: 'center',
-        display: 'flex',
-        gap: '30px'
-       }}>
+      <Box
+        sx={{
+          width: "60px",
+          flexDirection: "column",
+          height: "100vh",
+          alignItems: "center",
+          display: "flex",
+          gap: "30px",
+        }}
+      >
         <ButtonBase
           sx={{
-            width: '60px',
-            height: '60px',
-            paddingTop: '23px'
+            width: "60px",
+            height: "60px",
+            paddingTop: "23px",
           }}
           onClick={() => {
             goToHome();
-
           }}
         >
-            
-            <HomeIcon
-              height={34}
-              color="rgba(250, 250, 250, 0.5)"
-            />
-        
+          <HomeIcon height={34} color="rgba(250, 250, 250, 0.5)" />
         </ButtonBase>
         <ButtonBase
           onClick={() => {
             setDesktopSideView("directs");
-            toggleSideViewDirects()
+            toggleSideViewDirects();
           }}
         >
-        
-            <MessagingIcon
-              height={30}
-              color={
-                hasUnreadDirects
-                  ? "var(--unread)"
-                  : isDirects
-                  ? "white"
-                  : "rgba(250, 250, 250, 0.5)"
-              }
-            />
-
+          <MessagingIcon
+            height={30}
+            color={
+              hasUnreadDirects
+                ? "var(--unread)"
+                : isDirects
+                ? "white"
+                : "rgba(250, 250, 250, 0.5)"
+            }
+          />
         </ButtonBase>
         <ButtonBase
           onClick={() => {
             setDesktopSideView("groups");
-            toggleSideViewGroups()
+            toggleSideViewGroups();
           }}
         >
-            <HubsIcon
-              height={30}
-              color={
-                hasUnreadGroups
-                  ? "var(--unread)"
-                  : isGroups
-                  ? "white"
-                  : "rgba(250, 250, 250, 0.5)"
-              }
-            />
-     
+          <HubsIcon
+            height={30}
+            color={
+              hasUnreadGroups
+                ? "var(--unread)"
+                : isGroups
+                ? "white"
+                : "rgba(250, 250, 250, 0.5)"
+            }
+          />
         </ButtonBase>
         <Save isDesktop />
-        {mode !== 'home' && (
-                 <AppsNavBarDesktop  />
+        {mode !== "home" && <AppsNavBarDesktop />}
+      </Box>
 
-        )}
-
-       </Box>
-    
-  
       {mode === "home" && (
-         <Box sx={{
-          display: 'flex',
-          width: '100%',
-          flexDirection: 'column',
-          height: '100vh',
-          overflow: 'auto'
-        }}>
-
-         <Spacer height="30px" />
-        <AppsHomeDesktop availableQapps={availableQapps}  setMode={setMode} myApp={myApp} myWebsite={myWebsite} />
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            flexDirection: "column",
+            height: "100vh",
+            overflow: "auto",
+          }}
+        >
+          <Spacer height="30px" />
+          <AppsHomeDesktop
+            availableQapps={availableQapps}
+            setMode={setMode}
+            myApp={myApp}
+            myWebsite={myWebsite}
+          />
         </Box>
       )}
-    
-        <AppsLibraryDesktop
+
+      <AppsLibraryDesktop
         isShow={mode === "library" && !selectedTab}
-          availableQapps={availableQapps}
-          setMode={setMode}
-          myName={myName}
-          hasPublishApp={!!(myApp || myWebsite)}
-          categories={categories}
-        />
-   
-      {mode === "appInfo" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
-      {mode === "appInfo-from-category" && !selectedTab && <AppInfo app={selectedAppInfo} myName={myName} />}
-      <AppsCategoryDesktop  availableQapps={availableQapps} isShow={mode === 'category' && !selectedTab} category={selectedCategory} myName={myName} />
-      {mode === "publish" && !selectedTab && <AppPublish names={myName ?  [myName] : []} categories={categories} />}
+        availableQapps={availableQapps}
+        setMode={setMode}
+        myName={myName}
+        hasPublishApp={!!(myApp || myWebsite)}
+        categories={categories}
+      />
+
+      {mode === "appInfo" && !selectedTab && (
+        <AppInfo app={selectedAppInfo} myName={myName} />
+      )}
+      {mode === "appInfo-from-category" && !selectedTab && (
+        <AppInfo app={selectedAppInfo} myName={myName} />
+      )}
+      <AppsCategoryDesktop
+        availableQapps={availableQapps}
+        isShow={mode === "category" && !selectedTab}
+        category={selectedCategory}
+        myName={myName}
+      />
+      {mode === "publish" && !selectedTab && (
+        <AppPublish names={myName ? [myName] : []} categories={categories} />
+      )}
       {tabs.map((tab) => {
         if (!iframeRefs.current[tab.tabId]) {
           iframeRefs.current[tab.tabId] = React.createRef();
         }
         return (
           <AppViewerContainer
-          key={tab?.tabId}
+            key={tab?.tabId}
             hide={isNewTabWindow}
             isSelected={tab?.tabId === selectedTab?.tabId}
             app={tab}
@@ -409,16 +441,22 @@ export const AppsDesktop = ({ mode, setMode, show , myName, goToHome, setDesktop
 
       {isNewTabWindow && mode === "viewer" && (
         <>
-        <Box sx={{
-          display: 'flex',
-          width: '100%',
-          flexDirection: 'column',
-          height: '100vh',
-          overflow: 'auto'
-        }}>
-
-         <Spacer height="30px" />
-          <AppsHomeDesktop availableQapps={availableQapps} setMode={setMode} myApp={myApp} myWebsite={myWebsite}  />
+          <Box
+            sx={{
+              display: "flex",
+              width: "100%",
+              flexDirection: "column",
+              height: "100vh",
+              overflow: "auto",
+            }}
+          >
+            <Spacer height="30px" />
+            <AppsHomeDesktop
+              availableQapps={availableQapps}
+              setMode={setMode}
+              myApp={myApp}
+              myWebsite={myWebsite}
+            />
           </Box>
         </>
       )}
