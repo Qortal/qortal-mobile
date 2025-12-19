@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Qortal Go",
   webDir: "dist",
   server: {
-    androidScheme: "https",
+    androidScheme: "http",
   },
   plugins: {
     LocalNotifications: {
