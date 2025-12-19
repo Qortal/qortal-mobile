@@ -28,7 +28,7 @@ import { GlobalContext } from "../App";
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 
 export const manifestData = {
-  version: "0.5.5",
+  version: "0.5.6",
 };
 
 
