@@ -6593,9 +6593,7 @@ export const cleanupMediaForTab = async (tabId: string) => {
     for (const mediaId of mediaIds) {
       try {
         await manager.cleanupMedia(mediaId);
-        console.log(
-          `[cleanupMediaForTab] Cleaned up media: ${mediaId} for tab: ${tabId}`
-        );
+       
       } catch (error) {
         console.error(
           `[cleanupMediaForTab] Failed to cleanup media ${mediaId}:`,
@@ -6672,16 +6670,12 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
   let totalSize = data.totalSize;
   if (!totalSize) {
     try {
-      console.log(
-        `[playEncryptedMedia] Auto-detecting file size for: ${resourceUrl}`
-      );
+
       const headResponse = await fetch(resourceUrl, { method: "HEAD" });
       const contentLength = headResponse.headers.get("content-length");
       if (contentLength) {
         totalSize = parseInt(contentLength, 10);
-        console.log(
-          `[playEncryptedMedia] Auto-detected totalSize: ${totalSize}`
-        );
+
       } else {
         throw new Error(
           "Could not determine file size from server. Please provide totalSize parameter."
@@ -6689,7 +6683,7 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
       }
     } catch (error) {
       throw new Error(
-        `Failed to fetch file size: ${error.message}. Please provide totalSize parameter manually.`
+        `Failed to fetch file size: ${error?.message}. Please provide totalSize parameter manually.`
       );
     }
   }
@@ -6697,13 +6691,11 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
   // Ensure totalSize is a number (not string)
   totalSize = Number(totalSize);
 
-  console.log(
-    `[playEncryptedMedia] totalSize before validation: ${totalSize}, type: ${typeof totalSize}`
-  );
+
 
   // Validate totalSize
   if (!totalSize || totalSize <= 0 || isNaN(totalSize)) {
-    console.log("totalSize error", totalSize);
+
     throw new Error("Invalid totalSize. Must be greater than 0.");
   }
 
@@ -6711,7 +6703,7 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
   try {
     // Get the manager instance
     const manager = EncryptedMediaManager.getInstance();
-    console.log("manager", manager);
+  
     // Initialize server if not running
     const isRunning = await manager.isRunning();
     if (!isRunning) {

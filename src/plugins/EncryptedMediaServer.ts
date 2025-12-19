@@ -135,13 +135,7 @@ export class EncryptedMediaManager {
       throw new Error(`Invalid totalSize: ${totalSize} (type: ${typeof totalSize})`);
     }
 
-    console.log('[EncryptedMediaManager] Registering media with exact parameters:');
-    console.log('  mediaId:', mediaId, '(type:', typeof mediaId, ')');
-    console.log('  key length:', key?.length);
-    console.log('  iv length:', iv?.length);
-    console.log('  resourceUrl:', resourceUrl);
-    console.log('  totalSize:', size, '(type:', typeof size, ')');
-    console.log('  mimeType:', mimeType || 'video/mp4');
+ 
     
     // Create the options object explicitly
     const options = {
@@ -153,7 +147,6 @@ export class EncryptedMediaManager {
       mimeType: mimeType || 'video/mp4'
     };
     
-    console.log('[EncryptedMediaManager] Options object:', JSON.stringify(options, null, 2));
 
     try {
       const result = await EncryptedMediaServer.registerMedia(options);
