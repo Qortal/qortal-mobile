@@ -5373,8 +5373,6 @@ export const decryptAESGCMRequest = async (data, isFromExtension) => {
 
 export const createGroupRequest = async (data, isFromExtension) => {
   const requiredFields = [
-    "groupId",
-    "qortalAddress",
     "groupName",
     "type",
     "approvalThreshold",
