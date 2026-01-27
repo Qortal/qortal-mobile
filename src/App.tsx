@@ -48,6 +48,8 @@ import ltcLogo from "./assets/ltc.png";
 import qortLogo from "./assets/qort.png";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import Download from "./assets/svgs/Download.svg";
+import { ChromecastProvider } from "./context/ChromecastContext";
+import { ChromecastMiniPlayer } from "./components/Chromecast/ChromecastMiniPlayer";
 import Logout from "./assets/svgs/Logout.svg";
 import Return from "./assets/svgs/Return.svg";
 import Success from "./assets/svgs/Success.svg";
@@ -1869,16 +1871,19 @@ function App() {
     );
   };
   return (
-    <AppContainer
-      sx={{
-        height: isMobile ? "100%" : "100vh",
-        backgroundImage: desktopViewMode === "apps" && 'url("appsBg.svg")',
-        backgroundSize: desktopViewMode === "apps" && "cover",
-        backgroundPosition: desktopViewMode === "apps" && "center",
-        backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
-        overflow: "hidden"
-      }}
-    >
+    <>
+    <ChromecastProvider>
+      <AppContainer
+        sx={{
+          height: isMobile ? "100%" : "100vh",
+          backgroundImage: desktopViewMode === "apps" && 'url("appsBg.svg")',
+          backgroundSize: desktopViewMode === "apps" && "cover",
+          backgroundPosition: desktopViewMode === "apps" && "center",
+          backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
+          overflow: "hidden",
+          position: "relative" // Ensure fixed children can escape overflow
+        }}
+      >
            <PdfViewer />
               <div style={{
                 display: !isNative && extState === "not-authenticated" ? 'block' : 'none'
@@ -1976,6 +1981,7 @@ function App() {
           >
             <TaskManger getUserInfo={getUserInfo} />
           </Box>
+          
           <GlobalActions memberGroups={memberGroups} />
         </MyContext.Provider>
       )}
@@ -3473,6 +3479,10 @@ function App() {
       <Minting setIsOpenMinting={setIsOpenMinting} groups={memberGroups} myAddress={address} show={show} setTxList={setTxList} txList={txList}/>
      )}
     </AppContainer>
+    {/* ChromecastMiniPlayer outside AppContainer to avoid overflow:hidden clipping */}
+    {extState === "authenticated" && isMainWindow && <ChromecastMiniPlayer />}
+    </ChromecastProvider>
+    </>
   );
 }
 

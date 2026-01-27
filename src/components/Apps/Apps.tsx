@@ -25,6 +25,7 @@ import {
 import {
   clearSessionPermissionsByTabId,
   cleanupMediaForTab,
+  cleanupChromecastForTab,
 } from "../../qortalRequests";
 const uid = new ShortUniqueId({ length: 8 });
 
@@ -313,6 +314,11 @@ export const Apps = ({ mode, setMode, show, myName, myAddress }) => {
   const performTabRemoval = (tabId) => {
     // Clear session permissions for this tab
     clearSessionPermissionsByTabId(tabId);
+
+    // Cleanup Chromecast connection for this tab
+    cleanupChromecastForTab(tabId).catch((error) => {
+      console.error("Failed to cleanup Chromecast for tab:", tabId, error);
+    });
 
     // Cleanup encrypted media for this tab
     cleanupMediaForTab(tabId).catch((error) => {

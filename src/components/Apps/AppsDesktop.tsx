@@ -27,6 +27,10 @@ import { HomeIcon } from "../../assets/Icons/HomeIcon";
 import { MessagingIcon } from "../../assets/Icons/MessagingIcon";
 import { Save } from "../Save/Save";
 import { HubsIcon } from "../../assets/Icons/HubsIcon";
+import {
+  cleanupMediaForTab,
+  cleanupChromecastForTab,
+} from "../../qortalRequests";
 
 const uid = new ShortUniqueId({ length: 8 });
 
@@ -266,6 +270,13 @@ export const AppsDesktop = ({
 
   const removeTabFunc = (e) => {
     const data = e.detail?.data;
+
+    // Cleanup Chromecast connection for this tab
+    if (data?.tabId) {
+      cleanupChromecastForTab(data.tabId).catch((error) => {
+        console.error("Failed to cleanup Chromecast for tab:", data.tabId, error);
+      });
+    }
 
     // Cleanup encrypted media for this tab
     if (data?.tabId) {

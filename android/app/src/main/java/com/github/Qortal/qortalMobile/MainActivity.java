@@ -5,6 +5,8 @@ import com.github.Qortal.qortalMobile.NativeBcrypt;
 import com.github.Qortal.qortalMobile.NativePOW;
 import com.github.Qortal.qortalMobile.FileWriter;
 import com.github.Qortal.qortalMobile.EncryptedMediaServerPlugin;
+import com.github.Qortal.qortalMobile.ChromecastPlugin;
+import com.github.Qortal.qortalMobile.NetworkInfoPlugin;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -16,6 +18,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativePOW.class);
         registerPlugin(FileWriter.class);
         registerPlugin(EncryptedMediaServerPlugin.class);
+        registerPlugin(ChromecastPlugin.class);
+        registerPlugin(NetworkInfoPlugin.class);
         super.onCreate(savedInstanceState);
 
         // ✅ Enable mixed content mode for WebView

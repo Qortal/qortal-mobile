@@ -16,6 +16,7 @@ import {
   cancelSellNameRequest,
   cancelSellOrder,
   cleanupMediaForTab,
+  cleanupChromecastForTab,
   createAndCopyEmbedLink,
   createBuyOrder,
   createGroupRequest,
@@ -276,8 +277,8 @@ export function clearSessionPermissionsByTabId(tabId) {
   }
 }
 
-// Re-export cleanupMediaForTab for convenience
-export { cleanupMediaForTab };
+// Re-export cleanupMediaForTab and cleanupChromecastForTab for convenience
+export { cleanupMediaForTab, cleanupChromecastForTab };
 
 // TODO: GET_FRIENDS_LIST
 // NOT SURE IF TO IMPLEMENT: LINK_TO_QDN_RESOURCE, QDN_RESOURCE_DISPLAYED, SET_TAB_NOTIFICATIONS

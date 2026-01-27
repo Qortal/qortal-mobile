@@ -6582,6 +6582,61 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
 // Track media IDs by tab for automatic cleanup
 const mediaIdsByTabId = new Map<string, Set<string>>();
 
+// Track Chromecast connections by tab for automatic cleanup
+const chromecastTabIds = new Set<string>();
+
+/**
+ * Track that a tab has an active Chromecast connection
+ */
+export const trackChromecastForTab = (tabId: string) => {
+  if (tabId) {
+    chromecastTabIds.add(tabId);
+    console.log(`[Chromecast] Tracking connection for tabId ${tabId}`);
+  }
+};
+
+/**
+ * Remove Chromecast tracking for a tab
+ */
+export const untrackChromecastForTab = (tabId: string) => {
+  if (tabId) {
+    chromecastTabIds.delete(tabId);
+    console.log(`[Chromecast] Untracked connection for tabId ${tabId}`);
+  }
+};
+
+/**
+ * Check if a tab has an active Chromecast connection
+ */
+export const hasChromecastConnection = (tabId: string): boolean => {
+  return chromecastTabIds.has(tabId);
+};
+
+/**
+ * Cleanup Chromecast connection for a specific tab
+ * Call this when a tab is closed to disconnect Chromecast if connected
+ */
+export const cleanupChromecastForTab = async (tabId: string) => {
+  if (chromecastTabIds.has(tabId)) {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { default: Chromecast } = await import('../plugins/ChromecastPlugin');
+      
+      // Check if still connected before disconnecting
+      const connectionStatus = await Chromecast.isConnected();
+      if (connectionStatus?.connected) {
+        console.log(`[Chromecast] Disconnecting for closed tab ${tabId}`);
+        await Chromecast.disconnect();
+        console.log(`[Chromecast] Successfully disconnected for tab ${tabId}`);
+      }
+    } catch (error) {
+      console.error(`[Chromecast] Failed to cleanup for tab ${tabId}:`, error);
+    } finally {
+      chromecastTabIds.delete(tabId);
+    }
+  }
+};
+
 /**
  * Cleanup all media registered for a specific tab
  * Call this when a tab is closed
