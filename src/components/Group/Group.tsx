@@ -2065,6 +2065,7 @@ export const Group = ({
   const visibleGroups = useMemo(
     () =>
         groups.filter((group) => group?.groupId !== "0")
+            ,
     [groups]
   );
 
