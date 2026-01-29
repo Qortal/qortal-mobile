@@ -130,7 +130,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
   };
 
   const handleStopCasting = async () => {
-    // Stop casting - this now also disconnects from the device
+    // Stop casting but keep connection
     await stop();
   };
 
@@ -158,13 +158,17 @@ export const ChromecastMiniPlayer: React.FC = () => {
 
   const handleMuteToggle = () => {
     if (isMuted) {
-      // Unmute - restore previous volume
+      // Unmute - restore previous volume (capped at safe maximum)
+      const safeVolume = Math.min(volumeBeforeMute, 0.5); // Cap at 50% max
       setIsMuted(false);
-      setVolumeState(volumeBeforeMute);
-      setVolume(volumeBeforeMute);
+      setVolumeState(safeVolume);
+      setVolume(safeVolume);
     } else {
-      // Mute - save current volume and set to 0
-      setVolumeBeforeMute(volume);
+      // Mute - save current volume (if volume is 0, save a reasonable default)
+      // Also cap the saved volume to prevent loud unmutes
+      let volumeToSave = volume > 0 ? volume : 0.25;
+      volumeToSave = Math.min(volumeToSave, 0.5); // Never save more than 50%
+      setVolumeBeforeMute(volumeToSave);
       setIsMuted(true);
       setVolumeState(0);
       setVolume(0);
@@ -181,6 +185,9 @@ export const ChromecastMiniPlayer: React.FC = () => {
 
   const displayProgress = isDraggingProgress ? tempProgress : progress;
   const displayPosition = isDraggingProgress ? (tempProgress / 100) * duration : currentPosition;
+
+  // Force the slider to be treated as controlled component
+  const sliderValue = isNaN(displayProgress) ? 0 : Math.max(0, Math.min(100, displayProgress));
 
   return (
     <Slide direction="up" in={isCasting && !isPlayerMinimized} mountOnEnter unmountOnExit>
@@ -215,7 +222,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
             alignItems: 'center',
             gap: isMobile ? 1.5 : 2,
           }}>
-            {/* Thumbnail */}
+            {/* Thumbnail - COMMENTED OUT
             {currentVideo.imageUrl ? (
               <Box
                 sx={{
@@ -255,6 +262,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
                 <VolumeIcon sx={{ fontSize: isMobile ? 28 : 32, color: '#3b82f6' }} />
               </Box>
             )}
+            */}
 
             {/* Video info */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -354,7 +362,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
             </Box>
             
             <Slider
-              value={displayProgress}
+              value={sliderValue}
               onChange={handleProgressChange}
               onChangeCommitted={handleProgressCommit}
               onMouseDown={handleProgressStart}
@@ -488,6 +496,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
             {/* Right side - Volume and Stop casting button */}
             <Box sx={{ display: 'flex', gap: isMobile ? 0.5 : 1, alignItems: 'center' }}>
               {/* Volume control - Desktop gets slider, mobile gets quick mute */}
+              {/* COMMENTED OUT - Mute button temporarily disabled
               {!isMobile ? (
                 <Tooltip title="Volume">
                   <IconButton 
@@ -519,8 +528,9 @@ export const ChromecastMiniPlayer: React.FC = () => {
                   </IconButton>
                 </Tooltip>
               )}
+              */}
 
-              <Tooltip title="Stop casting and disconnect">
+              <Tooltip title="Stop video (keeps connection)">
                 <IconButton 
                   onClick={handleStopCasting}
                   sx={{
@@ -612,6 +622,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
                 },
               }}
             />
+            {/* COMMENTED OUT - Mute button temporarily disabled
             <IconButton
               onClick={handleMuteToggle}
               size="small"
@@ -625,6 +636,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
             >
               {getVolumeIcon()}
             </IconButton>
+            */}
           </Box>
         </Popover>
       </Paper>

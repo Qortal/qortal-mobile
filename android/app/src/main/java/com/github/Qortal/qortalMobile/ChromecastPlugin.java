@@ -220,9 +220,11 @@ public class ChromecastPlugin extends Plugin {
                     dialog.setOnDismissListener(d -> {
                         android.util.Log.d("ChromecastPlugin", "Cast dialog dismissed, starting connection polling");
                         
-                        // Poll connection status multiple times over 5 seconds
+                        // Poll connection status multiple times over 15 seconds (increased from 5)
+                        // Some devices/networks take longer to establish connection
                         final int[] attempts = {0};
-                        final int maxAttempts = 10; // 10 attempts * 500ms = 5 seconds
+                        final int maxAttempts = 20; // 20 attempts * 750ms = 15 seconds
+                        final int pollInterval = 750; // Increased from 500ms for less aggressive polling
                         
                         android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
                         Runnable checkConnection = new Runnable() {
@@ -234,7 +236,7 @@ public class ChromecastPlugin extends Plugin {
                                 CastSession session = sessionManager.getCurrentCastSession();
                                 
                                 if (session != null && session.isConnected()) {
-                                    android.util.Log.d("ChromecastPlugin", "✅ Session connected successfully after " + (attempts[0] * 500) + "ms");
+                                    android.util.Log.d("ChromecastPlugin", "✅ Session connected successfully after " + (attempts[0] * pollInterval) + "ms");
                                     // Update member variable to match
                                     ChromecastPlugin.this.castSession = session;
                                     ChromecastPlugin.this.remoteMediaClient = session.getRemoteMediaClient();
@@ -244,21 +246,55 @@ public class ChromecastPlugin extends Plugin {
                                     ret.put("deviceName", session.getCastDevice().getFriendlyName());
                                     call.resolve(ret);
                                 } else if (attempts[0] >= maxAttempts) {
-                                    android.util.Log.w("ChromecastPlugin", "❌ Connection timeout after " + (attempts[0] * 500) + "ms");
-                                    JSObject ret = new JSObject();
-                                    ret.put("success", false);
-                                    ret.put("message", "Connection timeout - no device selected or connection failed");
-                                    call.resolve(ret);
+                                    android.util.Log.w("ChromecastPlugin", "❌ Connection timeout after " + (attempts[0] * pollInterval) + "ms");
+                                    
+                                    // Check one final time if session is connecting (not yet fully connected)
+                                    if (session != null && !session.isDisconnected()) {
+                                        android.util.Log.d("ChromecastPlugin", "⚠️ Session exists but not yet connected, giving extra time...");
+                                        // Give 5 more seconds for slow connections
+                                        handler.postDelayed(new Runnable() {
+                                            int extraAttempts = 0;
+                                            @Override
+                                            public void run() {
+                                                extraAttempts++;
+                                                CastSession lateSession = sessionManager.getCurrentCastSession();
+                                                
+                                                if (lateSession != null && lateSession.isConnected()) {
+                                                    android.util.Log.d("ChromecastPlugin", "✅ Session connected after extended wait: " + ((attempts[0] * pollInterval) + (extraAttempts * 1000)) + "ms");
+                                                    ChromecastPlugin.this.castSession = lateSession;
+                                                    ChromecastPlugin.this.remoteMediaClient = lateSession.getRemoteMediaClient();
+                                                    
+                                                    JSObject ret = new JSObject();
+                                                    ret.put("success", true);
+                                                    ret.put("deviceName", lateSession.getCastDevice().getFriendlyName());
+                                                    call.resolve(ret);
+                                                } else if (extraAttempts >= 5) {
+                                                    android.util.Log.e("ChromecastPlugin", "❌ Final timeout - connection failed");
+                                                    JSObject ret = new JSObject();
+                                                    ret.put("success", false);
+                                                    ret.put("message", "Connection timeout - device took too long to connect");
+                                                    call.resolve(ret);
+                                                } else {
+                                                    handler.postDelayed(this, 1000);
+                                                }
+                                            }
+                                        }, 1000);
+                                    } else {
+                                        JSObject ret = new JSObject();
+                                        ret.put("success", false);
+                                        ret.put("message", "Connection timeout - no device selected or connection failed");
+                                        call.resolve(ret);
+                                    }
                                 } else {
                                     android.util.Log.d("ChromecastPlugin", "⏳ Polling attempt " + attempts[0] + "/" + maxAttempts + " - not connected yet");
-                                    // Try again in 500ms
-                                    handler.postDelayed(this, 500);
+                                    // Try again after poll interval
+                                    handler.postDelayed(this, pollInterval);
                                 }
                             }
                         };
                         
-                        // Start checking after 500ms (give Cast SDK time to initiate connection)
-                        handler.postDelayed(checkConnection, 500);
+                        // Start checking after initial delay (give Cast SDK time to initiate connection)
+                        handler.postDelayed(checkConnection, pollInterval);
                     });
                     
                     dialog.show();
@@ -277,20 +313,84 @@ public class ChromecastPlugin extends Plugin {
     @PluginMethod
     public void disconnect(PluginCall call) {
         android.util.Log.d("ChromecastPlugin", "disconnect() called");
-        try {
-            if (sessionManager != null) {
-                sessionManager.endCurrentSession(true);
-                android.util.Log.d("ChromecastPlugin", "Session ended successfully");
-            } else {
-                android.util.Log.w("ChromecastPlugin", "disconnect: sessionManager is null");
-            }
-            JSObject ret = new JSObject();
-            ret.put("success", true);
-            call.resolve(ret);
-        } catch (Exception e) {
-            android.util.Log.e("ChromecastPlugin", "disconnect error: " + e.getMessage(), e);
-            call.reject("Failed to disconnect: " + e.getMessage());
+        
+        Activity activity = getActivity();
+        if (activity == null) {
+            call.reject("Activity not available");
+            return;
         }
+        
+        // Run on UI thread like other Cast SDK calls
+        activity.runOnUiThread(() -> {
+            try {
+                // Immediately clear member variables to prevent any operations
+                android.util.Log.d("ChromecastPlugin", "Clearing cast session references...");
+                castSession = null;
+                remoteMediaClient = null;
+                
+                if (sessionManager != null) {
+                    CastSession currentSession = sessionManager.getCurrentCastSession();
+                    
+                    if (currentSession != null && currentSession.isConnected()) {
+                        android.util.Log.d("ChromecastPlugin", "Ending current cast session...");
+                        sessionManager.endCurrentSession(true);
+                        
+                        // Poll to verify disconnection actually happened
+                        final int[] attempts = {0};
+                        final int maxAttempts = 10; // 10 attempts * 300ms = 3 seconds
+                        
+                        android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+                        Runnable checkDisconnection = new Runnable() {
+                            @Override
+                            public void run() {
+                                attempts[0]++;
+                                CastSession session = sessionManager.getCurrentCastSession();
+                                
+                                if (session == null || session.isDisconnected()) {
+                                    android.util.Log.d("ChromecastPlugin", "✅ Disconnection verified after " + (attempts[0] * 300) + "ms");
+                                    JSObject ret = new JSObject();
+                                    ret.put("success", true);
+                                    call.resolve(ret);
+                                } else if (attempts[0] >= maxAttempts) {
+                                    android.util.Log.w("ChromecastPlugin", "⚠️ Disconnection not verified, but continuing anyway");
+                                    // Force end the session one more time
+                                    try {
+                                        sessionManager.endCurrentSession(true);
+                                    } catch (Exception e) {
+                                        android.util.Log.e("ChromecastPlugin", "Error force-ending session", e);
+                                    }
+                                    JSObject ret = new JSObject();
+                                    ret.put("success", true);
+                                    call.resolve(ret);
+                                } else {
+                                    android.util.Log.d("ChromecastPlugin", "⏳ Disconnect verification attempt " + attempts[0] + "/" + maxAttempts);
+                                    handler.postDelayed(this, 300);
+                                }
+                            }
+                        };
+                        
+                        // Start checking after 300ms
+                        handler.postDelayed(checkDisconnection, 300);
+                    } else {
+                        android.util.Log.d("ChromecastPlugin", "No active session to disconnect");
+                        JSObject ret = new JSObject();
+                        ret.put("success", true);
+                        call.resolve(ret);
+                    }
+                } else {
+                    android.util.Log.w("ChromecastPlugin", "disconnect: sessionManager is null");
+                    JSObject ret = new JSObject();
+                    ret.put("success", true);
+                    call.resolve(ret);
+                }
+            } catch (Exception e) {
+                android.util.Log.e("ChromecastPlugin", "disconnect error: " + e.getMessage(), e);
+                // Still try to clear member variables
+                castSession = null;
+                remoteMediaClient = null;
+                call.reject("Failed to disconnect: " + e.getMessage());
+            }
+        });
     }
 
     @PluginMethod
@@ -375,13 +475,21 @@ public class ChromecastPlugin extends Plugin {
                         .setAutoplay(true)
                         .build();
 
-                remoteMediaClient.load(loadRequest);
+                android.util.Log.d("ChromecastPlugin", "castVideo: sending load request with autoplay=true");
                 
-                android.util.Log.d("ChromecastPlugin", "castVideo: load request sent successfully");
-
-                JSObject ret = new JSObject();
-                ret.put("success", true);
-                call.resolve(ret);
+                // Load the media and wait for result
+                remoteMediaClient.load(loadRequest).setResultCallback(result -> {
+                    if (result.getStatus().isSuccess()) {
+                        android.util.Log.d("ChromecastPlugin", "castVideo: load request successful, media should start playing");
+                        JSObject ret = new JSObject();
+                        ret.put("success", true);
+                        call.resolve(ret);
+                    } else {
+                        android.util.Log.e("ChromecastPlugin", "castVideo: load request failed with status: " + result.getStatus());
+                        call.reject("Failed to load media on cast device");
+                    }
+                });
+                
             } catch (Exception e) {
                 android.util.Log.e("ChromecastPlugin", "castVideo error: " + e.getMessage(), e);
                 call.reject("Failed to cast video: " + e.getMessage());
@@ -600,14 +708,16 @@ public class ChromecastPlugin extends Plugin {
                 }
 
                 ret.put("state", state);
-                ret.put("position", mediaStatus.getStreamPosition() / 1000.0);
+                // Use getApproximateStreamPosition for real-time updates
+                // getStreamPosition returns cached value, getApproximateStreamPosition calculates based on elapsed time
+                ret.put("position", remoteMediaClient.getApproximateStreamPosition() / 1000.0);
                 
                 if (mediaStatus.getMediaInfo() != null) {
                     ret.put("duration", mediaStatus.getMediaInfo().getStreamDuration() / 1000.0);
                 }
                 
                 android.util.Log.d("ChromecastPlugin", "getPlaybackState: state=" + state + 
-                    ", position=" + (mediaStatus.getStreamPosition() / 1000.0));
+                    ", position=" + (remoteMediaClient.getApproximateStreamPosition() / 1000.0));
                 
                 call.resolve(ret);
             } catch (Exception e) {
