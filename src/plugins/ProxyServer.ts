@@ -1,4 +1,4 @@
-import { registerPlugin } from '@capacitor/core';
+import { registerPlugin } from "@capacitor/core";
 
 export interface ProxyServerPlugin {
   /**
@@ -7,9 +7,9 @@ export interface ProxyServerPlugin {
    * @param options.targetHost - Target host to forward to (default: 'localhost')
    * @param options.targetPort - Target port to forward to (default: 12392)
    */
-  startProxy(options?: { 
-    port?: number; 
-    targetHost?: string; 
+  startProxy(options?: {
+    port?: number;
+    targetHost?: string;
     targetPort?: number;
   }): Promise<{ success: boolean; port: number }>;
 
@@ -21,15 +21,14 @@ export interface ProxyServerPlugin {
   /**
    * Get current proxy server information
    */
-  getProxyInfo(): Promise<{ 
-    isRunning: boolean; 
-    port: number; 
-    targetHost: string; 
+  getProxyInfo(): Promise<{
+    isRunning: boolean;
+    port: number;
+    targetHost: string;
     targetPort: number;
   }>;
 }
 
-const ProxyServer = registerPlugin<ProxyServerPlugin>('ProxyServer');
+const ProxyServer = registerPlugin<ProxyServerPlugin>("ProxyServer");
 
 export { ProxyServer };
-

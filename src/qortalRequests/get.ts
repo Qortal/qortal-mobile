@@ -4405,6 +4405,8 @@ export const adminAction = async (data, isFromExtension) => {
     "forcesync",
     "addmintingaccount",
     "removemintingaccount",
+    "adddatapeer",
+    "removedatapeer",
   ];
   if (actionsRequiringValue.includes(data.type.toLowerCase()) && !data.value) {
     missingFields.push("value");
@@ -4460,6 +4462,16 @@ export const adminAction = async (data, isFromExtension) => {
       break;
     case "removepeer":
       apiEndpoint = await createEndpoint("/peers");
+      method = "DELETE";
+      includeValueInBody = true;
+      break;
+    case "adddatapeer":
+      apiEndpoint = await createEndpoint("/peers/data");
+      method = "POST";
+      includeValueInBody = true;
+      break;
+    case "removedatapeer":
+      apiEndpoint = await createEndpoint("/peers/data");
       method = "DELETE";
       includeValueInBody = true;
       break;
