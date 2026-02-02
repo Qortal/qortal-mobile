@@ -1,42 +1,38 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext } from "react";
 import { MyContext, getBaseApiReact } from "../../App";
 import {
   Card,
   CardContent,
-  CardHeader,
   Typography,
-  RadioGroup,
-  Radio,
-  FormControlLabel,
-  Button,
   Box,
   ButtonBase,
   Divider,
-  Dialog,
-  IconButton,
   CircularProgress,
+  LinearProgress,
+  useTheme,
+  Chip,
 } from "@mui/material";
 import { base64ToBlobUrl } from "../../utils/fileReading";
 import { saveFileToDiskGeneric } from "../../utils/generateWallet/generateWallet";
 import AttachmentIcon from '@mui/icons-material/Attachment';
 import RefreshIcon from "@mui/icons-material/Refresh";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PeopleIcon from '@mui/icons-material/People';
 import { CustomLoader } from "../../common/CustomLoader";
 import { Spacer } from "../../common/Spacer";
 import { FileAttachmentContainer, FileAttachmentFont } from "./Embed-styles";
 import DownloadIcon from "@mui/icons-material/Download";
 import SaveIcon from '@mui/icons-material/Save';
-import { useSetRecoilState } from "recoil";
-import { blobControllerAtom } from "../../atoms/global";
 import { decodeIfEncoded } from "../../utils/decode";
 import { isNative } from "../Apps/useQortalMessageListener";
+import { saveFileFromQDNLocation } from "../../qortalRequests/get";
 
 
 export const AttachmentCard = ({
     resourceData,
     resourceDetails,
     owner,
-    refresh,
     openExternal,
     external,
     isLoadingParent,
@@ -47,33 +43,34 @@ export const AttachmentCard = ({
     selectedGroupId
   }) => {
 
-    const [isOpen, setIsOpen] = useState(true);
     const { downloadResource } = useContext(MyContext);
+    const theme = useTheme();
+
+    const formatETA = (seconds: number | undefined) => {
+      if (!seconds || seconds <= 0) return null;
+
+      if (seconds < 60) {
+        return `${Math.round(seconds)}s`;
+      } else if (seconds < 3600) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.round(seconds % 60);
+        return `${minutes}m ${secs}s`;
+      } else {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        return `${hours}h ${minutes}m`;
+      }
+    };
   
     const saveToDisk = async ()=> {
       const { name, service, identifier } = resourceData;
-  
-          const url = `${getBaseApiReact()}/arbitrary/${service}/${name}/${identifier}`;
-          fetch(url)
-            .then(response => response.blob())
-            .then(async blob => {
-              setOpenSnack(true)
-              setInfoSnack({
-                type: "info",
-                message:
-                  "Saving file...",
-              });
-              await saveFileToDiskGeneric(blob, resourceData?.fileName)
-              setOpenSnack(true)
-              setInfoSnack({
-                type: "success",
-                message:
-                 isNative ?  "File saved in INTERNAL STORAGE, DOCUMENT folder." : "File downloaded",
-              });
-            })
-            .catch(error => {
-              console.error("Error fetching the video:", error);
-            });
+      
+      await saveFileFromQDNLocation({
+        location: { service, name, identifier },
+        filename: resourceData?.fileName,
+        mimeType: resourceData?.mimeType,
+        snackMethods: { setOpenSnack, setInfoSnack }
+      });
     }
   
     const saveToDiskEncrypted = async ()=> {
@@ -175,15 +172,18 @@ export const AttachmentCard = ({
               gap: "10px",
             }}
           >
-            <ButtonBase>
-              <RefreshIcon
-                onClick={refresh}
-                sx={{
-                  fontSize: "24px",
-                  color: "white",
-                }}
-              />
-            </ButtonBase>
+            {resourceDetails?.status?.status === 'FAILED_TO_DOWNLOAD' && (
+              <ButtonBase>
+                <RefreshIcon
+                  onClick={() => downloadResource(resourceData)}
+                  sx={{
+                    fontSize: "24px",
+                    color: theme.palette.text.primary,
+                  }}
+                />
+              </ButtonBase>
+            )}
+
             {external && (
               <ButtonBase>
                 <OpenInNewIcon
@@ -219,6 +219,55 @@ export const AttachmentCard = ({
                       {encryptionType === 'private' ? "ENCRYPTED" : encryptionType === 'group' ? 'GROUP ENCRYPTED' : "Not encrypted"}
 
           </Typography>
+
+          {/* Show peer count and ETA during download */}
+          {resourceDetails?.status?.status &&
+            !['READY', 'FAILED_TO_DOWNLOAD'].includes(
+              resourceDetails.status.status
+            ) && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginTop: '8px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {resourceDetails?.status?.numberOfPeers !== undefined && (
+                  <Chip
+                    icon={<PeopleIcon />}
+                    label={`${resourceDetails.status.numberOfPeers} pending peer${resourceDetails.status.numberOfPeers !== 1 ? 's' : ''}`}
+                    size="small"
+                    sx={{
+                      height: '20px',
+                      fontSize: '11px',
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : 'rgba(0, 0, 0, 0.08)',
+                    }}
+                  />
+                )}
+                {resourceDetails?.status?.estimatedTimeRemaining != null &&
+                  formatETA(resourceDetails.status.estimatedTimeRemaining) && (
+                    <Chip
+                      icon={<AccessTimeIcon />}
+                      label={formatETA(
+                        resourceDetails.status.estimatedTimeRemaining
+                      )}
+                      size="small"
+                      sx={{
+                        height: '20px',
+                        fontSize: '11px',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'rgba(0, 0, 0, 0.08)',
+                      }}
+                    />
+                  )}
+              </Box>
+            )}
         </Box>
         <Divider sx={{ borderColor: "rgb(255 255 255 / 10%)" }} />
         <Box
@@ -230,7 +279,7 @@ export const AttachmentCard = ({
           }}
         >
          
-          {isLoadingParent && isOpen && (
+          {isLoadingParent && (
             <Box
               sx={{
                 width: "100%",
@@ -289,8 +338,6 @@ export const AttachmentCard = ({
           }}>
              
           <FileAttachmentContainer >
-          <Typography>{resourceDetails?.status?.status === 'DOWNLOADED' ? 'BUILDING' : resourceDetails?.status?.status}</Typography>
-
             {!resourceDetails && (
               <>
                         <DownloadIcon />
@@ -300,23 +347,56 @@ export const AttachmentCard = ({
   
               </>
             )}
+
              {resourceDetails && resourceDetails?.status?.status !== 'READY' && resourceDetails?.status?.status !== 'FAILED_TO_DOWNLOAD' && (
               <>
                         <CircularProgress sx={{
                           color: 'white'
                         }} size={20} />
-                        <FileAttachmentFont sx={{
-                          fontSize: '14px'
-                        }}>Downloading: {resourceDetails?.status?.percentLoaded || '0'}%</FileAttachmentFont>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '8px',
+                            width: '100%',
+                          }}
+                        >
+                          <FileAttachmentFont sx={{
+                            fontSize: '14px'
+                          }}>
+                            Downloading: {Number(resourceDetails?.status?.percentLoaded || 0).toFixed(2)}%
+                          </FileAttachmentFont>
+                          <LinearProgress
+                            variant="determinate"
+                            value={resourceDetails?.status?.percentLoaded || 0}
+                            sx={{
+                              width: '100%',
+                              height: '6px',
+                              borderRadius: '3px',
+                            }}
+                          />
+                        </Box>
   
               </>
             )}
+
             {resourceDetails && resourceDetails?.status?.status === 'READY' &&  (
               <>
                         <SaveIcon />
                         <FileAttachmentFont sx={{
                           fontSize: '14px'
                         }}>Save to Disk</FileAttachmentFont>
+  
+              </>
+            )}
+
+            {resourceDetails && resourceDetails?.status?.status === 'FAILED_TO_DOWNLOAD' && (
+              <>
+                        <RefreshIcon />
+                        <FileAttachmentFont sx={{
+                          fontSize: '14px'
+                        }}>Video failed</FileAttachmentFont>
   
               </>
             )}

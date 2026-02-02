@@ -2403,6 +2403,106 @@ async function saveFileFromLocation(data, isFromExtension, snackMethods) {
   return true;
 }
 
+/**
+ * Standalone function to save a file from a QDN location without permission dialogs
+ * Perfect for UI components that need direct downloads
+ * 
+ * @param location - Object with {service, name, identifier}
+ * @param filename - The filename to save as
+ * @param encryption - Optional encryption config {encryptionType, iv, key}
+ * @param mimeType - Optional MIME type
+ * @param snackMethods - Optional {setOpenSnack, setInfoSnack} for user feedback
+ * @returns Promise<boolean>
+ */
+export const saveFileFromQDNLocation = async ({
+  location,
+  filename,
+  encryption = undefined,
+  mimeType = undefined,
+  snackMethods = undefined,
+}: {
+  location: { service: string; name: string; identifier?: string };
+  filename: string;
+  encryption?: { encryptionType?: string; iv?: string; key?: string };
+  mimeType?: string;
+  snackMethods?: { setOpenSnack: (val: boolean) => void; setInfoSnack: (val: any) => void };
+}): Promise<boolean> => {
+  try {
+    // Validate required fields
+    if (!location?.service || !location?.name) {
+      throw new Error("Missing required location fields: service and name");
+    }
+    if (!filename) {
+      throw new Error("Missing filename");
+    }
+
+    // Show "Saving file..." notification if snackbar methods provided
+    if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+      snackMethods.setOpenSnack(true);
+      snackMethods.setInfoSnack({
+        type: "info",
+        message: "Saving file...",
+      });
+    }
+
+    // For native mobile, use chunked download
+    if (isNative) {
+      try {
+        await saveFileInChunksFromUrl(location, encryption, filename);
+        
+        // Show success notification
+        if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+          snackMethods.setOpenSnack(true);
+          snackMethods.setInfoSnack({
+            type: "success",
+            message: "File saved in INTERNAL STORAGE, DOCUMENT folder.",
+          });
+        }
+        return true;
+      } catch (error) {
+        console.error("Save chunks url error:", error);
+        throw error;
+      }
+    }
+
+    // For web browsers, use the existing saveFileFromLocation helper
+    const result = await saveFileFromLocation(
+      {
+        filename,
+        location,
+        encryption,
+        mimeType,
+      },
+      false, // isFromExtension
+      snackMethods
+    );
+
+    // Show success notification
+    if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+      snackMethods.setOpenSnack(true);
+      snackMethods.setInfoSnack({
+        type: "success",
+        message: "File downloaded",
+      });
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error saving file from QDN location:", error);
+    
+    // Show error notification
+    if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+      snackMethods.setOpenSnack(true);
+      snackMethods.setInfoSnack({
+        type: "error",
+        message: error.message || "Failed to save file",
+      });
+    }
+    
+    throw error;
+  }
+};
+
 export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
   try {
     if (!data?.filename) throw new Error("Missing filename");

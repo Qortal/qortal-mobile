@@ -124,10 +124,11 @@ import { Settings } from "./components/Group/Settings";
 import { MainAvatar } from "./components/MainAvatar";
 import { useRetrieveDataLocalStorage } from "./useRetrieveDataLocalStorage";
 import { useQortalGetSaveSettings } from "./useQortalGetSaveSettings";
-import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
+import { useRecoilState, useResetRecoilState, useSetRecoilState, useRecoilValue } from "recoil";
 import {
   canSaveSettingToQdnAtom,
   fullScreenAtom,
+  globalDownloadsAtom,
   groupsPropertiesAtom,
   hasSettingsChangedAtom,
   isUsingImportExportSettingsAtom,
@@ -136,6 +137,7 @@ import {
   myGroupsWhereIAmAdminAtom,
   oldPinnedAppsAtom,
   qMailLastEnteredTimestampAtom,
+  resourceDownloadControllerAtom,
   settingsLocalLastUpdatedAtom,
   settingsQDNLastUpdatedAtom,
   sortablePinnedAppsAtom,
@@ -583,10 +585,26 @@ function App() {
   const resetAtomQMailLastEnteredTimestampAtom = useResetRecoilState(qMailLastEnteredTimestampAtom)
   const resetAtomMailsAtom = useResetRecoilState(mailsAtom)
   const resetLastEnteredGroupIdAtom = useResetRecoilState(lastEnteredGroupIdAtom)
-    const resetMyGroupsWhereIAmAdminAtom = useResetRecoilState(
+  const resetMyGroupsWhereIAmAdminAtom = useResetRecoilState(
     myGroupsWhereIAmAdminAtom
   );
+  const resetResourceDownloadControllerAtom = useResetRecoilState(
+    resourceDownloadControllerAtom
+  );
+  const resetGlobalDownloadsAtom = useResetRecoilState(globalDownloadsAtom);
+  const globalDownloadsValue = useRecoilValue(globalDownloadsAtom);
+  
   const resetAllRecoil = () => {
+    // First, clean up any active download intervals/timeouts
+    if (globalDownloadsValue && typeof globalDownloadsValue === 'object') {
+      Object.values(globalDownloadsValue).forEach((entry: any) => {
+        if (entry?.interval) clearInterval(entry.interval);
+        if (entry?.timeout) clearTimeout(entry.timeout);
+        if (entry?.retryTimeout) clearTimeout(entry.retryTimeout);
+      });
+    }
+    
+    // Reset all atoms
     resetAtomSortablePinnedAppsAtom();
     resetAtomCanSaveSettingToQdnAtom();
     resetAtomSettingsQDNLastUpdatedAtom();
@@ -598,6 +616,8 @@ function App() {
     resetGroupPropertiesAtom()
     resetLastEnteredGroupIdAtom()
     resetMyGroupsWhereIAmAdminAtom()
+    resetResourceDownloadControllerAtom()
+    resetGlobalDownloadsAtom()
   };
   useEffect(() => {
     if (!isMobile) return;
