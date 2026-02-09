@@ -44,8 +44,6 @@ import Logo1Dark from "./assets/svgs/Logo1Dark.svg";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Logo2 from "./assets/svgs/Logo2.svg";
 import Copy from "./assets/svgs/Copy.svg";
-import ltcLogo from "./assets/ltc.png";
-import qortLogo from "./assets/qort.png";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import Download from "./assets/svgs/Download.svg";
 import { ChromecastProvider } from "./context/ChromecastContext";
@@ -400,19 +398,16 @@ function App() {
 
   const [backupjson, setBackupjson] = useState<any>(null);
   const [rawWallet, setRawWallet] = useState<any>(null);
-  const [ltcBalanceLoading, setLtcBalanceLoading] = useState<boolean>(false);
   const [qortBalanceLoading, setQortBalanceLoading] = useState<boolean>(false);
   const [decryptedWallet, setdecryptedWallet] = useState<any>(null);
   const [requestConnection, setRequestConnection] = useState<any>(null);
   const [requestBuyOrder, setRequestBuyOrder] = useState<any>(null);
-  const [authenticatedMode, setAuthenticatedMode] = useState("qort");
   const [requestAuthentication, setRequestAuthentication] = useState<any>(null);
   const [isOpenDrawerLookup, setIsOpenDrawerLookup] = useState(false)
   const [isRunningPublicNode, setIsRunningPublicNode] = useState(false)
 
   const [userInfo, setUserInfo] = useState<any>(null);
   const [balance, setBalance] = useState<any>(null);
-  const [ltcBalance, setLtcBalance] = useState<any>(null);
   const [paymentTo, setPaymentTo] = useState<string>("");
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentPassword, setPaymentPassword] = useState<string>("");
@@ -917,23 +912,6 @@ function App() {
     getBalanceFunc();
     refetchUserInfo();
   };
-  const getLtcBalanceFunc = () => {
-    setLtcBalanceLoading(true);
-    window
-      .sendMessage("ltcBalance")
-      .then((response) => {
-        if (!response?.error && !isNaN(+response)) {
-          setLtcBalance(response);
-        }
-        setLtcBalanceLoading(false);
-      })
-      .catch((error) => {
-        console.error("Failed to get LTC balance:", error);
-        setLtcBalanceLoading(false);
-      });
-  };
-
-
   const clearAllStates = () => {
     setRequestConnection(null);
     setRequestAuthentication(null);
@@ -1093,16 +1071,6 @@ function App() {
       console.log("exit");
     };
   }, []);
-
-  useEffect(() => {
-    if (
-      authenticatedMode === "ltc" &&
-      !ltcBalanceLoading &&
-      ltcBalance === null
-    ) {
-      getLtcBalanceFunc();
-    }
-  }, [authenticatedMode]);
 
   const confirmPasswordToDownload = async () => {
     try {
@@ -1277,7 +1245,6 @@ function App() {
 
   const resetAllStates = () => {
     setExtstate("not-authenticated");
-    setAuthenticatedMode("qort");
     setBackupjson(null);
     setRawWallet(null);
     setdecryptedWallet(null);
@@ -1286,7 +1253,6 @@ function App() {
     setRequestAuthentication(null);
     setUserInfo(null);
     setBalance(null);
-    setLtcBalance(null);
     setPaymentTo("");
     setPaymentAmount(0);
     setPaymentPassword("");
@@ -1614,52 +1580,7 @@ function App() {
         >
           <Spacer height="48px" />
 
-          {authenticatedMode === "ltc" ? (
-            <>
-              <img src={ltcLogo} />
-              <Spacer height="32px" />
-              <CopyToClipboard text={rawWallet?.ltcAddress}>
-                <AddressBox>
-                  {rawWallet?.ltcAddress?.slice(0, 6)}...
-                  {rawWallet?.ltcAddress?.slice(-4)} <img src={Copy} />
-                </AddressBox>
-              </CopyToClipboard>
-              <Spacer height="10px" />
-              {ltcBalanceLoading && (
-                <CircularProgress color="success" size={16} />
-              )}
-              {!isNaN(+ltcBalance) && !ltcBalanceLoading && (
-                <Box
-                  sx={{
-                    gap: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <TextP
-                    sx={{
-                      textAlign: "center",
-                      lineHeight: "24px",
-                      fontSize: "20px",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {ltcBalance} LTC
-                  </TextP>
-                  <RefreshIcon
-                    onClick={getLtcBalanceFunc}
-                    sx={{
-                      fontSize: "16px",
-                      color: "white",
-                      cursor: "pointer",
-                    }}
-                  />
-                </Box>
-              )}
-              <AddressQRCode targetAddress={rawWallet?.ltcAddress} />
-            </>
-          ) : (
-            <>
+          <>
               <MainAvatar myName={userInfo?.name} />
               <Spacer height="32px" />
               <TextP
@@ -1775,7 +1696,6 @@ function App() {
           <Spacer height="10px" />
               <AddressQRCode targetAddress={rawWallet?.address0} />
             </>
-          )}
            <Spacer height="10px" />
           <TextP
             sx={{
@@ -1860,32 +1780,6 @@ function App() {
             />
           </ButtonBase>
           <Spacer height="20px" />
-          {authenticatedMode === "qort" && (
-            <img
-              onClick={() => {
-                setAuthenticatedMode("ltc");
-              }}
-              src={ltcLogo}
-              style={{
-                cursor: "pointer",
-                width: "20px",
-                height: "auto",
-              }}
-            />
-          )}
-          {authenticatedMode === "ltc" && (
-            <img
-              onClick={() => {
-                setAuthenticatedMode("qort");
-              }}
-              src={qortLogo}
-              style={{
-                cursor: "pointer",
-                width: "20px",
-                height: "auto",
-              }}
-            />
-          )}
         </AuthenticatedContainerInnerRight>
       </AuthenticatedContainer>
     );
