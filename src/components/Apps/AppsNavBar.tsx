@@ -8,6 +8,7 @@ import NavBack from "../../assets/svgs/NavBack.svg";
 import NavAdd from "../../assets/svgs/NavAdd.svg";
 import NavMoreMenu from "../../assets/svgs/NavMoreMenu.svg";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { ChromecastButton } from "../Chromecast/ChromecastButton";
 
 import {
   ButtonBase,
@@ -204,6 +205,7 @@ export const AppsNavBar = ({appsMode}) => {
            gap: "10px",
          }}
        >
+         <ChromecastButton />
          <ButtonBase
            onClick={() => {
              setSelectedTab(null);

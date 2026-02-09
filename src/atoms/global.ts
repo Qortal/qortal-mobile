@@ -1,4 +1,5 @@
 import { atom, selectorFamily, useRecoilCallback } from 'recoil';
+import { GlobalDownloadEntry } from '../types/resources';
 
 
 export const sortablePinnedAppsAtom = atom({
@@ -118,6 +119,11 @@ export const isFocusedParentDirectAtom = atom({
 export const resourceDownloadControllerAtom = atom({
   key: 'resourceDownloadControllerAtom', 
   default: {}, 
+});
+
+export const globalDownloadsAtom = atom<Record<string, GlobalDownloadEntry>>({
+  key: 'globalDownloadsAtom',
+  default: {},
 });
 
 export const resourceKeySelector = selectorFamily({

@@ -16,6 +16,7 @@ import {
   cancelSellNameRequest,
   cancelSellOrder,
   cleanupMediaForTab,
+  cleanupChromecastForTab,
   createAndCopyEmbedLink,
   createBuyOrder,
   createGroupRequest,
@@ -33,6 +34,7 @@ import {
   encryptQortalGroupData,
   getArrrSyncStatus,
   getCrossChainServerInfo,
+  startCrossChainServer,
   getDaySummary,
   getForeignFee,
   getHostedData,
@@ -161,6 +163,7 @@ export const VALID_SESSION_PERMISSIONS = [
   "SET_CURRENT_FOREIGN_SERVER",
   "ADD_FOREIGN_SERVER",
   "REMOVE_FOREIGN_SERVER",
+  "START_CROSSCHAIN_SERVER",
   "LOCK_TAB",
   "INVITE_TO_GROUP",
   "KICK_FROM_GROUP",
@@ -187,6 +190,7 @@ export const AUTO_GRANTED_PERMISSIONS_ON_AUTH = [
   "GET_USER_WALLET_TRANSACTIONS",
   "GET_LIST_ITEMS",
   "SIGN_FOREIGN_FEES",
+  "START_CROSSCHAIN_SERVER",
 ];
 
 export function setSessionPermissions(tabId, qapName, permissions) {
@@ -276,8 +280,8 @@ export function clearSessionPermissionsByTabId(tabId) {
   }
 }
 
-// Re-export cleanupMediaForTab for convenience
-export { cleanupMediaForTab };
+// Re-export cleanupMediaForTab and cleanupChromecastForTab for convenience
+export { cleanupMediaForTab, cleanupChromecastForTab };
 
 // TODO: GET_FRIENDS_LIST
 // NOT SURE IF TO IMPLEMENT: LINK_TO_QDN_RESOURCE, QDN_RESOURCE_DISPLAYED, SET_TAB_NOTIFICATIONS
@@ -752,6 +756,36 @@ function setupMessageListenerQortalRequest() {
       case "GET_CROSSCHAIN_SERVER_INFO": {
         try {
           const res = await getCrossChainServerInfo(request.payload);
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              payload: res,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        } catch (error) {
+          event.source.postMessage(
+            {
+              requestId: request.requestId,
+              action: request.action,
+              error: error.message,
+              type: "backgroundMessageResponse",
+            },
+            event.origin
+          );
+        }
+        break;
+      }
+
+      case "START_CROSSCHAIN_SERVER": {
+        try {
+          const res = await startCrossChainServer(
+            request.payload,
+            isFromExtension,
+            appInfo
+          );
           event.source.postMessage(
             {
               requestId: request.requestId,

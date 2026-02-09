@@ -1,10 +1,9 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { executeEvent } from "../../utils/events";
 import { useSetRecoilState } from "recoil";
 import { navigationControllerAtom } from "../../atoms/global";
-import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
-import { Browser } from "@capacitor/browser";
-import { decryptAesCtrChunk, saveFile } from "../../qortalRequests/get";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { decryptAesCtrChunk, saveFile, trackChromecastForTab, untrackChromecastForTab } from "../../qortalRequests/get";
 import { mimeToExtensionMap } from "../../utils/memeTypes";
 import { MyContext } from "../../App";
 import FileSaver from "file-saver";
@@ -13,9 +12,8 @@ import { Capacitor } from "@capacitor/core";
 import { createEndpoint } from "../../background";
 import {
   uint8ArrayToBase64,
-  uint8ArrayToBase64Version2,
 } from "../../backgroundFunctions/encryption";
-import { base64ToUint8Array } from "../../qdn/encryption/group-encryption";
+import { useChromecast } from "../../context/ChromecastContext";
 
 export const isNative = Capacitor.isNativePlatform();
 
@@ -446,6 +444,7 @@ export const listOfAllQortalRequests = [
   "GET_WALLET_BALANCE",
   "GET_USER_WALLET_INFO",
   "GET_CROSSCHAIN_SERVER_INFO",
+  "START_CROSSCHAIN_SERVER",
   "GET_TX_ACTIVITY_SUMMARY",
   "GET_FOREIGN_FEE",
   "UPDATE_FOREIGN_FEE",
@@ -527,6 +526,18 @@ export const listOfAllQortalRequests = [
   "WHICH_UI",
   "REENCRYPT_GROUP_KEYS",
   "PLAY_ENCRYPTED_MEDIA",
+  "CHROMECAST_INITIALIZE",
+  "CHROMECAST_IS_AVAILABLE",
+  "CHROMECAST_IS_CONNECTED",
+  "CHROMECAST_CONNECT",
+  "CHROMECAST_DISCONNECT",
+  "CHROMECAST_CAST_VIDEO",
+  "CHROMECAST_PLAY",
+  "CHROMECAST_PAUSE",
+  "CHROMECAST_STOP",
+  "CHROMECAST_SEEK",
+  "CHROMECAST_SET_VOLUME",
+  "CHROMECAST_GET_PLAYBACK_STATE",
 ];
 
 const UIQortalRequests = [
@@ -545,6 +556,7 @@ const UIQortalRequests = [
   "GET_WALLET_BALANCE",
   "GET_USER_WALLET_INFO",
   "GET_CROSSCHAIN_SERVER_INFO",
+  "START_CROSSCHAIN_SERVER",
   "GET_TX_ACTIVITY_SUMMARY",
   "GET_FOREIGN_FEE",
   "UPDATE_FOREIGN_FEE",
@@ -597,7 +609,7 @@ const UIQortalRequests = [
   "UNLOCK_TAB",
   "WHICH_UI",
   "REENCRYPT_GROUP_KEYS",
-  "PLAY_ENCRYPTED_MEDIA",
+  "PLAY_ENCRYPTED_MEDIA"
 ];
 
 async function retrieveFileFromIndexedDB(fileId) {
@@ -832,6 +844,9 @@ export const useQortalMessageListener = (
     infoSnackCustom,
     setInfoSnackCustom,
   } = useContext(MyContext);
+  
+  // Use centralized Chromecast manager
+  const chromecastManager = useChromecast();
 
   useEffect(() => {
     if (tabId && !isNaN(history?.currentIndex)) {
@@ -1067,6 +1082,52 @@ export const useQortalMessageListener = (
           },
           targetOrigin
         );
+      } else if (event?.data?.action === "CHROMECAST_CAST") {
+        // ✅ CHROMECAST_CAST - Single unified API for casting
+        // Automatically handles:
+        // - Device connection (shows picker if needed)
+        // - localhost → network IP conversion
+        // - Video loading and playback
+        // - Mini-player UI with controls
+        // - Tab cleanup on close
+        try {
+          const { url, title, subtitle, imageUrl, contentType } = event.data;
+          
+          // Convert relative URLs to full endpoints
+          const videoUrl = await createEndpoint(url);
+          
+          console.log("[CHROMECAST_CAST] Casting video:", { url: videoUrl, title });
+          
+          // Use centralized manager - handles everything!
+          const result = await chromecastManager.castVideo(videoUrl, {
+            title,
+            subtitle,
+            imageUrl,
+            contentType,
+          });
+          
+          // Track this tab if successful
+          if (result.success && tabId) {
+            trackChromecastForTab(tabId);
+          }
+          
+          event.ports[0].postMessage({
+            result: {
+              success: result.success,
+              casting: result.success,
+              deviceName: chromecastManager.deviceName,
+            },
+            error: result.error || null,
+          });
+          
+          console.log("[CHROMECAST_CAST] Result:", result);
+        } catch (error: any) {
+          console.error("[CHROMECAST_CAST] Error:", error);
+          event.ports[0].postMessage({
+            result: null,
+            error: error?.message || "Failed to cast video",
+          });
+        }
       }
     };
 

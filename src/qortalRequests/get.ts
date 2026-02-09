@@ -2403,6 +2403,109 @@ async function saveFileFromLocation(data, isFromExtension, snackMethods) {
   return true;
 }
 
+/**
+ * Standalone function to save a file from a QDN location without permission dialogs
+ * Perfect for UI components that need direct downloads
+ *
+ * @param location - Object with {service, name, identifier}
+ * @param filename - The filename to save as
+ * @param encryption - Optional encryption config {encryptionType, iv, key}
+ * @param mimeType - Optional MIME type
+ * @param snackMethods - Optional {setOpenSnack, setInfoSnack} for user feedback
+ * @returns Promise<boolean>
+ */
+export const saveFileFromQDNLocation = async ({
+  location,
+  filename,
+  encryption = undefined,
+  mimeType = undefined,
+  snackMethods = undefined,
+}: {
+  location: { service: string; name: string; identifier?: string };
+  filename: string;
+  encryption?: { encryptionType?: string; iv?: string; key?: string };
+  mimeType?: string;
+  snackMethods?: {
+    setOpenSnack: (val: boolean) => void;
+    setInfoSnack: (val: any) => void;
+  };
+}): Promise<boolean> => {
+  try {
+    // Validate required fields
+    if (!location?.service || !location?.name) {
+      throw new Error("Missing required location fields: service and name");
+    }
+    if (!filename) {
+      throw new Error("Missing filename");
+    }
+
+    // Show "Saving file..." notification if snackbar methods provided
+    if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+      snackMethods.setOpenSnack(true);
+      snackMethods.setInfoSnack({
+        type: "info",
+        message: "Saving file...",
+      });
+    }
+
+    // For native mobile, use chunked download
+    if (isNative) {
+      try {
+        await saveFileInChunksFromUrl(location, encryption, filename);
+
+        // Show success notification
+        if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+          snackMethods.setOpenSnack(true);
+          snackMethods.setInfoSnack({
+            type: "success",
+            message: "File saved in INTERNAL STORAGE, DOCUMENT folder.",
+          });
+        }
+        return true;
+      } catch (error) {
+        console.error("Save chunks url error:", error);
+        throw error;
+      }
+    }
+
+    // For web browsers, use the existing saveFileFromLocation helper
+    const result = await saveFileFromLocation(
+      {
+        filename,
+        location,
+        encryption,
+        mimeType,
+      },
+      false, // isFromExtension
+      snackMethods
+    );
+
+    // Show success notification
+    if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+      snackMethods.setOpenSnack(true);
+      snackMethods.setInfoSnack({
+        type: "success",
+        message: "File downloaded",
+      });
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error saving file from QDN location:", error);
+
+    // Show error notification
+    if (snackMethods?.setOpenSnack && snackMethods?.setInfoSnack) {
+      snackMethods.setOpenSnack(true);
+      snackMethods.setInfoSnack({
+        type: "error",
+        message: error.message || "Failed to save file",
+      });
+    }
+
+    throw error;
+  }
+};
+
 export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
   try {
     if (!data?.filename) throw new Error("Missing filename");
@@ -3030,6 +3133,63 @@ export const getCrossChainServerInfo = async (data) => {
     return res.servers;
   } catch (error) {
     throw new Error(error?.message || "Error in retrieving server info");
+  }
+};
+
+export const startCrossChainServer = async (
+  data,
+  isFromExtension?,
+  appInfo?: { tabId?: number; name?: string }
+) => {
+  const isGateway = await isRunningGateway();
+  if (isGateway) {
+    throw new Error("This action cannot be done through a public node");
+  }
+  if (
+    !appInfo?.tabId ||
+    !appInfo?.name ||
+    !hasSessionPermission(
+      appInfo.tabId,
+      appInfo.name,
+      "START_CROSSCHAIN_SERVER"
+    )
+  ) {
+    throw new Error("User not authenticated");
+  }
+  const requiredFields = ["coin"];
+  const missingFields: string[] = [];
+  requiredFields.forEach((field) => {
+    if (!data[field]) {
+      missingFields.push(field);
+    }
+  });
+  if (missingFields.length > 0) {
+    const missingFieldsString = missingFields.join(", ");
+    throw new Error(`Missing fields: ${missingFieldsString}`);
+  }
+  const url = `/crosschain/${data.coin.toLowerCase()}/start`;
+  try {
+    const endpoint = await createEndpoint(url);
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Accept: "*/*",
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch");
+    let res;
+    try {
+      res = await response.clone().json();
+    } catch (e) {
+      res = await response.text();
+    }
+    if (res?.error && res?.message) {
+      throw new Error(res.message);
+    }
+    return res;
+  } catch (error) {
+    throw new Error(error?.message || "Error starting crosschain server");
   }
 };
 
@@ -4405,6 +4565,8 @@ export const adminAction = async (data, isFromExtension) => {
     "forcesync",
     "addmintingaccount",
     "removemintingaccount",
+    "adddatapeer",
+    "removedatapeer",
   ];
   if (actionsRequiringValue.includes(data.type.toLowerCase()) && !data.value) {
     missingFields.push("value");
@@ -4460,6 +4622,16 @@ export const adminAction = async (data, isFromExtension) => {
       break;
     case "removepeer":
       apiEndpoint = await createEndpoint("/peers");
+      method = "DELETE";
+      includeValueInBody = true;
+      break;
+    case "adddatapeer":
+      apiEndpoint = await createEndpoint("/peers/data");
+      method = "POST";
+      includeValueInBody = true;
+      break;
+    case "removedatapeer":
+      apiEndpoint = await createEndpoint("/peers/data");
       method = "DELETE";
       includeValueInBody = true;
       break;
@@ -6580,6 +6752,63 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
 // Track media IDs by tab for automatic cleanup
 const mediaIdsByTabId = new Map<string, Set<string>>();
 
+// Track Chromecast connections by tab for automatic cleanup
+const chromecastTabIds = new Set<string>();
+
+/**
+ * Track that a tab has an active Chromecast connection
+ */
+export const trackChromecastForTab = (tabId: string) => {
+  if (tabId) {
+    chromecastTabIds.add(tabId);
+    console.log(`[Chromecast] Tracking connection for tabId ${tabId}`);
+  }
+};
+
+/**
+ * Remove Chromecast tracking for a tab
+ */
+export const untrackChromecastForTab = (tabId: string) => {
+  if (tabId) {
+    chromecastTabIds.delete(tabId);
+    console.log(`[Chromecast] Untracked connection for tabId ${tabId}`);
+  }
+};
+
+/**
+ * Check if a tab has an active Chromecast connection
+ */
+export const hasChromecastConnection = (tabId: string): boolean => {
+  return chromecastTabIds.has(tabId);
+};
+
+/**
+ * Cleanup Chromecast connection for a specific tab
+ * Call this when a tab is closed to disconnect Chromecast if connected
+ */
+export const cleanupChromecastForTab = async (tabId: string) => {
+  if (chromecastTabIds.has(tabId)) {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { default: Chromecast } = await import(
+        "../plugins/ChromecastPlugin"
+      );
+
+      // Check if still connected before disconnecting
+      const connectionStatus = await Chromecast.isConnected();
+      if (connectionStatus?.connected) {
+        console.log(`[Chromecast] Disconnecting for closed tab ${tabId}`);
+        await Chromecast.disconnect();
+        console.log(`[Chromecast] Successfully disconnected for tab ${tabId}`);
+      }
+    } catch (error) {
+      console.error(`[Chromecast] Failed to cleanup for tab ${tabId}:`, error);
+    } finally {
+      chromecastTabIds.delete(tabId);
+    }
+  }
+};
+
 /**
  * Cleanup all media registered for a specific tab
  * Call this when a tab is closed
@@ -6591,7 +6820,6 @@ export const cleanupMediaForTab = async (tabId: string) => {
     for (const mediaId of mediaIds) {
       try {
         await manager.cleanupMedia(mediaId);
-       
       } catch (error) {
         console.error(
           `[cleanupMediaForTab] Failed to cleanup media ${mediaId}:`,
@@ -6668,12 +6896,10 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
   let totalSize = data.totalSize;
   if (!totalSize) {
     try {
-
       const headResponse = await fetch(resourceUrl, { method: "HEAD" });
       const contentLength = headResponse.headers.get("content-length");
       if (contentLength) {
         totalSize = parseInt(contentLength, 10);
-
       } else {
         throw new Error(
           "Could not determine file size from server. Please provide totalSize parameter."
@@ -6689,11 +6915,8 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
   // Ensure totalSize is a number (not string)
   totalSize = Number(totalSize);
 
-
-
   // Validate totalSize
   if (!totalSize || totalSize <= 0 || isNaN(totalSize)) {
-
     throw new Error("Invalid totalSize. Must be greater than 0.");
   }
 
@@ -6701,7 +6924,7 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
   try {
     // Get the manager instance
     const manager = EncryptedMediaManager.getInstance();
-  
+
     // Initialize server if not running
     const isRunning = await manager.isRunning();
     if (!isRunning) {

@@ -7,6 +7,7 @@ import {
 import NavBack from "../../assets/svgs/NavBack.svg";
 import NavAdd from "../../assets/svgs/NavAdd.svg";
 import NavMoreMenu from "../../assets/svgs/NavMoreMenu.svg";
+import { ChromecastButton } from "../Chromecast/ChromecastButton";
 import {
   ButtonBase,
   ListItemIcon,
@@ -210,6 +211,7 @@ export const AppsNavBarDesktop = () => {
           flexDirection: "column",
         }}
       >
+        <ChromecastButton />
         <ButtonBase
           onClick={() => {
             setSelectedTab(null);

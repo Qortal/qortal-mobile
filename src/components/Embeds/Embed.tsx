@@ -1,6 +1,5 @@
-import React, {  useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getBaseApiReact } from "../../App";
-
 
 import { CustomizedSnackbars } from "../Snackbar/Snackbar";
 
@@ -9,11 +8,16 @@ import { executeEvent } from "../../utils/events";
 
 import { base64ToBlobUrl } from "../../utils/fileReading";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { blobControllerAtom, blobKeySelector, resourceKeySelector, selectedGroupIdAtom } from "../../atoms/global";
+import {
+  blobControllerAtom,
+  blobKeySelector,
+  resourceKeySelector,
+  selectedGroupIdAtom,
+} from "../../atoms/global";
 import { parseQortalLink } from "./embed-utils";
 import { PollCard } from "./PollEmbed";
 import { ImageCard } from "./ImageEmbed";
-import { VideoCard } from './VideoEmbed';
+import { VideoCard } from "./VideoEmbed";
 import { AttachmentCard } from "./AttachmentEmbed";
 
 const getPoll = async (name) => {
@@ -60,32 +64,41 @@ export const Embed = ({ embedLink }) => {
   const [imageUrl, setImageUrl] = useState("");
   const [parsedData, setParsedData] = useState(null);
   const setBlobs = useSetRecoilState(blobControllerAtom);
-  const [selectedGroupId] = useRecoilState(selectedGroupIdAtom)
+  const [selectedGroupId] = useRecoilState(selectedGroupIdAtom);
 
-  const resourceData = useMemo(()=> {
+  const resourceData = useMemo(() => {
     const parsedDataOnTheFly = parseQortalLink(embedLink);
-    if(parsedDataOnTheFly?.service && parsedDataOnTheFly?.name && parsedDataOnTheFly?.identifier){
+    if (
+      parsedDataOnTheFly?.service &&
+      parsedDataOnTheFly?.name &&
+      parsedDataOnTheFly?.identifier
+    ) {
       return {
-        service : parsedDataOnTheFly?.service,
+        service: parsedDataOnTheFly?.service,
         name: parsedDataOnTheFly?.name,
         identifier: parsedDataOnTheFly?.identifier,
-        fileName: parsedDataOnTheFly?.fileName ? decodeURIComponent(parsedDataOnTheFly?.fileName) : null,
-        mimeType: parsedDataOnTheFly?.mimeType ? decodeURIComponent(parsedDataOnTheFly?.mimeType) : null,
-        key:  parsedDataOnTheFly?.key ? decodeURIComponent(parsedDataOnTheFly?.key) : null,
-      }
+        fileName: parsedDataOnTheFly?.fileName
+          ? decodeURIComponent(parsedDataOnTheFly?.fileName)
+          : null,
+        mimeType: parsedDataOnTheFly?.mimeType
+          ? decodeURIComponent(parsedDataOnTheFly?.mimeType)
+          : null,
+        key: parsedDataOnTheFly?.key
+          ? decodeURIComponent(parsedDataOnTheFly?.key)
+          : null,
+      };
     } else {
-      return null
+      return null;
     }
-  }, [embedLink])
+  }, [embedLink]);
 
-  const keyIdentifier = useMemo(()=> {
-    
-    if(resourceData){
-      return `${resourceData.service}-${resourceData.name}-${resourceData.identifier}`
+  const keyIdentifier = useMemo(() => {
+    if (resourceData) {
+      return `${resourceData.service}-${resourceData.name}-${resourceData.identifier}`;
     } else {
-      return undefined
+      return undefined;
     }
-  }, [resourceData])
+  }, [resourceData]);
   const blobUrl = useRecoilValue(blobKeySelector(keyIdentifier));
 
   const handlePoll = async (parsedData) => {
@@ -97,7 +110,6 @@ export const Embed = ({ embedLink }) => {
         throw new Error("Invalid poll embed link. Missing name.");
       const pollRes = await getPoll(parsedData.name);
       setPoll(pollRes);
-    
     } catch (error) {
       setErrorMsg(error?.message || "Invalid embed link");
     } finally {
@@ -107,14 +119,16 @@ export const Embed = ({ embedLink }) => {
 
   const getImage = async ({ identifier, name, service }, key, parsedData) => {
     try {
-      if(blobUrl?.blobUrl){
-        return blobUrl?.blobUrl
+      if (blobUrl?.blobUrl) {
+        return blobUrl?.blobUrl;
       }
       let numberOfTries = 0;
       let imageFinalUrl = null;
+      let hasTriggeredDownload = false;
 
       const tryToGetImageStatus = async () => {
-        const urlStatus = `${getBaseApiReact()}/arbitrary/resource/status/${service}/${name}/${identifier}?build=true`;
+        // First, check status WITHOUT build parameter
+        const urlStatus = `${getBaseApiReact()}/arbitrary/resource/status/${service}/${name}/${identifier}`;
 
         const responseStatus = await fetch(urlStatus, {
           method: "GET",
@@ -124,7 +138,27 @@ export const Embed = ({ embedLink }) => {
         });
 
         const responseData = await responseStatus.json();
-        if (responseData?.status === "READY") {
+
+        // If not ready and haven't triggered download yet, trigger it ONCE with async=true
+        if (responseData?.status !== "READY" && !hasTriggeredDownload) {
+          hasTriggeredDownload = true;
+          const urlAsync = `${getBaseApiReact()}/arbitrary/${service}/${name}/${identifier}?async=true`;
+
+          // Trigger download but don't wait for response
+          fetch(urlAsync, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }).catch((error) => {
+            console.debug("Failed to trigger async download:", error);
+          });
+        }
+
+        if (
+          responseData?.status === "READY" ||
+          responseData?.status === "DOWNLOADED"
+        ) {
           if (parsedData?.encryptionType) {
             const urlData = `${getBaseApiReact()}/arbitrary/${service}/${name}/${identifier}?encoding=base64`;
 
@@ -134,62 +168,62 @@ export const Embed = ({ embedLink }) => {
                 "Content-Type": "application/json",
               },
             });
+
             const data = await responseData.text();
+
             if (data) {
-              let decryptedData
+              let decryptedData;
               try {
-                if(key && encryptionType === 'private'){
+                if (key && encryptionType === "private") {
                   decryptedData = await window.sendMessage(
                     "DECRYPT_DATA_WITH_SHARING_KEY",
-                   
-                      {
-                        encryptedData: data,
+                    {
+                      encryptedData: data,
                       key: decodeURIComponent(key),
-                      }
-                    
+                    }
                   );
                 }
-                 if(encryptionType === 'group'){
+                if (encryptionType === "group") {
                   decryptedData = await window.sendMessage(
                     "DECRYPT_QORTAL_GROUP_DATA",
-                   
-                      {
-                        data64: data,
+                    {
+                      data64: data,
                       groupId: selectedGroupId,
-                      }
-                    
+                    }
                   );
-                 }
+                }
               } catch (error) {
-                throw new Error('Unable to decrypt')
+                throw new Error("Unable to decrypt");
               }
-              
-              if (!decryptedData || decryptedData?.error) throw new Error("Could not decrypt data");
-              imageFinalUrl = base64ToBlobUrl(decryptedData, parsedData?.mimeType ? decodeURIComponent(parsedData?.mimeType) : undefined)
-               setBlobs((prev=> {
+
+              if (!decryptedData || decryptedData?.error)
+                throw new Error("Unable to decrypt");
+              imageFinalUrl = base64ToBlobUrl(
+                decryptedData,
+                parsedData?.mimeType
+                  ? decodeURIComponent(parsedData?.mimeType)
+                  : undefined
+              );
+              setBlobs((prev) => {
                 return {
                   ...prev,
                   [`${service}-${name}-${identifier}`]: {
                     blobUrl: imageFinalUrl,
-                    timestamp: Date.now()
-                  }
-                }
-              }))
+                    timestamp: Date.now(),
+                  },
+                };
+              });
             } else {
-              throw new Error('No data for image')
+              throw new Error("No data for image");
             }
-            
           } else {
-          imageFinalUrl = `${getBaseApiReact()}/arbitrary/${service}/${name}/${identifier}?async=true`;
-         
-          // If parsedData is used here, it must be defined somewhere
-        
-        }
+            imageFinalUrl = `${getBaseApiReact()}/arbitrary/${service}/${name}/${identifier}`;
+          }
         }
       };
 
       // Retry logic
-      while (!imageFinalUrl && numberOfTries < 3) {
+      while (!imageFinalUrl && numberOfTries < 5) {
         await tryToGetImageStatus();
         if (!imageFinalUrl) {
           numberOfTries++;
@@ -202,19 +236,14 @@ export const Embed = ({ embedLink }) => {
       }
 
       if (imageFinalUrl) {
-       
         return imageFinalUrl;
       } else {
-        setErrorMsg(
-          "Unable to download IMAGE. Please try again later by clicking the refresh button"
-        );
+        setErrorMsg("Failed to download image");
         return null;
       }
     } catch (error) {
       console.error("Error fetching image:", error);
-      setErrorMsg(
-       error?.error || error?.message ||  "An unexpected error occurred while trying to download the image"
-      );
+      setErrorMsg(error?.error || error?.message || "Failed to download image");
       return null;
     }
   };
@@ -225,14 +254,17 @@ export const Embed = ({ embedLink }) => {
       setErrorMsg("");
       if (!parsedData?.name || !parsedData?.service || !parsedData?.identifier)
         throw new Error("Invalid image embed link. Missing param.");
-      let image = await getImage({
-        name: parsedData.name,
-        service: parsedData.service,
-        identifier: parsedData?.identifier,
-      }, parsedData?.key, parsedData);
-      
-      setImageUrl(image);
+      let image = await getImage(
+        {
+          name: parsedData.name,
+          service: parsedData.service,
+          identifier: parsedData?.identifier,
+        },
+        parsedData?.key,
+        parsedData
+      );
 
+      setImageUrl(image);
     } catch (error) {
       setErrorMsg(error?.message || "Invalid embed link");
     } finally {
@@ -240,7 +272,6 @@ export const Embed = ({ embedLink }) => {
     }
   };
 
- 
   const handleLink = () => {
     try {
       const parsedData = parseQortalLink(embedLink);
@@ -253,9 +284,7 @@ export const Embed = ({ embedLink }) => {
             setExternal(res);
           }
         }
-      } catch (error) {
-        
-      }
+      } catch (error) {}
       switch (type) {
         case "POLL":
           {
@@ -265,8 +294,8 @@ export const Embed = ({ embedLink }) => {
         case "IMAGE":
           setType("IMAGE");
           break;
-        case 'VIDEO':
-          setType('VIDEO');
+        case "VIDEO":
+          setType("VIDEO");
           break;
         case "ATTACHMENT":
           setType("ATTACHMENT");
@@ -299,8 +328,6 @@ export const Embed = ({ embedLink }) => {
     hasFetched.current = true;
   }, [embedLink]);
 
-
-
   const resourceDetails = useRecoilValue(resourceKeySelector(keyIdentifier));
 
   const { parsedType, encryptionType } = useMemo(() => {
@@ -312,7 +339,7 @@ export const Embed = ({ embedLink }) => {
         parsedType = parsedDataOnTheFly.type;
       }
       if (parsedDataOnTheFly?.encryptionType) {
-        encryptionType = parsedDataOnTheFly?.encryptionType
+        encryptionType = parsedDataOnTheFly?.encryptionType;
       }
     } catch (error) {}
     return { parsedType, encryptionType };
@@ -347,10 +374,10 @@ export const Embed = ({ embedLink }) => {
           encryptionType={encryptionType}
         />
       )}
-      {parsedType === 'ATTACHMENT' && (
+      {parsedType === "ATTACHMENT" && (
         <AttachmentCard
-        resourceData={resourceData}
-        resourceDetails={resourceDetails}
+          resourceData={resourceData}
+          resourceDetails={resourceDetails}
           owner={parsedData?.name}
           refresh={fetchImage}
           setInfoSnack={setInfoSnack}
@@ -361,10 +388,9 @@ export const Embed = ({ embedLink }) => {
           errorMsg={errorMsg}
           encryptionType={encryptionType}
           selectedGroupId={selectedGroupId}
-
         />
       )}
-      {parsedType === 'VIDEO' && resourceData && (
+      {parsedType === "VIDEO" && resourceData && (
         <VideoCard
           resourceData={resourceData}
           owner={parsedData?.name}
@@ -382,11 +408,3 @@ export const Embed = ({ embedLink }) => {
     </div>
   );
 };
-
-
-
-
-
-
-
-

@@ -1,89 +1,112 @@
-import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 
-import {  objectToBase64 } from '../../qdn/encryption/group-encryption'
-import { ChatList } from './ChatList'
+import { objectToBase64 } from "../../qdn/encryption/group-encryption";
+import { ChatList } from "./ChatList";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
-import Tiptap from './TipTap'
-import { CustomButton } from '../../App-styles'
-import CircularProgress from '@mui/material/CircularProgress';
-import { Box, ButtonBase, Input, Typography } from '@mui/material';
-import { LoadingSnackbar } from '../Snackbar/LoadingSnackbar';
-import { getNameInfo } from '../Group/Group';
-import { Spacer } from '../../common/Spacer';
-import { CustomizedSnackbars } from '../Snackbar/Snackbar';
-import { getBaseApiReact, getBaseApiReactSocket, isMobile, pauseAllQueues, resumeAllQueues } from '../../App';
-import { getPublicKey } from '../../background';
-import { useMessageQueue } from '../../MessageQueueContext';
-import { executeEvent, subscribeToEvent, unsubscribeFromEvent } from '../../utils/events';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ShortUniqueId from "short-unique-id";
-import { ReturnIcon } from '../../assets/Icons/ReturnIcon';
-import { ExitIcon } from '../../assets/Icons/ExitIcon';
-import { MessageItem, ReplyPreview } from './MessageItem';
-import { isFocusedParentDirectAtom } from '../../atoms/global';
-import { useRecoilState } from 'recoil';
+import Tiptap from "./TipTap";
+import { CustomButton } from "../../App-styles";
+import CircularProgress from "@mui/material/CircularProgress";
+import { Box, ButtonBase, Input, Typography } from "@mui/material";
+import { LoadingSnackbar } from "../Snackbar/LoadingSnackbar";
+import { getNameInfo } from "../Group/Group";
+import { Spacer } from "../../common/Spacer";
+import { CustomizedSnackbars } from "../Snackbar/Snackbar";
 import {
-  MIN_REQUIRED_QORTS,
-} from '../../constants/constants.ts';
+  getBaseApiReact,
+  getBaseApiReactSocket,
+  isMobile,
+  pauseAllQueues,
+  resumeAllQueues,
+} from "../../App";
+import { getPublicKey } from "../../background";
+import { useMessageQueue } from "../../MessageQueueContext";
+import {
+  executeEvent,
+  subscribeToEvent,
+  unsubscribeFromEvent,
+} from "../../utils/events";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ShortUniqueId from "short-unique-id";
+import { ReturnIcon } from "../../assets/Icons/ReturnIcon";
+import { ExitIcon } from "../../assets/Icons/ExitIcon";
+import { MessageItem, ReplyPreview } from "./MessageItem";
+import { isFocusedParentDirectAtom } from "../../atoms/global";
+import { useRecoilState } from "recoil";
+import { MIN_REQUIRED_QORTS } from "../../constants/constants.ts";
 
 const uid = new ShortUniqueId({ length: 5 });
 
-
-export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDirect, setNewChat, getTimestampEnterChat, myName, balance, close, setMobileViewModeKeepOpen}) => {
-  const { queueChats, addToQueue, processWithNewMessages} = useMessageQueue();
-    const [isFocusedParent, setIsFocusedParent] =  useRecoilState(
-      isFocusedParentDirectAtom
-    );
-  const [messages, setMessages] = useState([])
-  const [isSending, setIsSending] = useState(false)
-  const [directToValue, setDirectToValue] = useState('')
-  const hasInitialized = useRef(false)
-  const [isLoading, setIsLoading] = useState(false)
+export const ChatDirect = ({
+  myAddress,
+  isNewChat,
+  selectedDirect,
+  setSelectedDirect,
+  setNewChat,
+  getTimestampEnterChat,
+  myName,
+  balance,
+  close,
+  setMobileViewModeKeepOpen,
+}) => {
+  const { queueChats, addToQueue, processWithNewMessages } = useMessageQueue();
+  const [isFocusedParent, setIsFocusedParent] = useRecoilState(
+    isFocusedParentDirectAtom
+  );
+  const [messages, setMessages] = useState([]);
+  const [isSending, setIsSending] = useState(false);
+  const [directToValue, setDirectToValue] = useState("");
+  const hasInitialized = useRef(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [openSnack, setOpenSnack] = React.useState(false);
   const [infoSnack, setInfoSnack] = React.useState(null);
-  const [publicKeyOfRecipient, setPublicKeyOfRecipient] = React.useState("")
-  const hasInitializedWebsocket = useRef(false)
-  const [onEditMessage, setOnEditMessage] = useState(null)
-  const [chatReferences, setChatReferences] = useState({})
+  const [publicKeyOfRecipient, setPublicKeyOfRecipient] = React.useState("");
+  const hasInitializedWebsocket = useRef(false);
+  const [onEditMessage, setOnEditMessage] = useState(null);
+  const [chatReferences, setChatReferences] = useState({});
 
   const editorRef = useRef(null);
   const socketRef = useRef(null);
   const timeoutIdRef = useRef(null);
   const groupSocketTimeoutRef = useRef(null);
-  const [replyMessage, setReplyMessage] = useState(null)
+  const [replyMessage, setReplyMessage] = useState(null);
   const setEditorRef = (editorInstance) => {
     editorRef.current = editorInstance;
   };
-  const [messageSize, setMessageSize] = useState(0)
+  const [messageSize, setMessageSize] = useState(0);
 
- 
-  const publicKeyOfRecipientRef = useRef(null)
+  const publicKeyOfRecipientRef = useRef(null);
 
   const handleReaction = useCallback(
     async (reaction, chatMessage, reactionState = true) => {
       try {
         if (isSending) return;
         if (+balance < MIN_REQUIRED_QORTS)
-          throw new Error(
-            t('group:message.error.qortals_required', {
-              quantity: MIN_REQUIRED_QORTS,
-              postProcess: 'capitalizeFirstChar',
-            })
-          );
+          throw new Error("A minimum of 4 QORT is required to send a message");
 
         pauseAllQueues();
         setIsSending(true);
 
         const otherData = {
           specialId: uid.rnd(),
-          type: 'reaction',
+          type: "reaction",
           content: reaction,
           contentState: reactionState,
         };
 
         const sendMessageFunc = async () => {
           return await sendChatDirect(
-            { chatReference: chatMessage.signature, messageText: '', otherData },
+            {
+              chatReference: chatMessage.signature,
+              messageText: "",
+              otherData,
+            },
             selectedDirect?.address,
             publicKeyOfRecipient,
             false
@@ -100,11 +123,16 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
           },
           chatReference: chatMessage.signature,
         };
-        addToQueue(sendMessageFunc, messageObj, 'chat-direct', selectedDirect?.address);
+        addToQueue(
+          sendMessageFunc,
+          messageObj,
+          "chat-direct",
+          selectedDirect?.address
+        );
       } catch (error) {
         const errorMsg = error?.message || error;
         setInfoSnack({
-          type: 'error',
+          type: "error",
           message: errorMsg,
         });
         setOpenSnack(true);
@@ -114,43 +142,55 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
         resumeAllQueues();
       }
     },
-    [isSending, balance, selectedDirect?.address, publicKeyOfRecipient, myName, myAddress]
+    [
+      isSending,
+      balance,
+      selectedDirect?.address,
+      publicKeyOfRecipient,
+      myName,
+      myAddress,
+    ]
   );
 
-  const getPublicKeyFunc = async (address)=> {
+  const getPublicKeyFunc = async (address) => {
     try {
-      const publicKey = await getPublicKey(address)
-      if(publicKeyOfRecipientRef.current !== selectedDirect?.address) return
-      setPublicKeyOfRecipient(publicKey)
-    } catch (error) {
-      
-    }
-  }
+      const publicKey = await getPublicKey(address);
+      if (publicKeyOfRecipientRef.current !== selectedDirect?.address) return;
+      setPublicKeyOfRecipient(publicKey);
+    } catch (error) {}
+  };
 
-  const tempMessages = useMemo(()=> {
-    if(!selectedDirect?.address) return []
-    if(queueChats[selectedDirect?.address]){
-      return queueChats[selectedDirect?.address]?.filter((item)=> !item?.chatReference)
+  const tempMessages = useMemo(() => {
+    if (!selectedDirect?.address) return [];
+    if (queueChats[selectedDirect?.address]) {
+      return queueChats[selectedDirect?.address]?.filter(
+        (item) => !item?.chatReference
+      );
     }
-    return []
-  }, [selectedDirect?.address, queueChats])
+    return [];
+  }, [selectedDirect?.address, queueChats]);
 
-  const tempChatReferences = useMemo(()=> {
-    if(!selectedDirect?.address) return []
-    if(queueChats[selectedDirect?.address]){
-      return queueChats[selectedDirect?.address]?.filter((item)=> !!item?.chatReference)
+  const tempChatReferences = useMemo(() => {
+    if (!selectedDirect?.address) return [];
+    if (queueChats[selectedDirect?.address]) {
+      return queueChats[selectedDirect?.address]?.filter(
+        (item) => !!item?.chatReference
+      );
     }
-    return []
-  }, [selectedDirect?.address, queueChats])
-  useEffect(()=> {
-    if(selectedDirect?.address){
-      publicKeyOfRecipientRef.current = selectedDirect?.address
-      getPublicKeyFunc(publicKeyOfRecipientRef.current)
+    return [];
+  }, [selectedDirect?.address, queueChats]);
+  useEffect(() => {
+    if (selectedDirect?.address) {
+      publicKeyOfRecipientRef.current = selectedDirect?.address;
+      getPublicKeyFunc(publicKeyOfRecipientRef.current);
     }
-  }, [selectedDirect?.address])
- 
+  }, [selectedDirect?.address]);
 
-  const middletierFunc = async (data: any, selectedDirectAddress: string, myAddress: string) => {
+  const middletierFunc = async (
+    data: any,
+    selectedDirectAddress: string,
+    myAddress: string
+  ) => {
     try {
       if (hasInitialized.current) {
         decryptMessages(data, true);
@@ -169,773 +209,857 @@ export const ChatDirect = ({ myAddress, isNewChat, selectedDirect, setSelectedDi
     } catch (error) {
       console.error(error);
     }
- }
- const decryptMessages = (encryptedMessages: any[], isInitiated: boolean)=> {
-  try {
-    return new Promise((res, rej)=> {
-      window.sendMessage("decryptDirect", {
-        data: encryptedMessages,
-        involvingAddress: selectedDirect?.address,
-      })
-      .then((decryptResponse) => {
-        if (!decryptResponse?.error) {
-          const response = processWithNewMessages(decryptResponse, selectedDirect?.address);
-            res(response);
-      
-            if (isInitiated) {
-              const formatted = response.filter((rawItem) => !rawItem?.chatReference).map((item) => ({
-                ...item,
-                id: item.signature,
-                text: item.message,
-                unread: item?.sender === myAddress ? false : true,
-              }));
-              setMessages((prev) => [...prev, ...formatted]);
-              setChatReferences((prev) => {
-                const organizedChatReferences = { ...prev };
+  };
+  const decryptMessages = (encryptedMessages: any[], isInitiated: boolean) => {
+    try {
+      return new Promise((res, rej) => {
+        window
+          .sendMessage("decryptDirect", {
+            data: encryptedMessages,
+            involvingAddress: selectedDirect?.address,
+          })
+          .then((decryptResponse) => {
+            if (!decryptResponse?.error) {
+              const response = processWithNewMessages(
+                decryptResponse,
+                selectedDirect?.address
+              );
+              res(response);
 
-              response.filter((rawItem) =>
-                rawItem &&
-                rawItem.chatReference &&
-                (rawItem?.type === 'reaction' ||
-                  rawItem?.type === 'edit' ||
-                  rawItem?.isEdited)
-              )
-              .forEach((item) => {
-                try {
-                  if (item?.type === 'edit' || item?.isEdited) {
-                    organizedChatReferences[item.chatReference] = {
-                      ...(organizedChatReferences[item.chatReference] ||
-                        {}),
-                      edit: item,
-                    };
-                  } else {
-                    const content = item?.content;
-                    const sender = item.sender;
-                    const newTimestamp = item.timestamp;
-                    const contentState = item?.contentState;
+              if (isInitiated) {
+                const formatted = response
+                  .filter((rawItem) => !rawItem?.chatReference)
+                  .map((item) => ({
+                    ...item,
+                    id: item.signature,
+                    text: item.message,
+                    unread: item?.sender === myAddress ? false : true,
+                  }));
+                setMessages((prev) => [...prev, ...formatted]);
+                setChatReferences((prev) => {
+                  const organizedChatReferences = { ...prev };
 
-                    if (
-                      !content ||
-                      typeof content !== 'string' ||
-                      !sender ||
-                      typeof sender !== 'string' ||
-                      !newTimestamp
-                    ) {
-                      return;
-                    }
+                  response
+                    .filter(
+                      (rawItem) =>
+                        rawItem &&
+                        rawItem.chatReference &&
+                        (rawItem?.type === "reaction" ||
+                          rawItem?.type === "edit" ||
+                          rawItem?.isEdited)
+                    )
+                    .forEach((item) => {
+                      try {
+                        if (item?.type === "edit" || item?.isEdited) {
+                          organizedChatReferences[item.chatReference] = {
+                            ...(organizedChatReferences[item.chatReference] ||
+                              {}),
+                            edit: item,
+                          };
+                        } else {
+                          const content = item?.content;
+                          const sender = item.sender;
+                          const newTimestamp = item.timestamp;
+                          const contentState = item?.contentState;
 
-                    organizedChatReferences[item.chatReference] = {
-                      ...(organizedChatReferences[item.chatReference] ||
-                        {}),
-                      reactions:
-                        organizedChatReferences[item.chatReference]
-                          ?.reactions || {},
-                    };
+                          if (
+                            !content ||
+                            typeof content !== "string" ||
+                            !sender ||
+                            typeof sender !== "string" ||
+                            !newTimestamp
+                          ) {
+                            return;
+                          }
 
-                    organizedChatReferences[item.chatReference].reactions[
-                      content
-                    ] =
-                      organizedChatReferences[item.chatReference]
-                        .reactions[content] || [];
+                          organizedChatReferences[item.chatReference] = {
+                            ...(organizedChatReferences[item.chatReference] ||
+                              {}),
+                            reactions:
+                              organizedChatReferences[item.chatReference]
+                                ?.reactions || {},
+                          };
 
-                    let latestTimestampForSender = null;
+                          organizedChatReferences[item.chatReference].reactions[
+                            content
+                          ] =
+                            organizedChatReferences[item.chatReference]
+                              .reactions[content] || [];
 
-                    organizedChatReferences[item.chatReference].reactions[
-                      content
-                    ] = organizedChatReferences[
-                      item.chatReference
-                    ].reactions[content].filter((reaction) => {
-                      if (reaction.sender === sender) {
-                        latestTimestampForSender = Math.max(
-                          latestTimestampForSender || 0,
-                          reaction.timestamp
+                          let latestTimestampForSender = null;
+
+                          organizedChatReferences[item.chatReference].reactions[
+                            content
+                          ] = organizedChatReferences[
+                            item.chatReference
+                          ].reactions[content].filter((reaction) => {
+                            if (reaction.sender === sender) {
+                              latestTimestampForSender = Math.max(
+                                latestTimestampForSender || 0,
+                                reaction.timestamp
+                              );
+                            }
+                            return reaction.sender !== sender;
+                          });
+
+                          if (
+                            latestTimestampForSender &&
+                            newTimestamp < latestTimestampForSender
+                          ) {
+                            return;
+                          }
+
+                          if (contentState !== false) {
+                            organizedChatReferences[
+                              item.chatReference
+                            ].reactions[content].push(item);
+                          }
+
+                          if (
+                            organizedChatReferences[item.chatReference]
+                              .reactions[content].length === 0
+                          ) {
+                            delete organizedChatReferences[item.chatReference]
+                              .reactions[content];
+                          }
+                        }
+                      } catch (error) {
+                        console.error(
+                          "Error processing reaction/edit item:",
+                          error,
+                          item
                         );
                       }
-                      return reaction.sender !== sender;
                     });
+                  return organizedChatReferences;
+                });
+              } else {
+                hasInitialized.current = true;
+                const formatted = response
+                  .filter((rawItem) => !rawItem?.chatReference)
+                  .map((item) => ({
+                    ...item,
+                    id: item.signature,
+                    text: item.message,
+                    unread: false,
+                  }));
+                setMessages(formatted);
 
-                    if (
-                      latestTimestampForSender &&
-                      newTimestamp < latestTimestampForSender
-                    ) {
-                      return;
-                    }
+                setChatReferences((prev) => {
+                  const organizedChatReferences = { ...prev };
 
-                    if (contentState !== false) {
-                      organizedChatReferences[
-                        item.chatReference
-                      ].reactions[content].push(item);
-                    }
+                  response
+                    .filter(
+                      (rawItem) =>
+                        rawItem &&
+                        rawItem.chatReference &&
+                        (rawItem?.type === "reaction" ||
+                          rawItem?.type === "edit" ||
+                          rawItem?.isEdited)
+                    )
+                    .forEach((item) => {
+                      try {
+                        if (item?.type === "edit" || item?.isEdited) {
+                          organizedChatReferences[item.chatReference] = {
+                            ...(organizedChatReferences[item.chatReference] ||
+                              {}),
+                            edit: item,
+                          };
+                        } else {
+                          const content = item?.content;
+                          const sender = item.sender;
+                          const newTimestamp = item.timestamp;
+                          const contentState = item?.contentState;
 
-                    if (
-                      organizedChatReferences[item.chatReference]
-                        .reactions[content].length === 0
-                    ) {
-                      delete organizedChatReferences[item.chatReference]
-                        .reactions[content];
-                    }
-                  }
-                } catch(error){
-                  console.error('Error processing reaction/edit item:', error, item);
-                }
-              })
-               return  organizedChatReferences
-              })
-            } else {
-              hasInitialized.current = true;
-              const formatted = response.filter((rawItem) => !rawItem?.chatReference)
-              .map((item) => ({
-                ...item,
-                id: item.signature,
-                text: item.message,
-                unread: false,
-              }));
-              setMessages(formatted);
+                          if (
+                            !content ||
+                            typeof content !== "string" ||
+                            !sender ||
+                            typeof sender !== "string" ||
+                            !newTimestamp
+                          ) {
+                            return;
+                          }
 
-              setChatReferences((prev) => {
-                const organizedChatReferences = { ...prev };
+                          organizedChatReferences[item.chatReference] = {
+                            ...(organizedChatReferences[item.chatReference] ||
+                              {}),
+                            reactions:
+                              organizedChatReferences[item.chatReference]
+                                ?.reactions || {},
+                          };
 
-              response.filter((rawItem) =>
-                rawItem &&
-                rawItem.chatReference &&
-                (rawItem?.type === 'reaction' ||
-                  rawItem?.type === 'edit' ||
-                  rawItem?.isEdited)
-              )
-              .forEach((item) => {
-                try {
-                  if (item?.type === 'edit' || item?.isEdited) {
-                    organizedChatReferences[item.chatReference] = {
-                      ...(organizedChatReferences[item.chatReference] ||
-                        {}),
-                      edit: item,
-                    };
-                  } else {
-                    const content = item?.content;
-                    const sender = item.sender;
-                    const newTimestamp = item.timestamp;
-                    const contentState = item?.contentState;
+                          organizedChatReferences[item.chatReference].reactions[
+                            content
+                          ] =
+                            organizedChatReferences[item.chatReference]
+                              .reactions[content] || [];
 
-                    if (
-                      !content ||
-                      typeof content !== 'string' ||
-                      !sender ||
-                      typeof sender !== 'string' ||
-                      !newTimestamp
-                    ) {
-                      return;
-                    }
+                          let latestTimestampForSender = null;
 
-                    organizedChatReferences[item.chatReference] = {
-                      ...(organizedChatReferences[item.chatReference] ||
-                        {}),
-                      reactions:
-                        organizedChatReferences[item.chatReference]
-                          ?.reactions || {},
-                    };
+                          organizedChatReferences[item.chatReference].reactions[
+                            content
+                          ] = organizedChatReferences[
+                            item.chatReference
+                          ].reactions[content].filter((reaction) => {
+                            if (reaction.sender === sender) {
+                              latestTimestampForSender = Math.max(
+                                latestTimestampForSender || 0,
+                                reaction.timestamp
+                              );
+                            }
+                            return reaction.sender !== sender;
+                          });
 
-                    organizedChatReferences[item.chatReference].reactions[
-                      content
-                    ] =
-                      organizedChatReferences[item.chatReference]
-                        .reactions[content] || [];
+                          if (
+                            latestTimestampForSender &&
+                            newTimestamp < latestTimestampForSender
+                          ) {
+                            return;
+                          }
 
-                    let latestTimestampForSender = null;
+                          if (contentState !== false) {
+                            organizedChatReferences[
+                              item.chatReference
+                            ].reactions[content].push(item);
+                          }
 
-                    organizedChatReferences[item.chatReference].reactions[
-                      content
-                    ] = organizedChatReferences[
-                      item.chatReference
-                    ].reactions[content].filter((reaction) => {
-                      if (reaction.sender === sender) {
-                        latestTimestampForSender = Math.max(
-                          latestTimestampForSender || 0,
-                          reaction.timestamp
+                          if (
+                            organizedChatReferences[item.chatReference]
+                              .reactions[content].length === 0
+                          ) {
+                            delete organizedChatReferences[item.chatReference]
+                              .reactions[content];
+                          }
+                        }
+                      } catch (error) {
+                        console.error(
+                          "Error processing reaction item:",
+                          error,
+                          item
                         );
                       }
-                      return reaction.sender !== sender;
                     });
-
-                    if (
-                      latestTimestampForSender &&
-                      newTimestamp < latestTimestampForSender
-                    ) {
-                      return;
-                    }
-
-                    if (contentState !== false) {
-                      organizedChatReferences[
-                        item.chatReference
-                      ].reactions[content].push(item);
-                    }
-
-                    if (
-                      organizedChatReferences[item.chatReference]
-                        .reactions[content].length === 0
-                    ) {
-                      delete organizedChatReferences[item.chatReference]
-                        .reactions[content];
-                    }
-                  }
-                } catch(error){
-                  console.error('Error processing reaction item:', error, item);
-                }
-              })
-               return  organizedChatReferences
-              })
+                  return organizedChatReferences;
+                });
+              }
+              return;
             }
-            return;
+            rej(response.error);
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+      });
+    } catch (error) {}
+  };
+
+  const forceCloseWebSocket = () => {
+    if (socketRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      clearTimeout(groupSocketTimeoutRef.current);
+      socketRef.current.close(1000, "forced");
+      socketRef.current = null;
+    }
+  };
+
+  const pingWebSocket = () => {
+    try {
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send("ping");
+        timeoutIdRef.current = setTimeout(() => {
+          if (socketRef.current) {
+            socketRef.current.close();
+            clearTimeout(groupSocketTimeoutRef.current);
           }
-          rej(response.error);
-        })
-        .catch((error) => {
-          rej(error.message || "An error occurred");
-        });
-      
-    })  
-  } catch (error) {
-      
-  }
-}
-
-    const forceCloseWebSocket = () => {
-      if (socketRef.current) {
-        clearTimeout(timeoutIdRef.current);
-        clearTimeout(groupSocketTimeoutRef.current);
-        socketRef.current.close(1000, 'forced');
-        socketRef.current = null;
+        }, 5000); // Close if no pong in 5 seconds
       }
+    } catch (error) {
+      console.error("Error during ping:", error);
+    }
+  };
+
+  const initWebsocketMessageGroup = () => {
+    forceCloseWebSocket(); // Close any existing connection
+
+    if (!selectedDirect?.address || !myAddress) return;
+
+    const socketLink = `${getBaseApiReactSocket()}/websockets/chat/messages?involving=${
+      selectedDirect?.address
+    }&involving=${myAddress}&encoding=BASE64&limit=100`;
+    socketRef.current = new WebSocket(socketLink);
+
+    socketRef.current.onopen = () => {
+      setTimeout(pingWebSocket, 50); // Initial ping
     };
-  
-    const pingWebSocket = () => {
+
+    socketRef.current.onmessage = (e) => {
       try {
-        if (socketRef.current?.readyState === WebSocket.OPEN) {
-          socketRef.current.send('ping');
-          timeoutIdRef.current = setTimeout(() => {
-            if (socketRef.current) {
-              socketRef.current.close();
-              clearTimeout(groupSocketTimeoutRef.current);
-            }
-          }, 5000); // Close if no pong in 5 seconds
+        if (e.data === "pong") {
+          clearTimeout(timeoutIdRef.current);
+          groupSocketTimeoutRef.current = setTimeout(pingWebSocket, 45000); // Ping every 45 seconds
+        } else {
+          middletierFunc(
+            JSON.parse(e.data),
+            selectedDirect?.address,
+            myAddress
+          );
+
+          setIsLoading(false);
         }
       } catch (error) {
-        console.error('Error during ping:', error);
+        console.error("Error handling WebSocket message:", error);
       }
     };
-  
 
-    const initWebsocketMessageGroup = () => {
-      forceCloseWebSocket(); // Close any existing connection
-  
-      if (!selectedDirect?.address || !myAddress) return;
-  
-      const socketLink = `${getBaseApiReactSocket()}/websockets/chat/messages?involving=${selectedDirect?.address}&involving=${myAddress}&encoding=BASE64&limit=100`;
-      socketRef.current = new WebSocket(socketLink);
-  
-      socketRef.current.onopen = () => {
-        setTimeout(pingWebSocket, 50); // Initial ping
-      };
-  
-      socketRef.current.onmessage = (e) => {
-        try {
-          if (e.data === 'pong') {
-            clearTimeout(timeoutIdRef.current);
-            groupSocketTimeoutRef.current = setTimeout(pingWebSocket, 45000); // Ping every 45 seconds
-          } else {
-            middletierFunc(JSON.parse(e.data), selectedDirect?.address, myAddress)
-
-            setIsLoading(false);
-          }
-        } catch (error) {
-          console.error('Error handling WebSocket message:', error);
-        }
-      };
-  
-      socketRef.current.onclose = (event) => {
-        clearTimeout(groupSocketTimeoutRef.current);
-        clearTimeout(timeoutIdRef.current);
-        console.warn(`WebSocket closed: ${event.reason || 'unknown reason'}`);
-        if (event.reason !== 'forced' && event.code !== 1000) {
-          setTimeout(() => initWebsocketMessageGroup(), 10000); // Retry after 10 seconds
-        }
-      };
-  
-      socketRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        clearTimeout(groupSocketTimeoutRef.current);
-        clearTimeout(timeoutIdRef.current);
-        if (socketRef.current) {
-          socketRef.current.close();
-        }
-      };
+    socketRef.current.onclose = (event) => {
+      clearTimeout(groupSocketTimeoutRef.current);
+      clearTimeout(timeoutIdRef.current);
+      console.warn(`WebSocket closed: ${event.reason || "unknown reason"}`);
+      if (event.reason !== "forced" && event.code !== 1000) {
+        setTimeout(() => initWebsocketMessageGroup(), 10000); // Retry after 10 seconds
+      }
     };
 
-    const setDirectChatValueFunc = async (e)=> {
-      setDirectToValue(e.detail.directToValue)
-    }
-    useEffect(() => {
-      subscribeToEvent("setDirectToValueNewChat", setDirectChatValueFunc);
-  
-      return () => {
-        unsubscribeFromEvent("setDirectToValueNewChat", setDirectChatValueFunc);
-      };
-    }, []);
-  
-    useEffect(() => {
-      if (hasInitializedWebsocket.current || isNewChat) return;
-      setIsLoading(true);
-      initWebsocketMessageGroup();
-      hasInitializedWebsocket.current = true;
-  
-      return () => {
-        forceCloseWebSocket(); // Clean up WebSocket on component unmount
-      };
-    }, [selectedDirect?.address, myAddress, isNewChat]);
+    socketRef.current.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      clearTimeout(groupSocketTimeoutRef.current);
+      clearTimeout(timeoutIdRef.current);
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
+  };
 
+  const setDirectChatValueFunc = async (e) => {
+    setDirectToValue(e.detail.directToValue);
+  };
+  useEffect(() => {
+    subscribeToEvent("setDirectToValueNewChat", setDirectChatValueFunc);
 
+    return () => {
+      unsubscribeFromEvent("setDirectToValueNewChat", setDirectChatValueFunc);
+    };
+  }, []);
 
-const sendChatDirect = async ({ chatReference = undefined, messageText, otherData}: any, address, publicKeyOfRecipient, isNewChatVar)=> {
-  try {
-    const directTo = isNewChatVar ? directToValue : address
- 
-    if(!directTo) return
-    return new Promise((res, rej)=> {
-      window.sendMessage("sendChatDirect", {
-        directTo,
-        chatReference,
-        messageText,
-        otherData,
-        publicKeyOfRecipient,
-        address: directTo,
-      })
-        .then(async (response) => {
-          if (!response?.error) {
-            if (isNewChatVar) {
-              let getRecipientName = null;
-              try {
-                getRecipientName = await getNameInfo(response.recipient);
-              } catch (error) {
-                console.error("Error fetching recipient name:", error);
+  useEffect(() => {
+    if (hasInitializedWebsocket.current || isNewChat) return;
+    setIsLoading(true);
+    initWebsocketMessageGroup();
+    hasInitializedWebsocket.current = true;
+
+    return () => {
+      forceCloseWebSocket(); // Clean up WebSocket on component unmount
+    };
+  }, [selectedDirect?.address, myAddress, isNewChat]);
+
+  const sendChatDirect = async (
+    { chatReference = undefined, messageText, otherData }: any,
+    address,
+    publicKeyOfRecipient,
+    isNewChatVar
+  ) => {
+    try {
+      const directTo = isNewChatVar ? directToValue : address;
+
+      if (!directTo) return;
+      return new Promise((res, rej) => {
+        window
+          .sendMessage("sendChatDirect", {
+            directTo,
+            chatReference,
+            messageText,
+            otherData,
+            publicKeyOfRecipient,
+            address: directTo,
+          })
+          .then(async (response) => {
+            if (!response?.error) {
+              if (isNewChatVar) {
+                let getRecipientName = null;
+                try {
+                  getRecipientName = await getNameInfo(response.recipient);
+                } catch (error) {
+                  console.error("Error fetching recipient name:", error);
+                }
+                setSelectedDirect({
+                  address: response.recipient,
+                  name: getRecipientName,
+                  timestamp: Date.now(),
+                  sender: myAddress,
+                  senderName: myName,
+                });
+                setNewChat(null);
+
+                window
+                  .sendMessage("addTimestampEnterChat", {
+                    timestamp: Date.now(),
+                    groupId: response.recipient,
+                  })
+                  .catch((error) => {
+                    console.error(
+                      "Failed to add timestamp:",
+                      error.message || "An error occurred"
+                    );
+                  });
+
+                setTimeout(() => {
+                  getTimestampEnterChat();
+                }, 400);
               }
-              setSelectedDirect({
-                address: response.recipient,
-                name: getRecipientName,
-                timestamp: Date.now(),
-                sender: myAddress,
-                senderName: myName,
-              });
-              setNewChat(null);
-      
-              window.sendMessage("addTimestampEnterChat", {
-                timestamp: Date.now(),
-                groupId: response.recipient,
-              }).catch((error) => {
-                console.error("Failed to add timestamp:", error.message || "An error occurred");
-              });
-      
-              setTimeout(() => {
-                getTimestampEnterChat();
-              }, 400);
+              res(response);
+              return;
             }
-            res(response);
-            return;
-          }
-          rej(response.error);
-        })
-        .catch((error) => {
-          rej(error.message || "An error occurred");
-        });
-      
-    })  
-  } catch (error) {
-      throw new Error(error)
-  } finally {
-  }
-}
-
-useEffect(()=> {
-  if(isFocusedParent === false){
-    setReplyMessage(null)
-                   setOnEditMessage(null)
-                   clearEditorContent()
-  }
-  }, [isFocusedParent])
-const clearEditorContent = () => {
-  if (editorRef.current) {
-    editorRef.current.chain().focus().clearContent().run();
-    setMessageSize(0)
-    if(isMobile){
-      setTimeout(() => {
-        editorRef.current?.chain().blur().run(); 
-        setIsFocusedParent(false)
-      }, 200);
+            rej(response.error);
+          })
+          .catch((error) => {
+            rej(error.message || "An error occurred");
+          });
+      });
+    } catch (error) {
+      throw new Error(error);
+    } finally {
     }
-  }
-};
-
-useEffect(() => {
-  if (!editorRef?.current) return;
-  const handleUpdate = () => {
-    const htmlContent = editorRef?.current.getHTML();
-    const stringified = JSON.stringify(htmlContent);
-    const size = new Blob([stringified]).size;
-    setMessageSize(size + 200);
   };
 
-  // Add a listener for the editorRef?.current's content updates
-  editorRef?.current.on('update', handleUpdate);
-
-  // Cleanup the listener on unmount
-  return () => {
-    editorRef?.current.off('update', handleUpdate);
-  };
-}, [editorRef?.current]);
-
-
-const sendMessage = async ()=> {
-  try {
-    if(messageSize > 4000) return
-    
-    if(+balance < 4) throw new Error('You need at least 4 QORT to send a message')
-    if(isSending) return
+  useEffect(() => {
+    if (isFocusedParent === false) {
+      setReplyMessage(null);
+      setOnEditMessage(null);
+      clearEditorContent();
+    }
+  }, [isFocusedParent]);
+  const clearEditorContent = () => {
     if (editorRef.current) {
-      const htmlContent = editorRef.current.getHTML();
- 
-      if(!htmlContent?.trim() || htmlContent?.trim() === '<p></p>') return
-      setIsSending(true)
-      pauseAllQueues()
-    const message = JSON.stringify(htmlContent)
-   
-  
-    if(isNewChat){
-      await sendChatDirect({ messageText: htmlContent}, null, null, true)
-      return
+      editorRef.current.chain().focus().clearContent().run();
+      setMessageSize(0);
+      if (isMobile) {
+        setTimeout(() => {
+          editorRef.current?.chain().blur().run();
+          setIsFocusedParent(false);
+        }, 200);
+      }
     }
-    let repliedTo = replyMessage?.signature
+  };
 
-    if (replyMessage?.chatReference) {
-      repliedTo = replyMessage?.chatReference
-    }
-    let chatReference = onEditMessage?.signature
-
-    const otherData = {
-      ...(onEditMessage?.decryptedData || {}),
-      specialId: uid.rnd(),
-      repliedTo: onEditMessage ? onEditMessage?.repliedTo : repliedTo,
-      type: chatReference ? 'edit' : ''
-    }
-    const sendMessageFunc = async () => {
-      return await sendChatDirect({ chatReference, messageText: htmlContent, otherData}, selectedDirect?.address, publicKeyOfRecipient, false)
+  useEffect(() => {
+    if (!editorRef?.current) return;
+    const handleUpdate = () => {
+      const htmlContent = editorRef?.current.getHTML();
+      const stringified = JSON.stringify(htmlContent);
+      const size = new Blob([stringified]).size;
+      setMessageSize(size + 200);
     };
 
-    
+    // Add a listener for the editorRef?.current's content updates
+    editorRef?.current.on("update", handleUpdate);
 
-    // Add the function to the queue
-    const messageObj = {
-      message: {
-        timestamp: Date.now(),
-      senderName: myName,
-      sender: myAddress,
-      ...(otherData || {}),
-      text: htmlContent,
-      },
-      chatReference
-    }
-    addToQueue(sendMessageFunc, messageObj, 'chat-direct',
-    selectedDirect?.address );
-    setTimeout(() => {
-      executeEvent("sent-new-message-group", {})
-    }, 150);
-    clearEditorContent()
-    setReplyMessage(null)
-    setOnEditMessage(null)
+    // Cleanup the listener on unmount
+    return () => {
+      editorRef?.current.off("update", handleUpdate);
+    };
+  }, [editorRef?.current]);
 
-    }
-    // send chat message
-  } catch (error) {
-    const errorMsg = error?.message || error
-    setInfoSnack({
-      type: "error",
-      message: errorMsg === 'invalid signature' ? 'You need at least 4 QORT to send a message' :  errorMsg,
-    });
-    setOpenSnack(true);
-    console.error(error)
-  } finally {
-    setIsSending(false)
-    resumeAllQueues()
-  }
-}
+  const sendMessage = async () => {
+    try {
+      if (messageSize > 4000) return;
 
+      if (+balance < 4)
+        throw new Error("You need at least 4 QORT to send a message");
+      if (isSending) return;
+      if (editorRef.current) {
+        const htmlContent = editorRef.current.getHTML();
 
-    const onReply = useCallback((message)=> {
-      if(onEditMessage){
-        editorRef.current.chain().focus().clearContent().run()
+        if (!htmlContent?.trim() || htmlContent?.trim() === "<p></p>") return;
+        setIsSending(true);
+        pauseAllQueues();
+        const message = JSON.stringify(htmlContent);
+
+        if (isNewChat) {
+          await sendChatDirect({ messageText: htmlContent }, null, null, true);
+          return;
+        }
+        let repliedTo = replyMessage?.signature;
+
+        if (replyMessage?.chatReference) {
+          repliedTo = replyMessage?.chatReference;
+        }
+        let chatReference = onEditMessage?.signature;
+
+        const otherData = {
+          ...(onEditMessage?.decryptedData || {}),
+          specialId: uid.rnd(),
+          repliedTo: onEditMessage ? onEditMessage?.repliedTo : repliedTo,
+          type: chatReference ? "edit" : "",
+        };
+        const sendMessageFunc = async () => {
+          return await sendChatDirect(
+            { chatReference, messageText: htmlContent, otherData },
+            selectedDirect?.address,
+            publicKeyOfRecipient,
+            false
+          );
+        };
+
+        // Add the function to the queue
+        const messageObj = {
+          message: {
+            timestamp: Date.now(),
+            senderName: myName,
+            sender: myAddress,
+            ...(otherData || {}),
+            text: htmlContent,
+          },
+          chatReference,
+        };
+        addToQueue(
+          sendMessageFunc,
+          messageObj,
+          "chat-direct",
+          selectedDirect?.address
+        );
+        setTimeout(() => {
+          executeEvent("sent-new-message-group", {});
+        }, 150);
+        clearEditorContent();
+        setReplyMessage(null);
+        setOnEditMessage(null);
       }
-      setReplyMessage(message)
-      setOnEditMessage(null)
+      // send chat message
+    } catch (error) {
+      const errorMsg = error?.message || error;
+      setInfoSnack({
+        type: "error",
+        message:
+          errorMsg === "invalid signature"
+            ? "You need at least 4 QORT to send a message"
+            : errorMsg,
+      });
+      setOpenSnack(true);
+      console.error(error);
+    } finally {
+      setIsSending(false);
+      resumeAllQueues();
+    }
+  };
+
+  const onReply = useCallback(
+    (message) => {
+      if (onEditMessage) {
+        editorRef.current.chain().focus().clearContent().run();
+      }
+      setReplyMessage(message);
+      setOnEditMessage(null);
       setIsFocusedParent(true);
 
       setTimeout(() => {
-        editorRef?.current?.chain().focus()
-  
+        editorRef?.current?.chain().focus();
       }, 250);
-    }, [onEditMessage])
-  
-  
-    const onEdit = useCallback((message)=> {
-      setOnEditMessage(message)
-      setReplyMessage(null)
-      setIsFocusedParent(true);
-      setTimeout(() => {
-        editorRef.current.chain().focus().setContent(message?.text).run();
-  
-      }, 250);
-  
-  
-    }, [])
-    
+    },
+    [onEditMessage]
+  );
+
+  const onEdit = useCallback((message) => {
+    setOnEditMessage(message);
+    setReplyMessage(null);
+    setIsFocusedParent(true);
+    setTimeout(() => {
+      editorRef.current.chain().focus().setContent(message?.text).run();
+    }, 250);
+  }, []);
+
   return (
-    <div style={{
-      height: isMobile ? '100%' : '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      background: !isMobile && 'var(--bg-2)'
-    }}>
+    <div
+      style={{
+        height: isMobile ? "100%" : "100vh",
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        background: !isMobile && "var(--bg-2)",
+      }}
+    >
       {!isMobile && (
-         <Box onClick={close} sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px',
-          cursor: 'pointer',
-          padding: '4px 6px',
-          width: 'fit-content',
-          borderRadius: '3px',
-          background: 'rgb(35, 36, 40)',
-          margin: '10px 0px',
-          alignSelf: 'center'
-        }}>
-          <ArrowBackIcon sx={{
-            color: 'white',
-            fontSize: isMobile ? '20px' : '20px'
-          }}/>
-          <Typography sx={{
-            color: 'white',
-            fontSize: isMobile ? '14px' : '14px'
-          }}>Close Direct Chat</Typography>
+        <Box
+          onClick={close}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            cursor: "pointer",
+            padding: "4px 6px",
+            width: "fit-content",
+            borderRadius: "3px",
+            background: "rgb(35, 36, 40)",
+            margin: "10px 0px",
+            alignSelf: "center",
+          }}
+        >
+          <ArrowBackIcon
+            sx={{
+              color: "white",
+              fontSize: isMobile ? "20px" : "20px",
+            }}
+          />
+          <Typography
+            sx={{
+              color: "white",
+              fontSize: isMobile ? "14px" : "14px",
+            }}
+          >
+            Close Direct Chat
+          </Typography>
         </Box>
       )}
-       {isMobile && (
-         <Box
-         sx={{
-           display: "flex",
-           alignItems: "center",
-           width: "100%",
-           marginTop: "7px",
-          marginBottom: '7px',
-           justifyContent: "center",
-         }}
-       >
-         <Box
-           sx={{
-             display: "flex",
-             alignItems: "center",
-             justifyContent: "space-between",
-             width: "320px",
-           }}
-         >
-           <Box
-             sx={{
-               display: "flex",
-               alignItems: "center",
-               width: "50px",
-             }}
-           >
-             <ButtonBase
-               onClick={() => {
-                 close()
-               }}
-             >
-               <ReturnIcon />
-             </ButtonBase>
-           </Box>
-           <Typography
-             sx={{
-               fontSize: "14px",
-               fontWeight: 600,
-             }}
-           >
-             {isNewChat ? '' : selectedDirect?.name || (selectedDirect?.address?.slice(0,10) + '...')}
-           </Typography>
-           <Box
-             sx={{
-               display: "flex",
-               alignItems: "center",
-               width: "50px",
-               justifyContent: "flex-end",
-             }}
-           >
-               <ButtonBase
-               onClick={() => {
-                 setSelectedDirect(null)
-                 setMobileViewModeKeepOpen('')
-                 setNewChat(false)
-               }}
-             >
-             <ExitIcon />
-             </ButtonBase>
-           </Box>
-         </Box>
-       </Box>
-       )}
-      {isNewChat && (
-        <>
-        <Spacer height="30px" />
-                <Input sx={{
-                  fontSize: '18px',
-                  padding: '5px'
-                }} placeholder='Name or address' value={directToValue} onChange={(e)=> setDirectToValue(e.target.value)} />
-
-        </>
-      )}
-      
-      <ChatList setMobileViewModeKeepOpen={setMobileViewModeKeepOpen} chatReferences={chatReferences} handleReaction={handleReaction} onEdit={onEdit} onReply={onReply} chatId={selectedDirect?.address} initialMessages={messages} myAddress={myAddress} tempMessages={tempMessages} tempChatReferences={tempChatReferences}/>
-
-   
-      <div style={{
-        // position: 'fixed',
-        // bottom: '0px',
-        backgroundColor: "#232428",
-        minHeight: isMobile ? '0px' : '150px',
-        maxHeight: isMobile ? 'auto' : '400px',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        width: '100%',
-        boxSizing: 'border-box',
-        padding: isMobile ? '10px' : '20px',
-        position: isFocusedParent ? 'fixed' : 'relative',
-        bottom: isFocusedParent ? '0px' : 'unset',
-        top: isFocusedParent ? '0px' : 'unset',
-        zIndex: isFocusedParent ? 11 : 'unset',
-        flexShrink: 0,
-        gap: '15px'
-      }}>
-      <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: isMobile && 1,
-            overflow: !isMobile &&  "auto",
-            flexShrink: 0
-      }}>
-      {replyMessage && (
-        <Box sx={{
-          display: 'flex',
-          gap: '5px',
-          alignItems: 'flex-start',
-          width: '100%'
-        }}>
-                  <ReplyPreview message={replyMessage} />
-
-
-        </Box>
-      )}
-      {onEditMessage && (
-        <Box sx={{
-          display: 'flex',
-          gap: '5px',
-          alignItems: 'flex-start',
-          width: '100%'
-        }}>
-                  <ReplyPreview isEdit message={onEditMessage} />
-
-         
-        </Box>
-      )}
-      <Tiptap isReply={onEditMessage || replyMessage} isFocusedParent={isFocusedParent} setEditorRef={setEditorRef} onEnter={sendMessage} isChat disableEnter={isMobile ? true : false} setIsFocusedParent={setIsFocusedParent}/>
-      </div>
-      <Box sx={{
-        display: 'flex',
-        width: '100&',
-        gap: '10px',
-        justifyContent: 'center',
-        flexShrink: 0,
-        position: 'relative',
-      }}>
-         {isFocusedParent && (
-               <CustomButton
-               onClick={()=> {
-                 if(isSending) return
-                 setIsFocusedParent(false)
-
-                 // Unfocus the editor
-               }}
-               style={{
-                 marginTop: 'auto',
-                 alignSelf: 'center',
-                 cursor: isSending ? 'default' : 'pointer',
-                 background: 'red',
-                 flexShrink: 0,
-                 padding: isMobile && '5px'
-               }}
-             >
-               
-               {` Close`}
-             </CustomButton>
-           
-            )}
-      <CustomButton
-              onClick={()=> {
-                if(messageSize > 4000) return
-                if(isSending) return
-                sendMessage()
-              }}
-              style={{
-                marginTop: 'auto',
-                alignSelf: 'center',
-                cursor: isSending ? 'default' : 'pointer',
-                background: isSending ? 'rgba(0, 0, 0, 0.8)' : 'var(--green)',
-                flexShrink: 0,
-                padding: isMobile && '5px'
+      {isMobile && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            marginTop: "7px",
+            marginBottom: "7px",
+            justifyContent: "center",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "320px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                width: "50px",
               }}
             >
-              {isSending && (
-                <CircularProgress
+              <ButtonBase
+                onClick={() => {
+                  close();
+                }}
+              >
+                <ReturnIcon />
+              </ButtonBase>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: "14px",
+                fontWeight: 600,
+              }}
+            >
+              {isNewChat
+                ? ""
+                : selectedDirect?.name ||
+                  selectedDirect?.address?.slice(0, 10) + "..."}
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                width: "50px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <ButtonBase
+                onClick={() => {
+                  setSelectedDirect(null);
+                  setMobileViewModeKeepOpen("");
+                  setNewChat(false);
+                }}
+              >
+                <ExitIcon />
+              </ButtonBase>
+            </Box>
+          </Box>
+        </Box>
+      )}
+      {isNewChat && (
+        <>
+          <Spacer height="30px" />
+          <Input
+            sx={{
+              fontSize: "18px",
+              padding: "5px",
+            }}
+            placeholder="Name or address"
+            value={directToValue}
+            onChange={(e) => setDirectToValue(e.target.value)}
+          />
+        </>
+      )}
+
+      <ChatList
+        setMobileViewModeKeepOpen={setMobileViewModeKeepOpen}
+        chatReferences={chatReferences}
+        handleReaction={handleReaction}
+        onEdit={onEdit}
+        onReply={onReply}
+        chatId={selectedDirect?.address}
+        initialMessages={messages}
+        myAddress={myAddress}
+        tempMessages={tempMessages}
+        tempChatReferences={tempChatReferences}
+      />
+
+      <div
+        style={{
+          // position: 'fixed',
+          // bottom: '0px',
+          backgroundColor: "#232428",
+          minHeight: isMobile ? "0px" : "150px",
+          maxHeight: isMobile ? "auto" : "400px",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          width: "100%",
+          boxSizing: "border-box",
+          padding: isMobile ? "10px" : "20px",
+          position: isFocusedParent ? "fixed" : "relative",
+          bottom: isFocusedParent ? "0px" : "unset",
+          top: isFocusedParent ? "0px" : "unset",
+          zIndex: isFocusedParent ? 11 : "unset",
+          flexShrink: 0,
+          gap: "15px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: isMobile && 1,
+            overflow: !isMobile && "auto",
+            flexShrink: 0,
+          }}
+        >
+          {replyMessage && (
+            <Box
+              sx={{
+                display: "flex",
+                gap: "5px",
+                alignItems: "flex-start",
+                width: "100%",
+              }}
+            >
+              <ReplyPreview message={replyMessage} />
+            </Box>
+          )}
+          {onEditMessage && (
+            <Box
+              sx={{
+                display: "flex",
+                gap: "5px",
+                alignItems: "flex-start",
+                width: "100%",
+              }}
+            >
+              <ReplyPreview isEdit message={onEditMessage} />
+            </Box>
+          )}
+          <Tiptap
+            isReply={onEditMessage || replyMessage}
+            isFocusedParent={isFocusedParent}
+            setEditorRef={setEditorRef}
+            onEnter={sendMessage}
+            isChat
+            disableEnter={isMobile ? true : false}
+            setIsFocusedParent={setIsFocusedParent}
+          />
+        </div>
+        <Box
+          sx={{
+            display: "flex",
+            width: "100&",
+            gap: "10px",
+            justifyContent: "center",
+            flexShrink: 0,
+            position: "relative",
+          }}
+        >
+          {isFocusedParent && (
+            <CustomButton
+              onClick={() => {
+                if (isSending) return;
+                setIsFocusedParent(false);
+
+                // Unfocus the editor
+              }}
+              style={{
+                marginTop: "auto",
+                alignSelf: "center",
+                cursor: isSending ? "default" : "pointer",
+                background: "red",
+                flexShrink: 0,
+                padding: isMobile && "5px",
+              }}
+            >
+              {` Close`}
+            </CustomButton>
+          )}
+          <CustomButton
+            onClick={() => {
+              if (messageSize > 4000) return;
+              if (isSending) return;
+              sendMessage();
+            }}
+            style={{
+              marginTop: "auto",
+              alignSelf: "center",
+              cursor: isSending ? "default" : "pointer",
+              background: isSending ? "rgba(0, 0, 0, 0.8)" : "var(--green)",
+              flexShrink: 0,
+              padding: isMobile && "5px",
+            }}
+          >
+            {isSending && (
+              <CircularProgress
                 size={18}
                 sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: '-12px',
-                  marginLeft: '-12px',
-                  color: 'white'
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  marginTop: "-12px",
+                  marginLeft: "-12px",
+                  color: "white",
                 }}
               />
-              )}
-              {` Send`}
-            </CustomButton>
-           
-              </Box>
-              {isFocusedParent && messageSize > 750 && (
-        <Box sx={{
-          display: 'flex',
-          width: '100%',
-          justifyContent: 'flex-end',
-          position: 'relative',
-          marginTop: '5px'
-        }}>
-                <Typography sx={{
-                  fontSize: '12px',
-                  color: messageSize > 4000 ? 'var(--danger)' : 'unset'
-                }}>{`size ${messageSize} of 4000`}</Typography>
-
+            )}
+            {` Send`}
+          </CustomButton>
+        </Box>
+        {isFocusedParent && messageSize > 750 && (
+          <Box
+            sx={{
+              display: "flex",
+              width: "100%",
+              justifyContent: "flex-end",
+              position: "relative",
+              marginTop: "5px",
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: "12px",
+                color: messageSize > 4000 ? "var(--danger)" : "unset",
+              }}
+            >{`size ${messageSize} of 4000`}</Typography>
           </Box>
-      )}
+        )}
       </div>
-      <LoadingSnackbar open={isLoading} info={{
-        message: "Loading chat... please wait."
-      }} />
-       <CustomizedSnackbars open={openSnack} setOpen={setOpenSnack} info={infoSnack} setInfo={setInfoSnack}  />
+      <LoadingSnackbar
+        open={isLoading}
+        info={{
+          message: "Loading chat... please wait.",
+        }}
+      />
+      <CustomizedSnackbars
+        open={openSnack}
+        setOpen={setOpenSnack}
+        info={infoSnack}
+        setInfo={setInfoSnack}
+      />
     </div>
-  )
-}
+  );
+};

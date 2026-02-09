@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Spacer } from "../common/Spacer";
 import { CustomButton, TextItalic, TextP, TextSpan } from "../App-styles";
 import {
@@ -20,25 +26,20 @@ import {
 import Logo1 from "../assets/svgs/Logo1.svg";
 import Logo1Dark from "../assets/svgs/Logo1Dark.svg";
 import Info from "../assets/svgs/Info.svg";
-import HelpIcon from '@mui/icons-material/Help';
+import HelpIcon from "@mui/icons-material/Help";
 import { CustomizedSnackbars } from "../components/Snackbar/Snackbar";
 import { set } from "lodash";
 import { cleanUrl, gateways, isUsingLocal } from "../background";
 import { GlobalContext } from "../App";
-import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
+import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 
 export const manifestData = {
-  version: "0.5.7",
+  version: "0.5.8",
 };
 
-
-
 function removeTrailingSlash(url: string) {
-  return url.trim().replace(/\/+$/, '');
+  return url.trim().replace(/\/+$/, "");
 }
-
-
-
 
 export const NotAuthenticated = ({
   getRootProps,
@@ -51,8 +52,8 @@ export const NotAuthenticated = ({
   handleSetGlobalApikey,
   currentNode,
   setCurrentNode,
-  useLocalNode, 
-  setUseLocalNode
+  useLocalNode,
+  setUseLocalNode,
 }) => {
   const [isValidApiKey, setIsValidApiKey] = useState<boolean | null>(null);
   const [hasLocalNode, setHasLocalNode] = useState<boolean | null>(null);
@@ -71,15 +72,15 @@ export const NotAuthenticated = ({
   const [customApikey, setCustomApiKey] = React.useState("");
   const [customNodeToSaveIndex, setCustomNodeToSaveIndex] =
     React.useState(null);
-    const { showTutorial, hasSeenGettingStarted  } = useContext(GlobalContext);
-    const [showSelectApiKey, setShowSelectApiKey] = useState(false)
-    const [enteredApiKey, setEnteredApiKey] = useState('')
+  const { showTutorial, hasSeenGettingStarted } = useContext(GlobalContext);
+  const [showSelectApiKey, setShowSelectApiKey] = useState(false);
+  const [enteredApiKey, setEnteredApiKey] = useState("");
   const importedApiKeyRef = useRef(null);
   const currentNodeRef = useRef(null);
   const hasLocalNodeRef = useRef(null);
   const isLocal = cleanUrl(currentNode?.url) === "127.0.0.1:12391";
   const handleFileChangeApiKey = (event) => {
-    setShowSelectApiKey(false)
+    setShowSelectApiKey(false);
     const file = event.target.files[0]; // Get the selected file
     if (file) {
       const reader = new FileReader();
@@ -87,34 +88,32 @@ export const NotAuthenticated = ({
         const text = e.target.result; // Get the file content
 
         setImportedApiKey(text); // Store the file content in the state
-        if(customNodes){
-          setCustomNodes((prev)=> {
-            const copyPrev = [...prev]
-            const findLocalIndex = copyPrev?.findIndex((item)=> item?.url === 'http://127.0.0.1:12391')
-            if(findLocalIndex === -1){
+        if (customNodes) {
+          setCustomNodes((prev) => {
+            const copyPrev = [...prev];
+            const findLocalIndex = copyPrev?.findIndex(
+              (item) => item?.url === "http://127.0.0.1:12391"
+            );
+            if (findLocalIndex === -1) {
               copyPrev.unshift({
                 url: "http://127.0.0.1:12391",
-                apikey: text
-              })
+                apikey: text,
+              });
             } else {
               copyPrev[findLocalIndex] = {
                 url: "http://127.0.0.1:12391",
-                apikey: text
-              }
+                apikey: text,
+              };
             }
-            window
-            .sendMessage("setCustomNodes", copyPrev)
-            .catch((error) => {
+            window.sendMessage("setCustomNodes", copyPrev).catch((error) => {
               console.error(
                 "Failed to set custom nodes:",
                 error.message || "An error occurred"
               );
             });
-            return copyPrev
-          })
-       
+            return copyPrev;
+          });
         }
-        
       };
       reader.readAsText(file); // Read the file as text
     }
@@ -132,14 +131,12 @@ export const NotAuthenticated = ({
       const data = await response.json();
       if (data?.height) {
         setHasLocalNode(true);
-        return true
+        return true;
       }
-      return false
-      
+      return false;
     } catch (error) {
-      return false
-      
-    } 
+      return false;
+    }
   }, []);
 
   useEffect(() => {
@@ -150,18 +147,20 @@ export const NotAuthenticated = ({
     window
       .sendMessage("getCustomNodesFromStorage")
       .then((response) => {
-      
-          setCustomNodes(response || []);
-          if(window?.electronAPI?.setAllowedDomains){
-            window.electronAPI.setAllowedDomains(response?.map((node)=> node.url))
+        setCustomNodes(response || []);
+        if (window?.electronAPI?.setAllowedDomains) {
+          window.electronAPI.setAllowedDomains(
+            response?.map((node) => node.url)
+          );
+        }
+        if (Array.isArray(response)) {
+          const findLocal = response?.find(
+            (item) => item?.url === "http://127.0.0.1:12391"
+          );
+          if (findLocal && findLocal?.apikey) {
+            setImportedApiKey(findLocal?.apikey);
           }
-          if(Array.isArray(response)){
-            const findLocal = response?.find((item)=> item?.url === 'http://127.0.0.1:12391')
-            if(findLocal && findLocal?.apikey){
-              setImportedApiKey(findLocal?.apikey)
-            }
-          }
-        
+        }
       })
       .catch((error) => {
         console.error(
@@ -182,48 +181,50 @@ export const NotAuthenticated = ({
     hasLocalNodeRef.current = hasLocalNode;
   }, [hasLocalNode]);
 
-
-
   const validateApiKey = useCallback(async (key, fromStartUp) => {
     try {
-      if(key === "isGateway") return
+      if (key === "isGateway") return;
       const isLocalKey = cleanUrl(key?.url) === "127.0.0.1:12391";
-      if (fromStartUp && key?.url && key?.apikey && !isLocalKey && !gateways.some(gateway => key?.url?.includes(gateway))) {
+      if (
+        fromStartUp &&
+        key?.url &&
+        key?.apikey &&
+        !isLocalKey &&
+        !gateways.some((gateway) => key?.url?.includes(gateway))
+      ) {
         setCurrentNode({
           url: key?.url,
           apikey: key?.apikey,
         });
 
-        let isValid = false
+        let isValid = false;
 
-        
         const url = `${key?.url}/admin/settings/localAuthBypassEnabled`;
         const response = await fetch(url);
 
         // Assuming the response is in plain text and will be 'true' or 'false'
         const data = await response.text();
-        if(data && data === 'true'){
-          isValid = true
+        if (data && data === "true") {
+          isValid = true;
         } else {
           const url2 = `${key?.url}/admin/apikey/test?apiKey=${key?.apikey}`;
           const response2 = await fetch(url2);
-    
+
           // Assuming the response is in plain text and will be 'true' or 'false'
           const data2 = await response2.text();
           if (data2 === "true") {
-            isValid = true
+            isValid = true;
           }
         }
-       
+
         if (isValid) {
           setIsValidApiKey(true);
           setUseLocalNode(true);
-          return
+          return;
         }
-
       }
       if (!currentNodeRef.current) return;
-      const stillHasLocal = await checkIfUserHasLocalNode()
+      const stillHasLocal = await checkIfUserHasLocalNode();
 
       if (isLocalKey && !stillHasLocal && !fromStartUp) {
         throw new Error("Please turn on your local node");
@@ -244,81 +245,79 @@ export const NotAuthenticated = ({
           apikey: importedApiKeyRef.current || key?.apikey,
           url: currentNodeRef.current?.url,
         };
-        if(!payload?.apikey){
+        if (!payload?.apikey) {
           try {
             const generateUrl = "http://127.0.0.1:12391/admin/apikey/generate";
             const generateRes = await fetch(generateUrl, {
               method: "POST",
-            })
+            });
             let res;
-      try {
-        res = await generateRes.clone().json();
-      } catch (e) {
-        res = await generateRes.text();
-      }
+            try {
+              res = await generateRes.clone().json();
+            } catch (e) {
+              res = await generateRes.text();
+            }
             if (res != null && !res.error && res.length >= 8) {
               payload = {
                 apikey: res,
                 url: currentNodeRef.current?.url,
               };
-  
+
               setImportedApiKey(res); // Store the file content in the state
-         
-            setCustomNodes((prev)=> {
-              const copyPrev = [...prev]
-              const findLocalIndex = copyPrev?.findIndex((item)=> item?.url === 'http://127.0.0.1:12391')
-              if(findLocalIndex === -1){
-                copyPrev.unshift({
-                  url: "http://127.0.0.1:12391",
-                  apikey: res
-                })
-              } else {
-                copyPrev[findLocalIndex] = {
-                  url: "http://127.0.0.1:12391",
-                  apikey: res
-                }
-              }
-              window
-              .sendMessage("setCustomNodes", copyPrev)
-              .catch((error) => {
-                console.error(
-                  "Failed to set custom nodes:",
-                  error.message || "An error occurred"
+
+              setCustomNodes((prev) => {
+                const copyPrev = [...prev];
+                const findLocalIndex = copyPrev?.findIndex(
+                  (item) => item?.url === "http://127.0.0.1:12391"
                 );
+                if (findLocalIndex === -1) {
+                  copyPrev.unshift({
+                    url: "http://127.0.0.1:12391",
+                    apikey: res,
+                  });
+                } else {
+                  copyPrev[findLocalIndex] = {
+                    url: "http://127.0.0.1:12391",
+                    apikey: res,
+                  };
+                }
+                window
+                  .sendMessage("setCustomNodes", copyPrev)
+                  .catch((error) => {
+                    console.error(
+                      "Failed to set custom nodes:",
+                      error.message || "An error occurred"
+                    );
+                  });
+                return copyPrev;
               });
-              return copyPrev
-            })
-         
-         
             }
           } catch (error) {
-            console.error(error)
+            console.error(error);
           }
         }
       } else if (currentNodeRef.current) {
         payload = currentNodeRef.current;
       }
-      let isValid = false
+      let isValid = false;
 
-        
       const url = `${payload?.url}/admin/settings/localAuthBypassEnabled`;
       const response = await fetch(url);
 
       // Assuming the response is in plain text and will be 'true' or 'false'
       const data = await response.text();
-      if(data && data === 'true'){
-        isValid = true
+      if (data && data === "true") {
+        isValid = true;
       } else {
         const url2 = `${payload?.url}/admin/apikey/test?apiKey=${payload?.apikey}`;
         const response2 = await fetch(url2);
-  
+
         // Assuming the response is in plain text and will be 'true' or 'false'
         const data2 = await response2.text();
         if (data2 === "true") {
-          isValid = true
+          isValid = true;
         }
       }
-     
 
       if (isValid) {
         window
@@ -342,14 +341,13 @@ export const NotAuthenticated = ({
       } else {
         setIsValidApiKey(false);
         setUseLocalNode(false);
-        if(!fromStartUp){
+        if (!fromStartUp) {
           setInfoSnack({
             type: "error",
             message: "Select a valid apikey",
           });
           setOpenSnack(true);
         }
-        
       }
     } catch (error) {
       setIsValidApiKey(false);
@@ -372,15 +370,15 @@ export const NotAuthenticated = ({
               error.message || "An error occurred"
             );
           });
-        return
+        return;
       }
-      if(!fromStartUp){
-      setInfoSnack({
-        type: "error",
-        message: error?.message || "Select a valid apikey",
-      });
-      setOpenSnack(true);
-    }
+      if (!fromStartUp) {
+        setInfoSnack({
+          type: "error",
+          message: error?.message || "Select a valid apikey",
+        });
+        setOpenSnack(true);
+      }
       console.error("Error validating API key:", error);
     }
   }, []);
@@ -399,17 +397,17 @@ export const NotAuthenticated = ({
     if (!isFullListOfNodes && customNodeToSaveIndex !== null) {
       nodes.splice(customNodeToSaveIndex, 1, {
         url: removeTrailingSlash(url),
-        apikey: customApikey?.trim() || '',
+        apikey: customApikey?.trim() || "",
       });
     } else if (!isFullListOfNodes && url) {
       nodes.push({
         url: removeTrailingSlash(url),
-        apikey: customApikey?.trim() || '',
+        apikey: customApikey?.trim() || "",
       });
     }
 
     setCustomNodes(nodes);
-  
+
     setCustomNodeToSaveIndex(null);
     if (!nodes) return;
     window
@@ -419,9 +417,11 @@ export const NotAuthenticated = ({
           setMode("list");
           setUrl("https://");
           setCustomApiKey("");
-          if(window?.electronAPI?.setAllowedDomains){
-            window.electronAPI.setAllowedDomains(nodes?.map((node) => node.url))
-            }
+          if (window?.electronAPI?.setAllowedDomains) {
+            window.electronAPI.setAllowedDomains(
+              nodes?.map((node) => node.url)
+            );
+          }
           // add alert if needed
         }
       })
@@ -450,15 +450,20 @@ export const NotAuthenticated = ({
         sx={{
           textAlign: "center",
           lineHeight: 1.2,
-          fontSize: '16px'
+          fontSize: "16px",
         }}
       >
-        WELCOME TO 
-        <TextSpan sx={{
-          fontSize: '16px'
-        }}> QORTAL</TextSpan>
+        WELCOME TO
+        <TextSpan
+          sx={{
+            fontSize: "16px",
+          }}
+        >
+          {" "}
+          QORTAL
+        </TextSpan>
       </TextP>
-      
+
       <Spacer height="30px" />
       <Box
         sx={{
@@ -467,12 +472,11 @@ export const NotAuthenticated = ({
           alignItems: "center",
         }}
       >
-       
-        <CustomButton onClick={()=> setExtstate('wallets')}>
+        <CustomButton onClick={() => setExtstate("wallets")}>
           {/* <input {...getInputProps()} /> */}
           Accounts
         </CustomButton>
-       
+
         {/* <Tooltip title="Authenticate by importing your Qortal JSON file" arrow>
           <img src={Info} />
         </Tooltip> */}
@@ -484,27 +488,24 @@ export const NotAuthenticated = ({
           display: "flex",
           gap: "10px",
           alignItems: "center",
-         
         }}
       >
-        
         <CustomButton
           onClick={() => {
             setExtstate("create-wallet");
           }}
           sx={{
-            backgroundColor: hasSeenGettingStarted === false && 'var(--green)',
-            color: hasSeenGettingStarted === false && 'black',
+            backgroundColor: hasSeenGettingStarted === false && "var(--green)",
+            color: hasSeenGettingStarted === false && "black",
             "&:hover": {
-              backgroundColor: hasSeenGettingStarted === false && 'var(--green)',
-              color: hasSeenGettingStarted === false && 'black'
-            }
+              backgroundColor:
+                hasSeenGettingStarted === false && "var(--green)",
+              color: hasSeenGettingStarted === false && "black",
+            },
           }}
         >
           Create account
         </CustomButton>
- 
-      
       </Box>
       <Spacer height="15px" />
 
@@ -524,15 +525,19 @@ export const NotAuthenticated = ({
             gap: "10px",
             alignItems: "center",
             flexDirection: "column",
-            outline: '0.5px solid rgba(255, 255, 255, 0.5)',
-            padding: '20px 30px',
-            borderRadius: '5px',
+            outline: "0.5px solid rgba(255, 255, 255, 0.5)",
+            padding: "20px 30px",
+            borderRadius: "5px",
           }}
         >
           <>
-          <Typography sx={{
-            textDecoration: 'underline'
-          }}>For advanced users</Typography>
+            <Typography
+              sx={{
+                textDecoration: "underline",
+              }}
+            >
+              For advanced users
+            </Typography>
             <Box
               sx={{
                 display: "flex",
@@ -543,12 +548,11 @@ export const NotAuthenticated = ({
               }}
             >
               <FormControlLabel
-              sx={{
-                "& .MuiFormControlLabel-label": {
-                  fontSize: '14px'
-                }
-                
-              }}
+                sx={{
+                  "& .MuiFormControlLabel-label": {
+                    fontSize: "14px",
+                  },
+                }}
                 control={
                   <Switch
                     sx={{
@@ -594,7 +598,12 @@ export const NotAuthenticated = ({
             </Box>
             {currentNode?.url === "http://127.0.0.1:12391" && (
               <>
-                <Button onClick={()=> setShowSelectApiKey(true)} size="small" variant="contained" component="label">
+                <Button
+                  onClick={() => setShowSelectApiKey(true)}
+                  size="small"
+                  variant="contained"
+                  component="label"
+                >
                   {apiKey ? "Change " : "Import "} apikey
                 </Button>
                 <Typography
@@ -637,7 +646,6 @@ export const NotAuthenticated = ({
           open={showSelectApiKey}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
-          
         >
           <DialogTitle id="alert-dialog-title">{"Enter apikey"}</DialogTitle>
           <DialogContent>
@@ -645,78 +653,84 @@ export const NotAuthenticated = ({
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: '20px'
+                gap: "20px",
               }}
             >
-              <TextField value={enteredApiKey} onChange={(e)=> setEnteredApiKey(e.target.value)}/>
-                <Button disabled={!!enteredApiKey} variant="contained"  component="label">Alternative: File select
+              <TextField
+                value={enteredApiKey}
+                onChange={(e) => setEnteredApiKey(e.target.value)}
+              />
+              <Button
+                disabled={!!enteredApiKey}
+                variant="contained"
+                component="label"
+              >
+                Alternative: File select
                 <input
-                    type="file"
-                    accept=".txt"
-                    hidden
-                    onChange={handleFileChangeApiKey} // File input handler
-                  />
-                </Button>
+                  type="file"
+                  accept=".txt"
+                  hidden
+                  onChange={handleFileChangeApiKey} // File input handler
+                />
+              </Button>
             </Box>
           </DialogContent>
           <DialogActions>
-           
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                   setEnteredApiKey("")
-                   setShowSelectApiKey(false)
-                  }}
-                >
-                  Close
-                </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setEnteredApiKey("");
+                setShowSelectApiKey(false);
+              }}
+            >
+              Close
+            </Button>
 
-                <Button
-                  variant="contained"
-                  disabled={!enteredApiKey}
-                  onClick={() => {
-                    try {
-                      setImportedApiKey(enteredApiKey); // Store the file content in the state
-        if(customNodes){
-          setCustomNodes((prev)=> {
-            const copyPrev = [...prev]
-            const findLocalIndex = copyPrev?.findIndex((item)=> item?.url === 'http://127.0.0.1:12391')
-            if(findLocalIndex === -1){
-              copyPrev.unshift({
-                url: "http://127.0.0.1:12391",
-                apikey: enteredApiKey
-              })
-            } else {
-              copyPrev[findLocalIndex] = {
-                url: "http://127.0.0.1:12391",
-                apikey: enteredApiKey
-              }
-            }
-            window
-            .sendMessage("setCustomNodes", copyPrev)
-            .catch((error) => {
-              console.error(
-                "Failed to set custom nodes:",
-                error.message || "An error occurred"
-              );
-            });
-            return copyPrev
-          })
-       
-        }
-        setUseLocalNode(false);
-        setShowSelectApiKey(false)
-        setEnteredApiKey("")
-                    } catch (error) {
-                      console.error(error)
-                    }
-                  }}
-                  autoFocus
-                >
-                  Save
-                </Button>
-           
-          
+            <Button
+              variant="contained"
+              disabled={!enteredApiKey}
+              onClick={() => {
+                try {
+                  setImportedApiKey(enteredApiKey); // Store the file content in the state
+                  if (customNodes) {
+                    setCustomNodes((prev) => {
+                      const copyPrev = [...prev];
+                      const findLocalIndex = copyPrev?.findIndex(
+                        (item) => item?.url === "http://127.0.0.1:12391"
+                      );
+                      if (findLocalIndex === -1) {
+                        copyPrev.unshift({
+                          url: "http://127.0.0.1:12391",
+                          apikey: enteredApiKey,
+                        });
+                      } else {
+                        copyPrev[findLocalIndex] = {
+                          url: "http://127.0.0.1:12391",
+                          apikey: enteredApiKey,
+                        };
+                      }
+                      window
+                        .sendMessage("setCustomNodes", copyPrev)
+                        .catch((error) => {
+                          console.error(
+                            "Failed to set custom nodes:",
+                            error.message || "An error occurred"
+                          );
+                        });
+                      return copyPrev;
+                    });
+                  }
+                  setUseLocalNode(false);
+                  setShowSelectApiKey(false);
+                  setEnteredApiKey("");
+                } catch (error) {
+                  console.error(error);
+                }
+              }}
+              autoFocus
+            >
+              Save
+            </Button>
           </DialogActions>
         </Dialog>
       )}
@@ -960,17 +974,22 @@ export const NotAuthenticated = ({
           </DialogActions>
         </Dialog>
       )}
-      <ButtonBase onClick={()=> {
-         showTutorial('create-account', true)
-      }} sx={{
-        position: 'fixed',
-        bottom: '25px',
-        right: '25px'
-      }}>
-        <HelpIcon sx={{
-          color: 'var(--unread)'
-        }} />
-        </ButtonBase>
+      <ButtonBase
+        onClick={() => {
+          showTutorial("create-account", true);
+        }}
+        sx={{
+          position: "fixed",
+          bottom: "25px",
+          right: "25px",
+        }}
+      >
+        <HelpIcon
+          sx={{
+            color: "var(--unread)",
+          }}
+        />
+      </ButtonBase>
     </>
   );
 };
