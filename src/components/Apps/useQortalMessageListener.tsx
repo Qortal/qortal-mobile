@@ -526,18 +526,7 @@ export const listOfAllQortalRequests = [
   "WHICH_UI",
   "REENCRYPT_GROUP_KEYS",
   "PLAY_ENCRYPTED_MEDIA",
-  "CHROMECAST_INITIALIZE",
-  "CHROMECAST_IS_AVAILABLE",
-  "CHROMECAST_IS_CONNECTED",
-  "CHROMECAST_CONNECT",
-  "CHROMECAST_DISCONNECT",
-  "CHROMECAST_CAST_VIDEO",
-  "CHROMECAST_PLAY",
-  "CHROMECAST_PAUSE",
-  "CHROMECAST_STOP",
-  "CHROMECAST_SEEK",
-  "CHROMECAST_SET_VOLUME",
-  "CHROMECAST_GET_PLAYBACK_STATE",
+  "CHROMECAST_CAST"
 ];
 
 const UIQortalRequests = [
@@ -1091,7 +1080,7 @@ export const useQortalMessageListener = (
         // - Mini-player UI with controls
         // - Tab cleanup on close
         try {
-          const { url, title, subtitle, imageUrl, contentType } = event.data;
+          const { url, title = "", subtitle = "", imageUrl = "", contentType = "" } = event.data;
           
           // Convert relative URLs to full endpoints
           const videoUrl = await createEndpoint(url);
