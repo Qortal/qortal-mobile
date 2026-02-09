@@ -53,22 +53,13 @@ export const ChromecastMiniPlayer: React.FC = () => {
   const [volumeBeforeMute, setVolumeBeforeMute] = useState(1);
   const [volumeAnchorEl, setVolumeAnchorEl] = useState<HTMLButtonElement | null>(null);
 
-  // Ensure player shows when casting starts
-  React.useEffect(() => {
-    console.log('[ChromecastMiniPlayer] State:', { 
-      isCasting, 
-      hasVideo: !!currentVideo, 
-      isPlayerMinimized 
-    });
-  }, [isCasting, currentVideo, isPlayerMinimized]);
+
 
   // Only show when casting
   if (!isCasting || !currentVideo) {
-    console.log('[ChromecastMiniPlayer] Not showing - isCasting:', isCasting, 'currentVideo:', !!currentVideo);
     return null;
   }
 
-  console.log('[ChromecastMiniPlayer] Rendering player, minimized:', isPlayerMinimized);
 
   const isPlaying = playbackState.state === 'PLAYING';
   const isBuffering = playbackState.state === 'BUFFERING';
@@ -76,14 +67,7 @@ export const ChromecastMiniPlayer: React.FC = () => {
   const duration = playbackState.duration || 0;
   const progress = duration ? (currentPosition / duration) * 100 : 0;
 
-  // Debug logging for progress
-  console.log('[ChromecastMiniPlayer] Progress update:', {
-    currentPosition,
-    duration,
-    progress,
-    isDragging: isDraggingProgress,
-    playbackState: playbackState.state
-  });
+
 
   const handlePlayPause = () => {
     if (isPlaying) {

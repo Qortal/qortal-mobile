@@ -170,7 +170,7 @@ export const useFetchResources = () => {
           baselineSpeed !== null &&
           chunkHistory.length >= 4
         ) {
-          console.log('Download stalled - no chunk progress detected');
+        
           return true;
         }
 
@@ -288,9 +288,7 @@ export const useFetchResources = () => {
                     );
                     if (shouldRequestAsync) {
                       hasDetectedSlowdown = true;
-                      console.log(
-                        `Download slowdown detected. Requesting async fetch for ${resourceId}`
-                      );
+                      
 
                       const url = `${getBaseApiReact()}/arbitrary/${service}/${name}/${identifier}?async=true`;
                       fetch(url, {

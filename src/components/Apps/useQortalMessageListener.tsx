@@ -1096,7 +1096,6 @@ export const useQortalMessageListener = (
           // Convert relative URLs to full endpoints
           const videoUrl = await createEndpoint(url);
           
-          console.log("[CHROMECAST_CAST] Casting video:", { url: videoUrl, title });
           
           // Use centralized manager - handles everything!
           const result = await chromecastManager.castVideo(videoUrl, {
@@ -1120,7 +1119,6 @@ export const useQortalMessageListener = (
             error: result.error || null,
           });
           
-          console.log("[CHROMECAST_CAST] Result:", result);
         } catch (error: any) {
           console.error("[CHROMECAST_CAST] Error:", error);
           event.ports[0].postMessage({
