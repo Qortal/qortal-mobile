@@ -10,7 +10,7 @@ import { ListOfGroupPromotions } from "./ListOfGroupPromotions";
 import HelpIcon from '@mui/icons-material/Help';
 import { useHandleTutorials } from "../Tutorials/useHandleTutorials";
 import { GlobalContext } from "../../App";
-import { QortPrice } from "../Home/QortPrice";
+import { QortStats } from "../Home/QortStats";
 import { QMailMessages } from "./QMailMessages";
 import { Explore } from "../Explore/Explore";
 import ExploreIcon from "@mui/icons-material/Explore";
@@ -146,7 +146,7 @@ export const Home = ({
 
           />
           {/* <ListOfThreadPostsWatched /> */}
-          <QortPrice />
+          <QortStats />
           {hasDoneNameAndBalanceAndIsLoaded && (
             <>
             <Spacer height="20px" />
