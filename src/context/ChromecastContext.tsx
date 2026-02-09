@@ -105,22 +105,17 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
     if (isInitialized) return;
 
     try {
-      console.log("[ChromecastContext] Initializing...");
       const result = await Chromecast.initialize();
 
       if (result.success) {
         setIsInitialized(true);
-        console.log("[ChromecastContext] Initialized successfully");
 
         // Check if already connected
         const connectedState = await Chromecast.isConnected();
         if (connectedState.connected && connectedState.deviceName) {
           setIsConnected(true);
           setDeviceName(connectedState.deviceName);
-          console.log(
-            "[ChromecastContext] Already connected to:",
-            connectedState.deviceName
-          );
+         
         }
       }
     } catch (error) {
@@ -144,20 +139,15 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         const result = await Chromecast.addListener(
           "castStateChanged",
           (data) => {
-            console.log("[ChromecastContext] Cast state changed:", data);
 
             // Handle different cast states from Android plugin
             switch (data.state) {
               case "CONNECTING":
-                console.log("[ChromecastContext] Connecting to device...");
                 setIsConnecting(true);
                 break;
 
               case "CONNECTED":
-                console.log(
-                  "[ChromecastContext] Connected to:",
-                  data.deviceName
-                );
+              
                 setIsConnected(true);
                 setIsConnecting(false);
                 if (data.deviceName) {
@@ -166,17 +156,13 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
                 break;
 
               case "DISCONNECTING":
-                console.log("[ChromecastContext] Disconnecting...");
                 break;
 
               case "DISCONNECTED":
               case "ERROR":
               case "SUSPENDED":
                 // Device disconnected, error, or session suspended - clean up state
-                console.log(
-                  "[ChromecastContext] Session ended/error, cleaning up state"
-                );
-
+           
                 // Stop foreground service
                 ForegroundService.stopCastingService().catch((err) => {
                   console.error(
@@ -189,9 +175,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
                 ProxyServer.getProxyInfo()
                   .then((info) => {
                     if (info.isRunning) {
-                      console.log(
-                        "[ChromecastContext] Stopping proxy after disconnect"
-                      );
+                      
                       ProxyServer.stopProxy().catch((err) => {
                         console.error(
                           "[ChromecastContext] Failed to stop proxy:",
@@ -221,10 +205,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         );
 
         listenerId = result.id;
-        console.log(
-          "[ChromecastContext] Cast state listener registered:",
-          listenerId
-        );
+       
       } catch (error) {
         console.error(
           "[ChromecastContext] Failed to setup cast state listener:",
@@ -251,15 +232,12 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
   // Poll playback state when casting
   useEffect(() => {
     if (!isCasting) {
-      console.log("[ChromecastContext] Not polling - isCasting is false");
       return;
     }
 
-    console.log("[ChromecastContext] Starting playback state polling...");
     const interval = setInterval(async () => {
       try {
         const state = await Chromecast.getPlaybackState();
-        console.log("[ChromecastContext] Playback state update:", state);
         setPlaybackState(state);
       } catch (error) {
         console.error(
@@ -270,7 +248,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
     }, 1000);
 
     return () => {
-      console.log("[ChromecastContext] Stopping playback state polling");
       clearInterval(interval);
     };
   }, [isCasting]);
@@ -280,7 +257,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
    */
   const detectVideoMimeType = useCallback(
     async (url: string): Promise<string> => {
-      console.log("[ChromecastContext] Detecting MIME type for:", url);
 
       try {
         // First, try to detect from URL/file extension
@@ -290,73 +266,53 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         if (urlLower.includes(".webm") || urlLower.includes("video/webm")) {
           // Check URL for codec hints
           if (urlLower.includes("av1") || urlLower.includes("av01")) {
-            console.log(
-              "[ChromecastContext] Detected AV1 codec in WebM from URL"
-            );
+           
             return 'video/webm; codecs="av01.0.05M.08"';
           } else if (urlLower.includes("vp9")) {
-            console.log(
-              "[ChromecastContext] Detected VP9 codec in WebM from URL"
-            );
+           
             return 'video/webm; codecs="vp9"';
           } else if (urlLower.includes("vp8")) {
-            console.log(
-              "[ChromecastContext] Detected VP8 codec in WebM from URL"
-            );
+          
             return 'video/webm; codecs="vp8"';
           }
-          console.log(
-            "[ChromecastContext] WebM container without specific codec info"
-          );
+        
           return "video/webm"; // Generic WebM
         }
 
         // Matroska/MKV container
         if (urlLower.includes(".mkv")) {
-          console.log("[ChromecastContext] Detected MKV container from URL");
           return "video/x-matroska";
         }
 
         // MP4 container - check URL for specific codecs
         if (urlLower.includes(".mp4") || urlLower.includes("video/mp4")) {
           if (urlLower.includes("av1") || urlLower.includes("av01")) {
-            console.log(
-              "[ChromecastContext] Detected AV1 codec in MP4 from URL"
-            );
+           
             return 'video/mp4; codecs="av01.0.05M.08"';
           } else if (
             urlLower.includes("hevc") ||
             urlLower.includes("h265") ||
             urlLower.includes("hev1")
           ) {
-            console.log(
-              "[ChromecastContext] Detected HEVC/H.265 codec in MP4 from URL"
-            );
+           
             return 'video/mp4; codecs="hev1.1.6.L120.90"';
           } else if (urlLower.includes("h264") || urlLower.includes("avc1")) {
-            console.log(
-              "[ChromecastContext] Detected H.264/AVC codec in MP4 from URL"
-            );
+            
             return 'video/mp4; codecs="avc1.64001F"';
           }
         }
 
         // OGG/Theora
         if (urlLower.includes(".ogv") || urlLower.includes(".ogg")) {
-          console.log("[ChromecastContext] Detected OGG container from URL");
           return "video/ogg";
         }
 
         // MPEG
         if (urlLower.includes(".mpg") || urlLower.includes(".mpeg")) {
-          console.log("[ChromecastContext] Detected MPEG container from URL");
           return "video/mpeg";
         }
 
-        // No extension or codec hint in URL - inspect file headers
-        console.log(
-          "[ChromecastContext] No codec info in URL, inspecting file headers..."
-        );
+       
         try {
           const response = await fetch(url, {
             headers: { Range: "bytes=0-63" },
@@ -381,9 +337,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
             bytes[2] === 0xdf &&
             bytes[3] === 0xa3
           ) {
-            console.log(
-              "[ChromecastContext] Detected WebM/Matroska from file signature"
-            );
+            
             // Would need more parsing to determine codec from EBML
             return "video/webm";
           }
@@ -396,7 +350,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
             bytes[6] === 0x79 &&
             bytes[7] === 0x70
           ) {
-            console.log("[ChromecastContext] Detected MP4 from file signature");
 
             // Read the ftyp box to check for codec brands
             const ftypData = String.fromCharCode(
@@ -404,30 +357,20 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
             );
 
             if (ftypData.includes("av01")) {
-              console.log(
-                "[ChromecastContext] ✅ Found AV1 codec in MP4 ftyp box!"
-              );
+              
               return 'video/mp4; codecs="av01.0.05M.08"';
             } else if (ftypData.includes("hev1") || ftypData.includes("hvc1")) {
-              console.log(
-                "[ChromecastContext] Found HEVC codec in MP4 ftyp box"
-              );
+            
               return 'video/mp4; codecs="hev1.1.6.L120.90"';
             } else if (ftypData.includes("avc1")) {
-              console.log(
-                "[ChromecastContext] Found H.264 codec in MP4 ftyp box"
-              );
+           
               return 'video/mp4; codecs="avc1.64001F"';
             } else if (ftypData.includes("vp09")) {
-              console.log(
-                "[ChromecastContext] Found VP9 codec in MP4 ftyp box"
-              );
+            
               return 'video/mp4; codecs="vp09.00.10.08"';
             }
 
-            console.log(
-              "[ChromecastContext] MP4 file but could not determine codec from ftyp"
-            );
+           
             return "video/mp4"; // Generic MP4
           }
         } catch (fetchError) {
@@ -438,9 +381,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         }
 
         // Default to MP4 if we can't determine
-        console.log(
-          "[ChromecastContext] Could not determine MIME type, defaulting to video/mp4"
-        );
+      
         return "video/mp4";
       } catch (error) {
         console.error("[ChromecastContext] Error detecting MIME type:", error);
@@ -453,32 +394,21 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
   // Convert localhost URLs to network IP with proxy
   const convertUrlForChromecast = useCallback(
     async (url: string): Promise<string> => {
-      console.log(
-        "[ChromecastContext] convertUrlForChromecast called with URL:",
-        url
-      );
+     
 
       // If it's already a full HTTP/HTTPS URL with localhost or 127.0.0.1, use proxy
       if (url.includes("localhost") || url.includes("127.0.0.1")) {
-        console.log(
-          "[ChromecastContext] Detected localhost URL, starting proxy conversion"
-        );
+       
         try {
           // Extract the port from the localhost URL
           const urlObj = new URL(url);
           const localhostPort = urlObj.port || "80";
-          console.log(
-            "[ChromecastContext] Extracted localhost port:",
-            localhostPort
-          );
+         
 
           // Start proxy server if not already running
           let currentProxyPort = proxyPort;
           if (!currentProxyPort) {
-            console.log(
-              "[ChromecastContext] Starting proxy server for localhost:",
-              localhostPort
-            );
+           
             const proxyResult = await ProxyServer.startProxy({
               port: 0, // Auto-assign port
               targetHost: "localhost",
@@ -488,10 +418,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
             if (proxyResult.success && proxyResult.port) {
               currentProxyPort = proxyResult.port;
               setProxyPort(currentProxyPort);
-              console.log(
-                "[ChromecastContext] Proxy server started on port:",
-                currentProxyPort
-              );
+            
             } else {
               console.error(
                 "[ChromecastContext] Failed to start proxy server, result:",
@@ -499,18 +426,11 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
               );
               return url; // Fallback to original URL
             }
-          } else {
-            console.log(
-              "[ChromecastContext] Reusing existing proxy on port:",
-              currentProxyPort
-            );
-          }
+          } 
 
           // Get device's network IP from Android
-          console.log("[ChromecastContext] Getting device network IP...");
           const { NetworkInfo } = await import("../plugins/NetworkInfo");
           const networkInfo = await NetworkInfo.getLocalIpAddress();
-          console.log("[ChromecastContext] Network info result:", networkInfo);
 
           if (
             networkInfo.success &&
@@ -528,12 +448,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
                 `${networkInfo.ipAddress}:${currentProxyPort}`
               );
 
-            console.log(
-              "[ChromecastContext] ✅ Converted URL via proxy:",
-              url,
-              "→",
-              convertedUrl
-            );
+          
             return convertedUrl;
           } else {
             console.warn(
@@ -549,23 +464,16 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         } catch (error) {
           console.error("[ChromecastContext] ❌ Failed to convert URL:", error);
         }
-      } else {
-        console.log(
-          "[ChromecastContext] URL does not contain localhost, no conversion needed"
-        );
-      }
+      } 
 
       // If it's a relative URL, convert to full Qortal node URL
       if (url.startsWith("/arbitrary/")) {
-        console.log("[ChromecastContext] Converting relative URL to full URL");
         const baseUrl = getBaseApiReact();
         const fullUrl = `${baseUrl}${url}`;
-        console.log("[ChromecastContext] Created full URL:", fullUrl);
         // Recursively convert in case baseUrl contains localhost
         return convertUrlForChromecast(fullUrl);
       }
 
-      console.log("[ChromecastContext] Returning original URL:", url);
       return url;
     },
     [proxyPort]
@@ -578,16 +486,12 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
     setIsConnecting(true);
     try {
-      console.log("[ChromecastContext] Showing device picker...");
       const result = await Chromecast.connect();
 
       if (result.success && result.deviceName) {
         setIsConnected(true);
         setDeviceName(result.deviceName);
-        console.log("[ChromecastContext] Connected to:", result.deviceName);
-      } else {
-        console.log("[ChromecastContext] Connection cancelled or failed");
-      }
+      } 
     } catch (error) {
       console.error("[ChromecastContext] Failed to connect:", error);
     } finally {
@@ -603,10 +507,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
       metadata?: VideoMetadata
     ): Promise<{ success: boolean; error?: string }> => {
       try {
-        console.log(
-          "[ChromecastContext] Performing cast with contentType:",
-          contentType
-        );
+       
 
         const result = await Chromecast.castVideo({
           url: convertedUrl,
@@ -631,7 +532,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
               deviceName: deviceName || "Chromecast",
               videoTitle: metadata?.title || "Video",
             });
-            console.log("[ChromecastContext] Foreground service started");
           } catch (serviceError) {
             console.warn(
               "[ChromecastContext] Failed to start foreground service:",
@@ -640,15 +540,11 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
             // Continue anyway, video will still cast but app might be killed
           }
 
-          console.log("[ChromecastContext] Video cast successfully");
           return { success: true };
         } else {
-          console.log(
-            "[ChromecastContext] Cast failed - native plugin returned success=false"
-          );
+          
           // Stop proxy if cast failed
           if (proxyPort) {
-            console.log("[ChromecastContext] Stopping proxy after failed cast");
             await ProxyServer.stopProxy();
             setProxyPort(null);
           }
@@ -661,7 +557,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         );
         // Stop proxy on error
         if (proxyPort) {
-          console.log("[ChromecastContext] Stopping proxy after cast error");
           try {
             await ProxyServer.stopProxy();
           } catch (proxyError) {
@@ -695,17 +590,13 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
         // If not connected, show device picker first
         if (!currentConnectionState.connected) {
-          console.log(
-            "[ChromecastContext] Not connected, showing device picker..."
-          );
+        
           await showDevicePicker();
 
           // Check if connection was successful after picker
           const connectedState = await Chromecast.isConnected();
           if (!connectedState.connected) {
-            console.log(
-              "[ChromecastContext] No device selected or connection failed"
-            );
+           
             return {
               success: false,
               error: "No device selected or connection failed",
@@ -713,18 +604,13 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
           }
 
           // Update React state to match native state
-          console.log(
-            "[ChromecastContext] Updating connection state after picker"
-          );
+         
           setIsConnected(true);
           if (connectedState.deviceName) {
             setDeviceName(connectedState.deviceName);
           }
         } else {
-          console.log(
-            "[ChromecastContext] Already connected to:",
-            currentConnectionState.deviceName
-          );
+         
           // Ensure React state matches native state
           if (!isConnected) {
             setIsConnected(true);
@@ -738,23 +624,12 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         // Detect MIME type if not provided
         let contentType = metadata?.contentType;
         if (!contentType) {
-          console.log(
-            "[ChromecastContext] No contentType provided, detecting..."
-          );
+          
           contentType = await detectVideoMimeType(convertedUrl);
-          console.log("[ChromecastContext] Detected contentType:", contentType);
-        } else {
-          console.log(
-            "[ChromecastContext] Using provided contentType:",
-            contentType
-          );
-        }
-
+        } 
         // Check if it's AV1 - show warning modal
         if (contentType.includes("av01")) {
-          console.log(
-            "[ChromecastContext] ⚠️ AV1 codec detected, showing warning modal"
-          );
+         
 
           // Store the pending cast info for user confirmation
           setPendingCastInfo({
@@ -774,7 +649,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
         console.error("[ChromecastContext] Failed to cast video:", error);
         // Stop proxy on error
         if (proxyPort) {
-          console.log("[ChromecastContext] Stopping proxy after cast error");
           try {
             await ProxyServer.stopProxy();
           } catch (proxyError) {
@@ -804,7 +678,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
   // Handler for when user confirms AV1 warning and wants to proceed
   const handleAV1Proceed = useCallback(async () => {
-    console.log("[ChromecastContext] User confirmed AV1 cast, proceeding...");
     setShowAV1Warning(false);
 
     if (!pendingCastInfo) {
@@ -824,7 +697,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
   // Handler for when user cancels AV1 warning
   const handleAV1Cancel = useCallback(() => {
-    console.log("[ChromecastContext] User cancelled AV1 cast");
     setShowAV1Warning(false);
     setPendingCastInfo(null);
   }, []);
@@ -832,31 +704,20 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
   const disconnect = useCallback(async () => {
     // Prevent double-disconnect
     if (isDisconnecting) {
-      console.log(
-        "[ChromecastContext] Disconnect already in progress, ignoring duplicate call"
-      );
+     
       return;
     }
 
     setIsDisconnecting(true);
 
     try {
-      console.log("[ChromecastContext] ===== DISCONNECT CALLED =====");
-      console.log("[ChromecastContext] Current state before disconnect:", {
-        isConnected,
-        isCasting,
-        deviceName,
-        hasCurrentVideo: !!currentVideo,
-        proxyPort,
-      });
+     
 
       await Chromecast.disconnect();
-      console.log("[ChromecastContext] Chromecast.disconnect() completed");
 
       // Stop foreground service
       try {
         await ForegroundService.stopCastingService();
-        console.log("[ChromecastContext] Foreground service stopped");
       } catch (serviceError) {
         console.error(
           "[ChromecastContext] Failed to stop foreground service:",
@@ -866,10 +727,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
       // Stop proxy server
       if (proxyPort) {
-        console.log(
-          "[ChromecastContext] Stopping proxy server on port:",
-          proxyPort
-        );
+        
         await ProxyServer.stopProxy();
         setProxyPort(null);
       }
@@ -882,8 +740,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
       setPlaybackState({ state: "IDLE" });
       setIsPlayerMinimized(false);
 
-      console.log("[ChromecastContext] All state reset after disconnect");
-      console.log("[ChromecastContext] ===== DISCONNECT COMPLETE =====");
+   
     } catch (error) {
       console.error("[ChromecastContext] Failed to disconnect:", error);
       // Even if disconnect fails, reset the UI state
@@ -912,7 +769,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
       setCurrentVideo(null);
       setPlaybackState({ state: "IDLE" });
       setIsPlayerMinimized(false);
-      console.log("[ChromecastContext] State reset despite error");
     } finally {
       setIsDisconnecting(false);
     }
@@ -928,7 +784,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
   const play = useCallback(async () => {
     try {
       await Chromecast.play();
-      console.log("[ChromecastContext] Playing");
     } catch (error) {
       console.error("[ChromecastContext] Failed to play:", error);
     }
@@ -937,7 +792,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
   const pause = useCallback(async () => {
     try {
       await Chromecast.pause();
-      console.log("[ChromecastContext] Paused");
     } catch (error) {
       console.error("[ChromecastContext] Failed to pause:", error);
     }
@@ -945,13 +799,11 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
   const stop = useCallback(async () => {
     try {
-      console.log("[ChromecastContext] Stopping media (keeping connection)...");
       await Chromecast.stop();
 
       // Stop foreground service since video stopped
       try {
         await ForegroundService.stopCastingService();
-        console.log("[ChromecastContext] Foreground service stopped");
       } catch (serviceError) {
         console.error(
           "[ChromecastContext] Failed to stop foreground service:",
@@ -961,10 +813,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
       // Stop proxy server since video is stopped
       if (proxyPort) {
-        console.log(
-          "[ChromecastContext] Stopping proxy server on port:",
-          proxyPort
-        );
+        
         await ProxyServer.stopProxy();
         setProxyPort(null);
       }
@@ -975,7 +824,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
       setPlaybackState({ state: "IDLE" });
       setIsPlayerMinimized(false);
 
-      console.log("[ChromecastContext] Stopped media, connection maintained");
     } catch (error) {
       console.error("[ChromecastContext] Failed to stop:", error);
       // Reset casting state even on error but keep connection
@@ -1008,7 +856,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
   const seek = useCallback(async (position: number) => {
     try {
       await Chromecast.seek({ position });
-      console.log("[ChromecastContext] Seeked to:", position);
     } catch (error) {
       console.error("[ChromecastContext] Failed to seek:", error);
     }
@@ -1019,7 +866,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
       // Clamp volume between 0 and 1
       const clampedVolume = Math.max(0, Math.min(1, volume));
       await Chromecast.setVolume({ volume: clampedVolume });
-      console.log("[ChromecastContext] Volume set to:", clampedVolume);
     } catch (error) {
       console.error("[ChromecastContext] Failed to set volume:", error);
     }
@@ -1061,7 +907,6 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
     return () => {
       // Component is unmounting, stop proxy and service if running
       if (proxyPort) {
-        console.log("[ChromecastContext] Component unmounting, stopping proxy");
         ProxyServer.stopProxy().catch((error) => {
           console.error(
             "[ChromecastContext] Failed to stop proxy on unmount:",
@@ -1081,22 +926,16 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
 
   // Listen for notification actions (stop button clicked)
   useEffect(() => {
-    console.log("[ChromecastContext] Setting up notification action listener");
 
     const setupListener = async () => {
       try {
         const handle = await ForegroundService.addListener(
           "notificationAction",
           async (event) => {
-            console.log(
-              "[ChromecastContext] Notification action received:",
-              event
-            );
+            
 
             if (event.action === "stop") {
-              console.log(
-                "[ChromecastContext] Stop button clicked in notification, stopping casting..."
-              );
+             
               await stop();
             }
           }
@@ -1117,9 +956,7 @@ export const ChromecastProvider: React.FC<ChromecastProviderProps> = ({
     return () => {
       listenerPromise.then((handle) => {
         if (handle) {
-          console.log(
-            "[ChromecastContext] Removing notification action listener"
-          );
+         
           handle.remove();
         }
       });

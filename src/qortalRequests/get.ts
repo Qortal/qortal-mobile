@@ -6761,7 +6761,7 @@ const chromecastTabIds = new Set<string>();
 export const trackChromecastForTab = (tabId: string) => {
   if (tabId) {
     chromecastTabIds.add(tabId);
-    console.log(`[Chromecast] Tracking connection for tabId ${tabId}`);
+   
   }
 };
 
@@ -6771,7 +6771,7 @@ export const trackChromecastForTab = (tabId: string) => {
 export const untrackChromecastForTab = (tabId: string) => {
   if (tabId) {
     chromecastTabIds.delete(tabId);
-    console.log(`[Chromecast] Untracked connection for tabId ${tabId}`);
+   
   }
 };
 
@@ -6797,9 +6797,9 @@ export const cleanupChromecastForTab = async (tabId: string) => {
       // Check if still connected before disconnecting
       const connectionStatus = await Chromecast.isConnected();
       if (connectionStatus?.connected) {
-        console.log(`[Chromecast] Disconnecting for closed tab ${tabId}`);
+      
         await Chromecast.disconnect();
-        console.log(`[Chromecast] Successfully disconnected for tab ${tabId}`);
+      
       }
     } catch (error) {
       console.error(`[Chromecast] Failed to cleanup for tab ${tabId}:`, error);
@@ -6928,7 +6928,6 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
     // Initialize server if not running
     const isRunning = await manager.isRunning();
     if (!isRunning) {
-      console.log("[playEncryptedMedia] Starting encrypted media server...");
       await manager.initialize(57000);
     }
 
@@ -6942,9 +6941,7 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
       data.mimeType || "video/mp4"
     );
 
-    console.log(
-      `[playEncryptedMedia] Successfully registered media: ${data.mediaId} -> ${streamUrl}`
-    );
+   
 
     // Track this mediaId by tabId for automatic cleanup
     if (appInfo?.tabId) {
@@ -6952,9 +6949,7 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
         mediaIdsByTabId.set(appInfo.tabId, new Set());
       }
       mediaIdsByTabId.get(appInfo.tabId)!.add(data.mediaId);
-      console.log(
-        `[playEncryptedMedia] Tracking mediaId ${data.mediaId} for tabId ${appInfo.tabId}`
-      );
+      
     }
 
     return {
