@@ -34,7 +34,7 @@ import { GlobalContext } from "../App";
 import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 
 export const manifestData = {
-  version: "0.5.8",
+  version: "0.5.9",
 };
 
 function removeTrailingSlash(url: string) {
