@@ -6,6 +6,58 @@ import "react-quill/dist/quill.bubble.css";
 import { Box, styled } from "@mui/material";
 import { convertQortalLinks } from "../../../utils/qortalLink";
 
+const allowedHtmlTags = [
+  "a",
+  "b",
+  "i",
+  "em",
+  "strong",
+  "p",
+  "br",
+  "div",
+  "span",
+  "img",
+  "ul",
+  "ol",
+  "li",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "blockquote",
+  "code",
+  "pre",
+  "table",
+  "thead",
+  "tbody",
+  "tr",
+  "th",
+  "td",
+  "s",
+  "hr",
+];
+
+const allowedHtmlAttrs = [
+  "href",
+  "target",
+  "rel",
+  "class",
+  "src",
+  "alt",
+  "title",
+  "width",
+  "height",
+  "align",
+  "valign",
+  "colspan",
+  "rowspan",
+  "border",
+  "cellpadding",
+  "cellspacing",
+  "data-url",
+];
 
 const CrowdfundInlineContent = styled(Box)(({ theme }) => ({
     display: "flex",
@@ -22,10 +74,14 @@ export const DisplayHtml = ({ html, textColor }: any) => {
     if (!html) return null;
 
     const sanitize: string = DOMPurify.sanitize(html, {
-      USE_PROFILES: { html: true },
+      ALLOWED_TAGS: allowedHtmlTags,
+      ALLOWED_ATTR: allowedHtmlAttrs,
     });
     const anchorQortal = convertQortalLinks(sanitize);
-    return anchorQortal;
+    return DOMPurify.sanitize(anchorQortal, {
+      ALLOWED_TAGS: allowedHtmlTags,
+      ALLOWED_ATTR: allowedHtmlAttrs,
+    });
   }, [html]);
 
   if (!cleanContent) return null;
