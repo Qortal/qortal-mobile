@@ -28,17 +28,17 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { ScreenOrientation } from '@capacitor/screen-orientation';
+import { ScreenOrientation } from "@capacitor/screen-orientation";
 
 import { decryptStoredWallet } from "./utils/decryptWallet";
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 
-import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
-import 'react-json-view-lite/dist/index.css';
+import { JsonView, allExpanded, darkStyles } from "react-json-view-lite";
+import "react-json-view-lite/dist/index.css";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import Logo1 from "./assets/svgs/Logo1.svg";
-import WarningIcon from '@mui/icons-material/Warning';
+import WarningIcon from "@mui/icons-material/Warning";
 
 import Logo1Dark from "./assets/svgs/Logo1Dark.svg";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -53,10 +53,10 @@ import Return from "./assets/svgs/Return.svg";
 import Success from "./assets/svgs/Success.svg";
 import Info from "./assets/svgs/Info.svg";
 import CloseIcon from "@mui/icons-material/Close";
-import { FilePicker } from '@capawesome/capacitor-file-picker';
-import './utils/seedPhrase/RandomSentenceGenerator';
+import { FilePicker } from "@capawesome/capacitor-file-picker";
+import "./utils/seedPhrase/RandomSentenceGenerator";
 import { useFetchResources } from "./common/useFetchResources";
-import HelpIcon from '@mui/icons-material/Help';
+import HelpIcon from "@mui/icons-material/Help";
 
 import {
   createAccount,
@@ -93,7 +93,7 @@ import { LoadingButton } from "@mui/lab";
 import { Label } from "./components/Group/AddGroup";
 import { CustomizedSnackbars } from "./components/Snackbar/Snackbar";
 import SettingsIcon from "@mui/icons-material/Settings";
-import EngineeringIcon from '@mui/icons-material/Engineering';
+import EngineeringIcon from "@mui/icons-material/Engineering";
 
 import {
   cleanUrl,
@@ -118,11 +118,17 @@ import {
 import { requestQueueGroupJoinRequests } from "./components/Group/GroupJoinRequests";
 import { DrawerComponent } from "./components/Drawer/Drawer";
 import { AddressQRCode } from "./components/AddressQRCode";
+import { QortalRequestDetails } from "./components/QortalRequestDetails";
 import { Settings } from "./components/Group/Settings";
 import { MainAvatar } from "./components/MainAvatar";
 import { useRetrieveDataLocalStorage } from "./useRetrieveDataLocalStorage";
 import { useQortalGetSaveSettings } from "./useQortalGetSaveSettings";
-import { useRecoilState, useResetRecoilState, useSetRecoilState, useRecoilValue } from "recoil";
+import {
+  useRecoilState,
+  useResetRecoilState,
+  useSetRecoilState,
+  useRecoilValue,
+} from "recoil";
 import {
   canSaveSettingToQdnAtom,
   fullScreenAtom,
@@ -142,7 +148,11 @@ import {
 } from "./atoms/global";
 import { useAppFullScreen } from "./useAppFullscreen";
 import { NotAuthenticated, manifestData } from "./ExtStates/NotAuthenticated";
-import {  isNative, openIndexedDB, showSaveFilePicker } from "./components/Apps/useQortalMessageListener";
+import {
+  isNative,
+  openIndexedDB,
+  showSaveFilePicker,
+} from "./components/Apps/useQortalMessageListener";
 import { fileToBase64 } from "./utils/fileReading";
 import { handleGetFileFromIndexedDB } from "./utils/indexedDB";
 import { Wallets } from "./Wallets";
@@ -161,7 +171,6 @@ import { InstallPWA } from "./components/InstallPWA";
 import { QortPayment } from "./components/QortPayment";
 import { PdfViewer } from "./common/PdfViewer";
 import { DownloadWallet } from "./components/Auth/DownloadWallet";
-
 
 type extStates =
   | "not-authenticated"
@@ -239,14 +248,18 @@ async function isFromPlayStore() {
 }
 
 function promptUserToUpdate(apkUrl) {
-  if (confirm('A new version is available on github. Would you like to download it?')) {
-    window.open(apkUrl, '_system'); // Opens the APK download URL in the default browser
+  if (
+    confirm(
+      "A new version is available on github. Would you like to download it?",
+    )
+  ) {
+    window.open(apkUrl, "_system"); // Opens the APK download URL in the default browser
   }
 }
 
 function isNewerVersion(current, latest) {
-  const currentParts = current.split('.').map(Number);
-  const latestParts = latest.split('.').map(Number);
+  const currentParts = current.split(".").map(Number);
+  const latestParts = latest.split(".").map(Number);
 
   for (let i = 0; i < currentParts.length; i++) {
     if (latestParts[i] > currentParts[i]) return true;
@@ -257,33 +270,36 @@ function isNewerVersion(current, latest) {
 
 async function checkForUpdateFromGitHub() {
   try {
-
     const currentVersion = manifestData.version;
     // Fetch the latest release information
-    const response = await fetch('https://api.github.com/repos/Qortal/qortal-mobile/releases/latest');
+    const response = await fetch(
+      "https://api.github.com/repos/Qortal/qortal-mobile/releases/latest",
+    );
     const latestRelease = await response.json();
 
     // Get the version from the release name, assuming it follows the pattern "v0.2.0"
-    const latestVersion = latestRelease.name.replace(/^v/, ''); // Remove the "v" prefix if present
+    const latestVersion = latestRelease.name.replace(/^v/, ""); // Remove the "v" prefix if present
 
     if (isNewerVersion(currentVersion, latestVersion)) {
-      const apkAsset = latestRelease.assets.find(asset => asset.name.endsWith('.apk'));
+      const apkAsset = latestRelease.assets.find((asset) =>
+        asset.name.endsWith(".apk"),
+      );
       if (apkAsset) {
         // Prompt user to download the APK if a new version is available
         promptUserToUpdate(apkAsset.browser_download_url);
       }
     }
   } catch (error) {
-    console.error('Error checking for update:', error);
+    console.error("Error checking for update:", error);
   }
 }
-
-
 
 async function checkForUpdate() {
   const fromPlayStore = await isFromPlayStore();
   if (fromPlayStore) {
-    console.log("App is from the Play Store. Handle updates through the Play Store.");
+    console.log(
+      "App is from the Play Store. Handle updates through the Play Store.",
+    );
     // Show instructions for Play Store updates, or redirect the user to the Play Store.
   } else {
     console.log("App is sideloaded. Handle APK-based update.");
@@ -328,7 +344,7 @@ export const pauseAllQueues = () => {
   window.sendMessage("pauseAllQueues", {}).catch((error) => {
     console.error(
       "Failed to pause all queues:",
-      error.message || "An error occurred"
+      error.message || "An error occurred",
     );
   });
 };
@@ -337,15 +353,15 @@ export const resumeAllQueues = () => {
   window.sendMessage("resumeAllQueues", {}).catch((error) => {
     console.error(
       "Failed to resume all queues:",
-      error.message || "An error occurred"
+      error.message || "An error occurred",
     );
   });
 };
 
 const defaultValuesGlobal = {
   openTutorialModal: null,
-  setOpenTutorialModal: ()=> {}
-}
+  setOpenTutorialModal: () => {},
+};
 export const MyContext = createContext<MyContextInterface>(defaultValues);
 export const GlobalContext = createContext<any>(defaultValuesGlobal);
 
@@ -394,7 +410,7 @@ export const isMainWindow = true;
 function App() {
   const [extState, setExtstate] = useState<extStates>("not-authenticated");
   const [desktopViewMode, setDesktopViewMode] = useState("home");
-  const {downloadResource} = useFetchResources()
+  const { downloadResource } = useFetchResources();
 
   const [backupjson, setBackupjson] = useState<any>(null);
   const [rawWallet, setRawWallet] = useState<any>(null);
@@ -403,8 +419,8 @@ function App() {
   const [requestConnection, setRequestConnection] = useState<any>(null);
   const [requestBuyOrder, setRequestBuyOrder] = useState<any>(null);
   const [requestAuthentication, setRequestAuthentication] = useState<any>(null);
-  const [isOpenDrawerLookup, setIsOpenDrawerLookup] = useState(false)
-  const [isRunningPublicNode, setIsRunningPublicNode] = useState(false)
+  const [isOpenDrawerLookup, setIsOpenDrawerLookup] = useState(false);
+  const [isRunningPublicNode, setIsRunningPublicNode] = useState(false);
 
   const [userInfo, setUserInfo] = useState<any>(null);
   const [balance, setBalance] = useState<any>(null);
@@ -422,7 +438,7 @@ function App() {
   const [authenticatePassword, setAuthenticatePassword] = useState<string>("");
   const [sendqortState, setSendqortState] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isOpenMinting, setIsOpenMinting] = useState(false)
+  const [isOpenMinting, setIsOpenMinting] = useState(false);
 
   const [
     walletToBeDownloadedPasswordConfirm,
@@ -436,15 +452,24 @@ function App() {
   const [memberGroups, setMemberGroups] = useState([]);
   const [isFocused, setIsFocused] = useState(true);
   const [hasSettingsChanged, setHasSettingsChanged] = useRecoilState(
-    hasSettingsChangedAtom
+    hasSettingsChangedAtom,
   );
-  const {showTutorial, openTutorialModal, shownTutorialsInitiated, setOpenTutorialModal, hasSeenGettingStarted} = useHandleTutorials()
+  const {
+    showTutorial,
+    openTutorialModal,
+    shownTutorialsInitiated,
+    setOpenTutorialModal,
+    hasSeenGettingStarted,
+  } = useHandleTutorials();
   const holdRefExtState = useRef<extStates>("not-authenticated");
   const isFocusedRef = useRef<boolean>(true);
   const { isShow, onCancel, onOk, show, message } = useModal();
-  const {isUserBlocked,
+  const {
+    isUserBlocked,
     addToBlockList,
-    removeBlockFromList, getAllBlockedUsers} = useBlockedAddresses(extState === 'authenticated')
+    removeBlockFromList,
+    getAllBlockedUsers,
+  } = useBlockedAddresses(extState === "authenticated");
   const {
     isShow: isShowUnsavedChanges,
     onCancel: onCancelUnsavedChanges,
@@ -490,35 +515,33 @@ function App() {
   const [currentNode, setCurrentNode] = useState({
     url: "http://127.0.0.1:12391",
   });
-    const [useLocalNode, setUseLocalNode] = useState(false);
-    const [confirmRequestRead, setConfirmRequestRead] = useState(false);
+  const [useLocalNode, setUseLocalNode] = useState(false);
+  const [confirmRequestRead, setConfirmRequestRead] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showSeed, setShowSeed] = useState(false)
-  const [creationStep, setCreationStep] = useState(1)
+  const [showSeed, setShowSeed] = useState(false);
+  const [creationStep, setCreationStep] = useState(1);
   const qortalRequestCheckbox1Ref = useRef(null);
   useRetrieveDataLocalStorage(userInfo?.address);
   useQortalGetSaveSettings(userInfo?.name, extState === "authenticated");
   const [fullScreen, setFullScreen] = useRecoilState(fullScreenAtom);
-  const {getIndividualUserInfo} = useHandleUserInfo()
+  const { getIndividualUserInfo } = useHandleUserInfo();
 
-  const balanceSetIntervalRef = useRef(null)
-
+  const balanceSetIntervalRef = useRef(null);
 
   const { toggleFullScreen } = useAppFullScreen(setFullScreen);
-  const generatorRef = useRef(null)
-  const exportSeedphrase = async ()=> {
+  const generatorRef = useRef(null);
+  const exportSeedphrase = async () => {
     try {
-      const seedPhrase = generatorRef.current.parsedString
-      saveSeedPhraseToDisk(seedPhrase)
+      const seedPhrase = generatorRef.current.parsedString;
+      saveSeedPhraseToDisk(seedPhrase);
       await showInfo({
-        message: isNative ? `Your seed phrase was downloaded by your browser.. Keep that file secure.` : `Your seed phrase was saved to INTERNAL storage, in the document folder. Keep that file secure.`,
-       })
-    } catch (error) {
-      
-    }
-  
-  }
+        message: isNative
+          ? `Your seed phrase was downloaded by your browser.. Keep that file secure.`
+          : `Your seed phrase was saved to INTERNAL storage, in the document folder. Keep that file secure.`,
+      });
+    } catch (error) {}
+  };
   const passwordRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (extState === "wallet-dropped" && passwordRef.current) {
@@ -528,22 +551,21 @@ function App() {
 
   useEffect(() => {
     try {
-        ScreenOrientation.lock({ orientation: 'portrait' });
-
+      ScreenOrientation.lock({ orientation: "portrait" });
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-}, []);
-  useEffect(()=> {
-    if(!shownTutorialsInitiated) return
-    if(extState === 'not-authenticated'){
-      showTutorial('create-account')
-    } else if(extState === "create-wallet" && walletToBeDownloaded){
-      showTutorial('important-information')
-    } else if(extState === "authenticated"){
-      showTutorial('getting-started')
+  }, []);
+  useEffect(() => {
+    if (!shownTutorialsInitiated) return;
+    if (extState === "not-authenticated") {
+      showTutorial("create-account");
+    } else if (extState === "create-wallet" && walletToBeDownloaded) {
+      showTutorial("important-information");
+    } else if (extState === "authenticated") {
+      showTutorial("getting-started");
     }
-  }, [extState, walletToBeDownloaded, shownTutorialsInitiated])
+  }, [extState, walletToBeDownloaded, shownTutorialsInitiated]);
   useEffect(() => {
     // Attach a global event listener for double-click
     const handleDoubleClick = () => {
@@ -557,48 +579,54 @@ function App() {
     return () => {
       document.documentElement.removeEventListener(
         "dblclick",
-        handleDoubleClick
+        handleDoubleClick,
       );
     };
   }, [toggleFullScreen]);
   //resets for recoil
   const resetAtomSortablePinnedAppsAtom = useResetRecoilState(
-    sortablePinnedAppsAtom
+    sortablePinnedAppsAtom,
   );
   const resetAtomCanSaveSettingToQdnAtom = useResetRecoilState(
-    canSaveSettingToQdnAtom
+    canSaveSettingToQdnAtom,
   );
   const resetAtomSettingsQDNLastUpdatedAtom = useResetRecoilState(
-    settingsQDNLastUpdatedAtom
+    settingsQDNLastUpdatedAtom,
   );
   const resetAtomSettingsLocalLastUpdatedAtom = useResetRecoilState(
-    settingsLocalLastUpdatedAtom
+    settingsLocalLastUpdatedAtom,
   );
   const resetAtomOldPinnedAppsAtom = useResetRecoilState(oldPinnedAppsAtom);
-  const resetAtomIsUsingImportExportSettingsAtom = useResetRecoilState(isUsingImportExportSettingsAtom)
-  const resetGroupPropertiesAtom = useResetRecoilState(groupsPropertiesAtom)
-  const resetAtomQMailLastEnteredTimestampAtom = useResetRecoilState(qMailLastEnteredTimestampAtom)
-  const resetAtomMailsAtom = useResetRecoilState(mailsAtom)
-  const resetLastEnteredGroupIdAtom = useResetRecoilState(lastEnteredGroupIdAtom)
+  const resetAtomIsUsingImportExportSettingsAtom = useResetRecoilState(
+    isUsingImportExportSettingsAtom,
+  );
+  const resetGroupPropertiesAtom = useResetRecoilState(groupsPropertiesAtom);
+  const resetAtomQMailLastEnteredTimestampAtom = useResetRecoilState(
+    qMailLastEnteredTimestampAtom,
+  );
+  const resetAtomMailsAtom = useResetRecoilState(mailsAtom);
+  const resetLastEnteredGroupIdAtom = useResetRecoilState(
+    lastEnteredGroupIdAtom,
+  );
   const resetMyGroupsWhereIAmAdminAtom = useResetRecoilState(
-    myGroupsWhereIAmAdminAtom
+    myGroupsWhereIAmAdminAtom,
   );
   const resetResourceDownloadControllerAtom = useResetRecoilState(
-    resourceDownloadControllerAtom
+    resourceDownloadControllerAtom,
   );
   const resetGlobalDownloadsAtom = useResetRecoilState(globalDownloadsAtom);
   const globalDownloadsValue = useRecoilValue(globalDownloadsAtom);
-  
+
   const resetAllRecoil = () => {
     // First, clean up any active download intervals/timeouts
-    if (globalDownloadsValue && typeof globalDownloadsValue === 'object') {
+    if (globalDownloadsValue && typeof globalDownloadsValue === "object") {
       Object.values(globalDownloadsValue).forEach((entry: any) => {
         if (entry?.interval) clearInterval(entry.interval);
         if (entry?.timeout) clearTimeout(entry.timeout);
         if (entry?.retryTimeout) clearTimeout(entry.retryTimeout);
       });
     }
-    
+
     // Reset all atoms
     resetAtomSortablePinnedAppsAtom();
     resetAtomCanSaveSettingToQdnAtom();
@@ -606,13 +634,13 @@ function App() {
     resetAtomSettingsLocalLastUpdatedAtom();
     resetAtomOldPinnedAppsAtom();
     resetAtomIsUsingImportExportSettingsAtom();
-    resetAtomQMailLastEnteredTimestampAtom()
-    resetAtomMailsAtom()
-    resetGroupPropertiesAtom()
-    resetLastEnteredGroupIdAtom()
-    resetMyGroupsWhereIAmAdminAtom()
-    resetResourceDownloadControllerAtom()
-    resetGlobalDownloadsAtom()
+    resetAtomQMailLastEnteredTimestampAtom();
+    resetAtomMailsAtom();
+    resetGroupPropertiesAtom();
+    resetLastEnteredGroupIdAtom();
+    resetMyGroupsWhereIAmAdminAtom();
+    resetResourceDownloadControllerAtom();
+    resetGlobalDownloadsAtom();
   };
   useEffect(() => {
     if (!isMobile) return;
@@ -643,61 +671,60 @@ function App() {
     globalApiKey = key;
   };
 
-  useEffect(()=> {
-    isRunningGateway().then((res)=> {
-      setIsRunningPublicNode(res)
-    }).catch((error)=> {
-      console.error(error)
-    })
-  }, [extState])
-
+  useEffect(() => {
+    isRunningGateway()
+      .then((res) => {
+        setIsRunningPublicNode(res);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [extState]);
 
   useEffect(() => {
     try {
       setIsLoading(true);
       window
-      .sendMessage("getApiKey")
-      .then((response) => {
-        if (response) {
-          handleSetGlobalApikey(response);
-          setApiKey(response);
-        }
-      })
-      .catch((error) => {
-        console.error(
-          "Failed to get API key:",
-          error?.message || "An error occurred"
-        );
-      }).finally(()=> {
-        window
-        .sendMessage("getWalletInfo")
+        .sendMessage("getApiKey")
         .then((response) => {
-          if (response && response?.walletInfo) {
-            setRawWallet(response?.walletInfo);
-            if (
-              holdRefExtState.current === "web-app-request-payment" ||
-              holdRefExtState.current === "web-app-request-connection" ||
-              holdRefExtState.current === "web-app-request-buy-order"
-            )
-              return;
-            if (response?.hasKeyPair) {
-              setExtstate("authenticated");
-            } else {
-              setExtstate("wallet-dropped");
-            }
+          if (response) {
+            handleSetGlobalApikey(response);
+            setApiKey(response);
           }
         })
         .catch((error) => {
-          console.error("Failed to get wallet info:", error);
+          console.error(
+            "Failed to get API key:",
+            error?.message || "An error occurred",
+          );
+        })
+        .finally(() => {
+          window
+            .sendMessage("getWalletInfo")
+            .then((response) => {
+              if (response && response?.walletInfo) {
+                setRawWallet(response?.walletInfo);
+                if (
+                  holdRefExtState.current === "web-app-request-payment" ||
+                  holdRefExtState.current === "web-app-request-connection" ||
+                  holdRefExtState.current === "web-app-request-buy-order"
+                )
+                  return;
+                if (response?.hasKeyPair) {
+                  setExtstate("authenticated");
+                } else {
+                  setExtstate("wallet-dropped");
+                }
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to get wallet info:", error);
+            });
         });
-      })
     } catch (error) {
-      
     } finally {
       setIsLoading(false);
-
     }
-   
   }, []);
   useEffect(() => {
     if (extState) {
@@ -781,25 +808,22 @@ function App() {
         setdecryptedWallet(null);
       } catch (e) {
         console.log(e);
-
       }
     },
   });
 
-   const handleFilePick = async () => {
+  const handleFilePick = async () => {
     try {
       const resultPermission = await FilePicker.checkPermissions();
       // Open the file picker to select a JSON file
       const result = await FilePicker.pickFiles({
-        types: ['application/json'], // Restrict to JSON files
+        types: ["application/json"], // Restrict to JSON files
         multiple: false, // Allow only one file
         readData: true,
-
       });
       if (result.files.length > 0) {
         const decodedData = atob(result.files[0].data); // `atob` decodes Base64 to a string
         const parsedFile = JSON.parse(decodedData);
-        
 
         // Validate required fields
         const requiredFields = [
@@ -812,14 +836,14 @@ function App() {
           "kdfThreads",
         ];
         for (const field of requiredFields) {
-          if (!(field in parsedFile)) throw new Error(`${field} not found in JSON`);
+          if (!(field in parsedFile))
+            throw new Error(`${field} not found in JSON`);
         }
 
         // Set the state with parsed wallet data
         setRawWallet(parsedFile);
         setExtstate("wallet-dropped");
         setdecryptedWallet(null);
-
       } else {
         console.log("No file selected.");
       }
@@ -836,7 +860,7 @@ function App() {
     wallet = await wallet2.generateSaveWalletData(
       password,
       crypto.kdfThreads,
-      () => {}
+      () => {},
     );
 
     setWalletToBeDownloaded({
@@ -849,33 +873,33 @@ function App() {
     };
   };
 
-  const balanceSetInterval = ()=> {
+  const balanceSetInterval = () => {
     try {
-      if(balanceSetIntervalRef?.current){
+      if (balanceSetIntervalRef?.current) {
         clearInterval(balanceSetIntervalRef?.current);
       }
 
       let isCalling = false;
-      balanceSetIntervalRef.current =  setInterval(async () => {
+      balanceSetIntervalRef.current = setInterval(async () => {
         if (isCalling) return;
         isCalling = true;
         window
-        .sendMessage("balance")
-        .then((response) => {
-          if (!response?.error && !isNaN(+response)) {
-            setBalance(response);
-          }
-               isCalling = false;
-        })
-        .catch((error) => {
-          console.error("Failed to get balance:", error);
-               isCalling = false;
-        });
+          .sendMessage("balance")
+          .then((response) => {
+            if (!response?.error && !isNaN(+response)) {
+              setBalance(response);
+            }
+            isCalling = false;
+          })
+          .catch((error) => {
+            console.error("Failed to get balance:", error);
+            isCalling = false;
+          });
       }, 40000);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-  }
+  };
 
   const getBalanceFunc = () => {
     setQortBalanceLoading(true);
@@ -886,25 +910,24 @@ function App() {
           setBalance(response);
         }
         setQortBalanceLoading(false);
-       
       })
       .catch((error) => {
         console.error("Failed to get balance:", error);
         setQortBalanceLoading(false);
       });
-      balanceSetInterval()
+    balanceSetInterval();
   };
 
   const refetchUserInfo = () => {
     window
-      .sendMessage('userInfo')
+      .sendMessage("userInfo")
       .then((response) => {
         if (response && !response.error) {
           setUserInfo(response);
         }
       })
       .catch((error) => {
-        console.error('Failed to get user info:', error);
+        console.error("Failed to get user info:", error);
       });
   };
 
@@ -920,10 +943,11 @@ function App() {
   const qortalRequestPermissonFromExtension = async (message, event) => {
     if (message.action === "QORTAL_REQUEST_PERMISSION") {
       try {
-        if(message?.payload?.checkbox1){
-          qortalRequestCheckbox1Ref.current = message?.payload?.checkbox1?.value || false
+        if (message?.payload?.checkbox1) {
+          qortalRequestCheckbox1Ref.current =
+            message?.payload?.checkbox1?.value || false;
         }
-        setConfirmRequestRead(false)
+        setConfirmRequestRead(false);
 
         await showQortalRequestExtension(message?.payload);
         if (qortalRequestCheckbox1Ref.current) {
@@ -936,7 +960,7 @@ function App() {
                 checkbox1: qortalRequestCheckbox1Ref.current,
               },
             },
-            event.origin
+            event.origin,
           );
           return;
         }
@@ -948,7 +972,7 @@ function App() {
               accepted: true,
             },
           },
-          event.origin
+          event.origin,
         );
       } catch (error) {
         event.source.postMessage(
@@ -959,25 +983,24 @@ function App() {
               accepted: false,
             },
           },
-          event.origin
+          event.origin,
         );
       }
     }
   };
-  
 
   useEffect(() => {
     // Handler function for incoming messages
     const messageHandler = (event) => {
       if (event.origin !== window.location.origin) {
-        return;  
+        return;
       }
       const message = event.data;
 
       if (message?.action === "CHECK_FOCUS") {
         event.source.postMessage(
           { action: "CHECK_FOCUS_RESPONSE", isFocused: isFocusedRef.current },
-          event.origin
+          event.origin,
         );
       } else if (message.action === "NOTIFICATION_OPEN_DIRECT") {
         executeEvent("openDirectMessage", {
@@ -987,25 +1010,21 @@ function App() {
         executeEvent("openGroupMessage", {
           from: message.payload.from,
         });
-      } else if (
-        message.action === "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP" 
-      ) {
+      } else if (message.action === "NOTIFICATION_OPEN_ANNOUNCEMENT_GROUP") {
         executeEvent("openGroupAnnouncement", {
           from: message.payload.from,
         });
-      } else if (
-        message.action === "NOTIFICATION_OPEN_THREAD_NEW_POST" 
-      ) {
+      } else if (message.action === "NOTIFICATION_OPEN_THREAD_NEW_POST") {
         executeEvent("openThreadNewPost", {
           data: message.payload.data,
         });
       } else if (
         message.action === "QORTAL_REQUEST_PERMISSION" &&
-        message?.isFromExtension
+        message?.isFromExtension &&
+        event.source === window
       ) {
         qortalRequestPermissonFromExtension(message, event);
-      } 
-      else if(message?.action === 'getFileFromIndexedDB'){
+      } else if (message?.action === "getFileFromIndexedDB") {
         handleGetFileFromIndexedDB(event);
       }
     };
@@ -1030,12 +1049,10 @@ function App() {
   const responseToConnectionRequest = (
     isOkay: boolean,
     hostname: string,
-    interactionId: string
+    interactionId: string,
   ) => {
     // REMOVED FOR MOBILE APP
   };
-
-
 
   const getUserInfo = useCallback(async (useTimer?: boolean) => {
     try {
@@ -1097,34 +1114,34 @@ function App() {
     try {
       await saveFileToDisk(
         walletToBeDownloaded.wallet,
-        walletToBeDownloaded.qortAddress
+        walletToBeDownloaded.qortAddress,
       );
-     
     } catch (error: any) {
       setWalletToBeDownloadedError(error?.message);
     } finally {
     }
   };
 
-  const saveWalletToLocalStorage = async (newWallet)=> {
+  const saveWalletToLocalStorage = async (newWallet) => {
     try {
-       getWallets().then((res)=> {
-            
-              if(res && Array.isArray(res)){
-                 const wallets = [...res, newWallet]
-                 storeWallets(wallets)
-              } else {
-                storeWallets([newWallet])
-              }
-              setIsLoading(false)
-          }).catch((error)=> {
-              console.error(error)
-              setIsLoading(false)
-          })
+      getWallets()
+        .then((res) => {
+          if (res && Array.isArray(res)) {
+            const wallets = [...res, newWallet];
+            storeWallets(wallets);
+          } else {
+            storeWallets([newWallet]);
+          }
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error(error);
+          setIsLoading(false);
+        });
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-  }
+  };
 
   const createAccountFunc = async () => {
     try {
@@ -1152,16 +1169,20 @@ function App() {
       const wallet = await res.generateSaveWalletData(
         walletToBeDownloadedPassword,
         crypto.kdfThreads,
-        () => {}
+        () => {},
       );
       window
-        .sendMessage("decryptWallet", {
-          password: walletToBeDownloadedPassword,
-          wallet,
-        },120000)
+        .sendMessage(
+          "decryptWallet",
+          {
+            password: walletToBeDownloadedPassword,
+            wallet,
+          },
+          120000,
+        )
         .then((response) => {
           if (response && !response.error) {
-            saveWalletToLocalStorage(wallet)
+            saveWalletToLocalStorage(wallet);
             setRawWallet(wallet);
             setWalletToBeDownloaded({
               wallet,
@@ -1204,10 +1225,9 @@ function App() {
           message:
             "Your settings have changed. If you logout you will lose your changes. Click on the save button in the header to keep your changed settings.",
         });
-      } else if(extState === 'authenticated') {
+      } else if (extState === "authenticated") {
         await showUnsavedChanges({
-          message:
-            "Are you sure you would like to logout?",
+          message: "Are you sure you would like to logout?",
         });
       }
       window
@@ -1221,7 +1241,7 @@ function App() {
         .catch((error) => {
           console.error(
             "Failed to log out:",
-            error.message || "An error occurred"
+            error.message || "An error occurred",
           );
         });
     } catch (error) {}
@@ -1239,8 +1259,8 @@ function App() {
     setExtstate("authenticated");
     setIsOpenSendQort(false);
     setIsOpenSendQortSuccess(false);
-    setShowSeed(false)
-    setCreationStep(1)
+    setShowSeed(false);
+    setCreationStep(1);
   };
 
   const resetAllStates = () => {
@@ -1268,9 +1288,9 @@ function App() {
     setTxList([]);
     setMemberGroups([]);
     resetAllRecoil();
-    setShowSeed(false)
-    setCreationStep(1)
-    if(balanceSetIntervalRef?.current){
+    setShowSeed(false);
+    setCreationStep(1);
+    if (balanceSetIntervalRef?.current) {
       clearInterval(balanceSetIntervalRef?.current);
     }
   };
@@ -1290,10 +1310,14 @@ function App() {
         }, 250);
       });
       window
-        .sendMessage("decryptWallet", {
-          password: authenticatePassword,
-          wallet: rawWallet,
-        }, 120000)
+        .sendMessage(
+          "decryptWallet",
+          {
+            password: authenticatePassword,
+            wallet: rawWallet,
+          },
+          120000,
+        )
         .then((response) => {
           if (response && !response.error) {
             setAuthenticatePassword("");
@@ -1386,7 +1410,7 @@ function App() {
         window.sendMessage("clearAllNotifications", {}).catch((error) => {
           console.error(
             "Failed to clear notifications:",
-            error.message || "An error occurred"
+            error.message || "An error occurred",
           );
         });
       }
@@ -1409,7 +1433,7 @@ function App() {
           window.sendMessage("clearAllNotifications", {}).catch((error) => {
             console.error(
               "Failed to clear notifications:",
-              error.message || "An error occurred"
+              error.message || "An error occurred",
             );
           });
         }
@@ -1444,7 +1468,7 @@ function App() {
   }, []);
 
   const openUserProfile = (e) => {
-   setIsOpenDrawerProfile(true);
+    setIsOpenDrawerProfile(true);
   };
 
   useEffect(() => {
@@ -1461,7 +1485,7 @@ function App() {
     setOpenSnack(true);
     setInfoSnack({
       type,
-      message
+      message,
     });
   };
 
@@ -1473,14 +1497,14 @@ function App() {
     };
   }, []);
 
-  useEffect(()=> {
-    checkForUpdate()
-  }, [])
+  useEffect(() => {
+    checkForUpdate();
+  }, []);
 
   const registerName = async () => {
     try {
       if (!userInfo?.address) throw new Error("Your address was not found");
-      if(!registerNameValue) throw new Error('Enter a name')
+      if (!registerNameValue) throw new Error("Enter a name");
       const fee = await getFee("REGISTER_NAME");
       await show({
         message: "Would you like to register this name?",
@@ -1581,122 +1605,120 @@ function App() {
           <Spacer height="48px" />
 
           <>
-              <MainAvatar myName={userInfo?.name} />
-              <Spacer height="32px" />
-              <TextP
+            <MainAvatar myName={userInfo?.name} />
+            <Spacer height="32px" />
+            <TextP
+              sx={{
+                textAlign: "center",
+                lineHeight: "24px",
+                fontSize: "20px",
+              }}
+            >
+              {userInfo?.name}
+            </TextP>
+            <Spacer height="10px" />
+            <CopyToClipboard text={rawWallet?.address0}>
+              <AddressBox>
+                {rawWallet?.address0?.slice(0, 6)}...
+                {rawWallet?.address0?.slice(-4)} <img src={Copy} />
+              </AddressBox>
+            </CopyToClipboard>
+            <Spacer height="10px" />
+            {qortBalanceLoading && (
+              <CircularProgress color="success" size={16} />
+            )}
+            {!qortBalanceLoading && balance >= 0 && (
+              <Box
                 sx={{
-                  textAlign: "center",
-                  lineHeight: "24px",
-                  fontSize: "20px",
+                  gap: "10px",
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
-                {userInfo?.name}
-              </TextP>
-              <Spacer height="10px" />
-              <CopyToClipboard text={rawWallet?.address0}>
-                <AddressBox>
-                  {rawWallet?.address0?.slice(0, 6)}...
-                  {rawWallet?.address0?.slice(-4)} <img src={Copy} />
-                </AddressBox>
-              </CopyToClipboard>
-              <Spacer height="10px" />
-              {qortBalanceLoading && (
-                <CircularProgress color="success" size={16} />
-              )}
-              {!qortBalanceLoading && balance >= 0 && (
-                <Box
-                  sx={{
-                    gap: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <TextP
-                    sx={{
-                      textAlign: "center",
-                      lineHeight: "24px",
-                      fontSize: "20px",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {balance?.toFixed(2)} QORT
-                  </TextP>
-                  <RefreshIcon
-                    onClick={getBalanceAndUserInfoFunc}
-                    sx={{
-                      fontSize: "16px",
-                      color: "white",
-                      cursor: "pointer",
-                    }}
-                  />
-                </Box>
-              )}
-
-              <Spacer height="35px" />
-              {userInfo && !userInfo?.name && (
                 <TextP
-                  ref={registerNamePopoverRef}
                   sx={{
                     textAlign: "center",
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    marginTop: "10px",
-                    color: "red",
-                    textDecoration: "underline",
-                  }}
-                  onClick={() => {
-                    executeEvent('openRegisterName', {})
+                    lineHeight: "24px",
+                    fontSize: "20px",
+                    fontWeight: 700,
                   }}
                 >
-                  REGISTER NAME
+                  {balance?.toFixed(2)} QORT
                 </TextP>
-              )}
-              {/* <Spacer height="20px" /> */}
-              <CustomButton
+                <RefreshIcon
+                  onClick={getBalanceAndUserInfoFunc}
+                  sx={{
+                    fontSize: "16px",
+                    color: "white",
+                    cursor: "pointer",
+                  }}
+                />
+              </Box>
+            )}
+
+            <Spacer height="35px" />
+            {userInfo && !userInfo?.name && (
+              <TextP
+                ref={registerNamePopoverRef}
+                sx={{
+                  textAlign: "center",
+                  lineHeight: 1.2,
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  marginTop: "10px",
+                  color: "red",
+                  textDecoration: "underline",
+                }}
                 onClick={() => {
-                  setIsOpenSendQort(true);
-                  // setExtstate("send-qort");
-                  setIsOpenDrawerProfile(false);
+                  executeEvent("openRegisterName", {});
                 }}
               >
-                Transfer QORT
-              </CustomButton>
-              <Spacer height="20px" />
-              <ButtonBase
-        sx={{
-          "&:hover": { backgroundColor: "secondary.main" },
-          transition: "all 0.1s ease-in-out",
-          padding: "5px",
-          borderRadius: "5px",
-          gap: "5px",
-        }}
-        onClick={async () => {
-          setIsOpenDrawerProfile(false);
-            executeEvent("openWalletsApp", {
-           
-            });
-          }}
-      >
-        <AccountBalanceWalletIcon
-          sx={{
-            color: "white",
-          }}
-        />
-        <Typography
-          sx={{
-            fontSize: "1rem",
-          }}
-        >
-          See Wallets
-        </Typography>
-      </ButtonBase>
-      <Divider />
+                REGISTER NAME
+              </TextP>
+            )}
+            {/* <Spacer height="20px" /> */}
+            <CustomButton
+              onClick={() => {
+                setIsOpenSendQort(true);
+                // setExtstate("send-qort");
+                setIsOpenDrawerProfile(false);
+              }}
+            >
+              Transfer QORT
+            </CustomButton>
+            <Spacer height="20px" />
+            <ButtonBase
+              sx={{
+                "&:hover": { backgroundColor: "secondary.main" },
+                transition: "all 0.1s ease-in-out",
+                padding: "5px",
+                borderRadius: "5px",
+                gap: "5px",
+              }}
+              onClick={async () => {
+                setIsOpenDrawerProfile(false);
+                executeEvent("openWalletsApp", {});
+              }}
+            >
+              <AccountBalanceWalletIcon
+                sx={{
+                  color: "white",
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: "1rem",
+                }}
+              >
+                See Wallets
+              </Typography>
+            </ButtonBase>
+            <Divider />
+            <Spacer height="10px" />
+            <AddressQRCode targetAddress={rawWallet?.address0} />
+          </>
           <Spacer height="10px" />
-              <AddressQRCode targetAddress={rawWallet?.address0} />
-            </>
-           <Spacer height="10px" />
           <TextP
             sx={{
               textAlign: "center",
@@ -1708,8 +1730,10 @@ function App() {
               textDecoration: "underline",
             }}
             onClick={async () => {
-              executeEvent("addTab", { data: { service: 'APP', name: 'q-trade' } });
-              executeEvent("open-apps-mode", { });
+              executeEvent("addTab", {
+                data: { service: "APP", name: "q-trade" },
+              });
+              executeEvent("open-apps-mode", {});
               setIsOpenDrawerProfile(false);
             }}
           >
@@ -1717,29 +1741,32 @@ function App() {
           </TextP>
         </AuthenticatedContainerInnerLeft>
         <AuthenticatedContainerInnerRight>
-        <Spacer height="20px" />
+          <Spacer height="20px" />
 
-        <ButtonBase onClick={async ()=> {
+          <ButtonBase
+            onClick={async () => {
               try {
                 setIsOpenDrawerProfile(false);
-                const res =  await isRunningGateway()
-                if(res) throw new Error('Cannot view minting details on the gateway')
-                setIsOpenMinting(true)
-
+                const res = await isRunningGateway();
+                if (res)
+                  throw new Error("Cannot view minting details on the gateway");
+                setIsOpenMinting(true);
               } catch (error) {
-                setOpenSnack(true)
+                setOpenSnack(true);
                 setInfoSnack({
-                  type: 'error',
-                  message: error?.message
-                })
+                  type: "error",
+                  message: error?.message,
+                });
               }
-            }}>
-              <EngineeringIcon sx={{
-                color: 'var(--unread)'
-                 }} />
-            </ButtonBase>
-          
-           
+            }}
+          >
+            <EngineeringIcon
+              sx={{
+                color: "var(--unread)",
+              }}
+            />
+          </ButtonBase>
+
           <Spacer height="20px" />
           <img
             onClick={() => {
@@ -1786,1616 +1813,1749 @@ function App() {
   };
   return (
     <>
-    <ChromecastProvider>
-      <AppContainer
-        sx={{
-          height: isMobile ? "100%" : "100vh",
-          backgroundImage: desktopViewMode === "apps" && 'url("appsBg.svg")',
-          backgroundSize: desktopViewMode === "apps" && "cover",
-          backgroundPosition: desktopViewMode === "apps" && "center",
-          backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
-          overflow: "hidden",
-          position: "relative" // Ensure fixed children can escape overflow
-        }}
-      >
-           <PdfViewer />
-              <div style={{
-                display: !isNative && extState === "not-authenticated" ? 'block' : 'none'
-              }}>
-                <InstallPWA />
-                </div>
-       
-       <GlobalContext.Provider value={{
-            showTutorial,
-            openTutorialModal,
-            setOpenTutorialModal,
-            downloadResource,
-            hasSeenGettingStarted
-      }}>
+      <ChromecastProvider>
+        <AppContainer
+          sx={{
+            height: isMobile ? "100%" : "100vh",
+            backgroundImage: desktopViewMode === "apps" && 'url("appsBg.svg")',
+            backgroundSize: desktopViewMode === "apps" && "cover",
+            backgroundPosition: desktopViewMode === "apps" && "center",
+            backgroundRepeat: desktopViewMode === "apps" && "no-repeat",
+            overflow: "hidden",
+            position: "relative", // Ensure fixed children can escape overflow
+          }}
+        >
+          <PdfViewer />
+          <div
+            style={{
+              display:
+                !isNative && extState === "not-authenticated"
+                  ? "block"
+                  : "none",
+            }}
+          >
+            <InstallPWA />
+          </div>
+
+          <GlobalContext.Provider
+            value={{
+              showTutorial,
+              openTutorialModal,
+              setOpenTutorialModal,
+              downloadResource,
+              hasSeenGettingStarted,
+            }}
+          >
             <Tutorials />
-      {extState === "not-authenticated" && (
-        <NotAuthenticated
-          getRootProps={getRootProps}
-          getInputProps={getInputProps}
-          handleFilePick={handleFilePick}
-          setExtstate={setExtstate}
-          apiKey={apiKey}
-          globalApiKey={globalApiKey}
-          setApiKey={setApiKey}
-          handleSetGlobalApikey={handleSetGlobalApikey}
-          currentNode={currentNode}
-          setCurrentNode={setCurrentNode}
-          setUseLocalNode={setUseLocalNode}
-          useLocalNode={useLocalNode}
-        />
-      )}
-      {/* {extState !== "not-authenticated" && (
+            {extState === "not-authenticated" && (
+              <NotAuthenticated
+                getRootProps={getRootProps}
+                getInputProps={getInputProps}
+                handleFilePick={handleFilePick}
+                setExtstate={setExtstate}
+                apiKey={apiKey}
+                globalApiKey={globalApiKey}
+                setApiKey={setApiKey}
+                handleSetGlobalApikey={handleSetGlobalApikey}
+                currentNode={currentNode}
+                setCurrentNode={setCurrentNode}
+                setUseLocalNode={setUseLocalNode}
+                useLocalNode={useLocalNode}
+              />
+            )}
+            {/* {extState !== "not-authenticated" && (
         <button onClick={logoutFunc}>logout</button>
       )} */}
-      {extState === "authenticated" && isMainWindow && (
-        <MyContext.Provider
-          value={{
-            txList,
-            setTxList,
-            memberGroups,
-            setMemberGroups,
-            isShow,
-            onCancel,
-            onOk,
-            show,
-            message,
-            rootHeight,
-            showInfo,
-            openSnackGlobal: openSnack, 
-            setOpenSnackGlobal: setOpenSnack,
-            infoSnackCustom: infoSnack,
-            setInfoSnackCustom: setInfoSnack,
-            userInfo: userInfo,
-            downloadResource,
-            getIndividualUserInfo,
-            isUserBlocked,
-            addToBlockList,
-            removeBlockFromList,
-            getAllBlockedUsers,
-            isRunningPublicNode
-          }}
-        >
-          <Box
-            sx={{
-              width: "100vw",
-              height: isMobile ? "100%" : "100vh",
-              display: "flex",
-              flexDirection: isMobile ? "column" : "row",
-              overflow: isMobile && "hidden",
-            }}
-          >
-            <Group
-              logoutFunc={logoutFunc}
-              balance={balance}
-              userInfo={userInfo}
-              myAddress={address}
-              isFocused={isFocused}
-              isMain={isMain}
-              isOpenDrawerProfile={isOpenDrawerProfile}
-              setIsOpenDrawerProfile={setIsOpenDrawerProfile}
-              desktopViewMode={desktopViewMode}
-              setDesktopViewMode={setDesktopViewMode}
-            />
-            {!isMobile && desktopViewMode !== "apps" && renderProfile()}
-          </Box>
-
-          <Box
-            sx={{
-              position: "fixed",
-              right: "25px",
-              bottom: "25px",
-              width: "350px",
-              zIndex: 100000,
-            }}
-          >
-            <TaskManger getUserInfo={getUserInfo} />
-          </Box>
-          
-          <GlobalActions memberGroups={memberGroups} />
-        </MyContext.Provider>
-      )}
-      {isOpenSendQort && isMainWindow && (
-        <Box
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "fixed",
-            background: "#27282c",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            zIndex: 10000,
-          }}
-        >
-          <Spacer height="22px" />
-          <Box
-            sx={{
-              display: "flex",
-              width: "100%",
-              justifyContent: "flex-start",
-              paddingLeft: "22px",
-              boxSizing: "border-box",
-            }}
-          >
-            <img
-              style={{
-                cursor: "pointer",
-              }}
-              onClick={returnToMain}
-              src={Return}
-            />
-          </Box>
-          <QortPayment balance={balance} show={show} onSuccess={()=> {
-               setIsOpenSendQort(false);
-               setIsOpenSendQortSuccess(true);
-            }} 
-             defaultPaymentTo={paymentTo}
-            />
-        </Box>
-      )}
-
-      {isShowQortalRequest && !isMainWindow && (
-        <>
-          <Spacer height="120px" />
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              width: "100%",
-            }}
-          >
-            <TextP
-              sx={{
-                lineHeight: 1.2,
-                maxWidth: "90%",
-                textAlign: "center",
-              }}
-            >
-              {messageQortalRequest?.text1}
-            </TextP>
-          </Box>
-          {messageQortalRequest?.text2 && (
-            <>
-              <Spacer height="10px" />
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "flex-start",
-                  width: "90%",
+            {extState === "authenticated" && isMainWindow && (
+              <MyContext.Provider
+                value={{
+                  txList,
+                  setTxList,
+                  memberGroups,
+                  setMemberGroups,
+                  isShow,
+                  onCancel,
+                  onOk,
+                  show,
+                  message,
+                  rootHeight,
+                  showInfo,
+                  openSnackGlobal: openSnack,
+                  setOpenSnackGlobal: setOpenSnack,
+                  infoSnackCustom: infoSnack,
+                  setInfoSnackCustom: setInfoSnack,
+                  userInfo: userInfo,
+                  downloadResource,
+                  getIndividualUserInfo,
+                  isUserBlocked,
+                  addToBlockList,
+                  removeBlockFromList,
+                  getAllBlockedUsers,
+                  isRunningPublicNode,
                 }}
               >
-                <TextP
+                <Box
                   sx={{
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
+                    width: "100vw",
+                    height: isMobile ? "100%" : "100vh",
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                    overflow: isMobile && "hidden",
                   }}
                 >
-                  {messageQortalRequest?.text2}
-                </TextP>
-              </Box>
-              <Spacer height="15px" />
-            </>
-          )}
-          {messageQortalRequest?.text3 && (
-            <>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "flex-start",
-                  width: "90%",
-                }}
-              >
-                <TextP
+                  <Group
+                    logoutFunc={logoutFunc}
+                    balance={balance}
+                    userInfo={userInfo}
+                    myAddress={address}
+                    isFocused={isFocused}
+                    isMain={isMain}
+                    isOpenDrawerProfile={isOpenDrawerProfile}
+                    setIsOpenDrawerProfile={setIsOpenDrawerProfile}
+                    desktopViewMode={desktopViewMode}
+                    setDesktopViewMode={setDesktopViewMode}
+                  />
+                  {!isMobile && desktopViewMode !== "apps" && renderProfile()}
+                </Box>
+
+                <Box
                   sx={{
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
+                    position: "fixed",
+                    right: "25px",
+                    bottom: "25px",
+                    width: "350px",
+                    zIndex: 100000,
                   }}
                 >
-                  {messageQortalRequest?.text3}
-                </TextP>
-                <Spacer height="15px" />
-              </Box>
-            </>
-          )}
+                  <TaskManger getUserInfo={getUserInfo} />
+                </Box>
 
-          {messageQortalRequest?.text4 && (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "flex-start",
-                width: "90%",
-              }}
-            >
-              <TextP
-                sx={{
-                  lineHeight: 1.2,
-                  fontSize: "16px",
-                  fontWeight: "normal",
-                }}
-              >
-                {messageQortalRequest?.text4}
-              </TextP>
-            </Box>
-          )}
-
-          {messageQortalRequest?.html && (
-            <div
-              dangerouslySetInnerHTML={{ __html: messageQortalRequest?.html }}
-            />
-          )}
-          <Spacer height="15px" />
-
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: 1.2,
-              fontSize: "16px",
-              fontWeight: 700,
-              maxWidth: "90%",
-            }}
-          >
-            {messageQortalRequest?.highlightedText}
-          </TextP>
-
-          {messageQortalRequest?.fee && (
-            <>
-              <Spacer height="15px" />
-
-              <TextP
-                sx={{
-                  textAlign: "center",
-                  lineHeight: 1.2,
-                  fontSize: "16px",
-                  fontWeight: "normal",
-                  maxWidth: "90%",
-                }}
-              >
-                {"Fee: "}
-                {messageQortalRequest?.fee}
-                {" QORT"}
-              </TextP>
-              <Spacer height="15px" />
-            </>
-          )}
-          {messageQortalRequest?.checkbox1 && (
-            <Box
-              sx={{
-                display: "flex",
-                gap: "10px",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "90%",
-                marginTop: "20px",
-              }}
-            >
-              <Checkbox
-                onChange={(e) => {
-                  qortalRequestCheckbox1Ref.current = e.target.checked;
-                }}
-                edge="start"
-                tabIndex={-1}
-                disableRipple
-                defaultChecked={messageQortalRequest?.checkbox1?.value}
-                sx={{
-                  "&.Mui-checked": {
-                    color: "white", // Customize the color when checked
-                  },
-                  "& .MuiSvgIcon-root": {
-                    color: "white",
-                  },
-                }}
-              />
-
-              <Typography
-                sx={{
-                  fontSize: "14px",
-                }}
-              >
-                {messageQortalRequest?.checkbox1?.label}
-              </Typography>
-            </Box>
-          )}
-
-          <Spacer height="29px" />
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          >
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => onOkQortalRequest("accepted")}
-            >
-              accept
-            </CustomButton>
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => onCancelQortalRequest()}
-            >
-              decline
-            </CustomButton>
-          </Box>
-          <ErrorText>{sendPaymentError}</ErrorText>
-        </>
-      )}
-      {extState === "web-app-request-buy-order" && !isMainWindow && (
-        <>
-          <Spacer height="100px" />
-
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-            }}
-          >
-            The Application <br></br>{" "}
-            <TextItalic>{requestBuyOrder?.hostname}</TextItalic> <br></br>
-            <TextSpan>
-              is requesting {requestBuyOrder?.crosschainAtInfo?.length}{" "}
-              {`buy order${
-                requestBuyOrder?.crosschainAtInfo.length === 1 ? "" : "s"
-              }`}
-            </TextSpan>
-          </TextP>
-          <Spacer height="10px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "24px",
-              fontSize: "20px",
-              fontWeight: 700,
-            }}
-          >
-            {requestBuyOrder?.crosschainAtInfo?.reduce((latest, cur) => {
-              return latest + +cur?.qortAmount;
-            }, 0)}{" "}
-            QORT
-          </TextP>
-          <Spacer height="15px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-              fontSize: "14px",
-            }}
-          >
-            FOR
-          </TextP>
-          <Spacer height="15px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "24px",
-              fontSize: "20px",
-              fontWeight: 700,
-            }}
-          >
-            {roundUpToDecimals(
-              requestBuyOrder?.crosschainAtInfo?.reduce((latest, cur) => {
-                return latest + +cur?.expectedForeignAmount;
-              }, 0)
+                <GlobalActions memberGroups={memberGroups} />
+              </MyContext.Provider>
             )}
-            {` ${requestBuyOrder?.crosschainAtInfo?.[0]?.foreignBlockchain}`}
-          </TextP>
-          {/* <Spacer height="29px" />
-
-          <CustomLabel htmlFor="standard-adornment-password">
-            Confirm Wallet Password
-          </CustomLabel>
-          <Spacer height="5px" />
-          <PasswordField
-            id="standard-adornment-password"
-            value={paymentPassword}
-            onChange={(e) => setPaymentPassword(e.target.value)}
-          /> */}
-          <Spacer height="29px" />
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          >
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => confirmBuyOrder(false)}
-            >
-              accept
-            </CustomButton>
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => confirmBuyOrder(true)}
-            >
-              decline
-            </CustomButton>
-          </Box>
-          <ErrorText>{sendPaymentError}</ErrorText>
-        </>
-      )}
-
-      {extState === "web-app-request-payment" && !isMainWindow && (
-        <>
-          <Spacer height="100px" />
-
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-            }}
-          >
-            The Application <br></br>{" "}
-            <TextItalic>{sendqortState?.hostname}</TextItalic> <br></br>
-            <TextSpan>is requesting a payment</TextSpan>
-          </TextP>
-          <Spacer height="10px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-              fontSize: "10px",
-            }}
-          >
-            {sendqortState?.description}
-          </TextP>
-          <Spacer height="15px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "24px",
-              fontSize: "20px",
-              fontWeight: 700,
-            }}
-          >
-            {sendqortState?.amount} QORT
-          </TextP>
-          {/* <Spacer height="29px" />
-
-          <CustomLabel htmlFor="standard-adornment-password">
-            Confirm Wallet Password
-          </CustomLabel>
-          <Spacer height="5px" />
-          <PasswordField
-            id="standard-adornment-password"
-            value={paymentPassword}
-            onChange={(e) => setPaymentPassword(e.target.value)}
-          /> */}
-          <Spacer height="29px" />
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          >
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => confirmPayment(false)}
-            >
-              accept
-            </CustomButton>
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() => confirmPayment(true)}
-            >
-              decline
-            </CustomButton>
-          </Box>
-          <ErrorText>{sendPaymentError}</ErrorText>
-        </>
-      )}
-      {extState === "web-app-request-connection" && !isMainWindow && (
-        <>
-          <Spacer height="48px" />
-          <div
-            className="image-container"
-            style={{
-              width: "136px",
-              height: "154px",
-            }}
-          >
-            <img src={Logo1Dark} className="base-image" />
-          </div>
-          <Spacer height="38px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-            }}
-          >
-            The Application <br></br>{" "}
-            <TextItalic>{requestConnection?.hostname}</TextItalic> <br></br>
-            <TextSpan>is requestion a connection</TextSpan>
-          </TextP>
-          <Spacer height="38px" />
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          >
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() =>
-                responseToConnectionRequest(
-                  true,
-                  requestConnection?.hostname,
-                  requestConnection.interactionId
-                )
-              }
-            >
-              accept
-            </CustomButton>
-            <CustomButton
-              sx={{
-                minWidth: "102px",
-              }}
-              onClick={() =>
-                responseToConnectionRequest(
-                  false,
-                  requestConnection?.hostname,
-                  requestConnection.interactionId
-                )
-              }
-            >
-              decline
-            </CustomButton>
-          </Box>
-        </>
-      )}
-      {extState === "web-app-request-authentication" && !isMainWindow && (
-        <>
-          <Spacer height="48px" />
-          <div
-            className="image-container"
-            style={{
-              width: "136px",
-              height: "154px",
-            }}
-          >
-            <img src={Logo1Dark} className="base-image" />
-          </div>
-          <Spacer height="38px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-            }}
-          >
-            The Application <br></br>{" "}
-            <TextItalic>{requestConnection?.hostname}</TextItalic> <br></br>
-            <TextSpan>requests authentication</TextSpan>
-          </TextP>
-          <Spacer height="38px" />
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          ></Box>
-          <Spacer height="38px" />
-          <CustomButton {...getRootProps()}>
-            <input {...getInputProps()} />
-            Authenticate
-          </CustomButton>
-          <Spacer height="6px" />
-          <CustomButton
-            onClick={() => {
-              setExtstate("create-wallet");
-            }}
-          >
-            Create account
-          </CustomButton>
-        </>
-      )}
-       {extState === "wallets" && (
-        <>
-         <Spacer height="22px" />
-          <Box
-            sx={{
-              display: "flex",
-              width: "100%",
-              justifyContent: "flex-start",
-              paddingLeft: "22px",
-              boxSizing: "border-box",
-            }}
-          >
-            <img
-              style={{
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                setRawWallet(null);
-                setExtstate("not-authenticated");
-                logoutFunc();
-              }}
-              src={Return}
-            />
-          </Box>
-         <Wallets setRawWallet={setRawWallet} setExtState={setExtstate} rawWallet={rawWallet} />
-
-        </>
-      )}
-       {rawWallet && extState === "wallet-dropped" && (
-        <>
-          <Spacer height="22px" />
-          <Box
-            sx={{
-              display: "flex",
-              width: "100%",
-              justifyContent: "flex-start",
-              paddingLeft: "22px",
-              boxSizing: "border-box",
-            }}
-          >
-            <img
-              style={{
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                setRawWallet(null);
-                setExtstate("wallets");
-                logoutFunc();
-              }}
-              src={Return}
-            />
-          </Box>
-          <Spacer height="10px" />
-          <div
-            className="image-container"
-            style={{
-              width: "136px",
-              height: "154px",
-            }}
-          >
-            <img src={Logo1Dark} className="base-image" />
-          </div>
-          <Spacer height="35px" />
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <Typography>{rawWallet?.name || rawWallet?.filename || rawWallet?.address0}</Typography>
-            <Spacer height="10px" />
-            <TextP
-              sx={{
-                textAlign: "start",
-                lineHeight: "24px",
-                fontSize: "20px",
-                fontWeight: 600,
-              }}
-            >
-              Authenticate
-            </TextP>
-          </Box>
-          <Spacer height="35px" />
-
-          <>
-            <CustomLabel htmlFor="standard-adornment-password">
-              Wallet Password
-            </CustomLabel>
-            <Spacer height="5px" />
-            <PasswordField
-              id="standard-adornment-password"
-              value={authenticatePassword}
-              onChange={(e) => setAuthenticatePassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  authenticateWallet();
-                }
-              }}
-              ref={passwordRef}
-            />
-             {useLocalNode ? (
-              <>
-           <Spacer height="20px" />
-             <Typography
-                    sx={{
-                      fontSize: "12px",
-                    }}
-                  >
-                    {"Using node: "} {currentNode?.url}
-                  </Typography>
-              </>
-            ) : (
-              <>
-              <Spacer height="20px" />
-                <Typography
-                       sx={{
-                         fontSize: "12px",
-                       }}
-                     >
-                       {"Using public node"} 
-                     </Typography>
-                 </>
-            )}
-            <Spacer height="20px" />
-            <CustomButton onClick={authenticateWallet}>
-              Authenticate
-            </CustomButton>
-            <ErrorText>{walletToBeDecryptedError}</ErrorText>
-          </>
-        </>
-      )}
-      {extState === "download-wallet" && (
-        <>
-         <DownloadWallet
-            returnToMain={returnToMain}
-            setIsLoading={setIsLoading}
-            showInfo={showInfo}
-            rawWallet={rawWallet}
-            setWalletToBeDownloaded={setWalletToBeDownloaded}
-            walletToBeDownloaded={walletToBeDownloaded}
-          />
-        </>
-      )}
-      {extState === "create-wallet" && (
-        <>
-          {!walletToBeDownloaded && (
-            <>
-              <Spacer height="22px" />
+            {isOpenSendQort && isMainWindow && (
               <Box
                 sx={{
-                  display: "flex",
                   width: "100%",
-                  justifyContent: "flex-start",
-                  paddingLeft: "22px",
-                  boxSizing: "border-box",
-                }}
-              >
-                <img
-                  style={{
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    if(creationStep === 2){
-                      setCreationStep(1)
-                      return
-                    }
-                    setExtstate("not-authenticated");
-                    setShowSeed(false)
-                    setCreationStep(1)
-                    setWalletToBeDownloadedPasswordConfirm('')
-                    setWalletToBeDownloadedPassword('')
-                  }}
-                  src={Return}
-                />
-              </Box>
-              <Spacer height="15px" />
-              <div
-                className="image-container"
-                style={{
-                  width: "136px",
-                  height: "154px",
-                }}
-              >
-                <img src={Logo1Dark} className="base-image" />
-              </div>
-              <Spacer height="38px" />
-              <TextP
-                sx={{
-                  textAlign: "center",
-                  lineHeight: "15px",
-                }}
-              >
-                Set up your Qortal account
-              </TextP>
-              <Spacer height="14px" />
-              <Box sx={{
-                display: 'flex',
-                maxWidth: '100%',
-                justifyContent: 'center',
-                padding: '10px'
-              }}>
-              <Box sx={{
-                display: creationStep === 1 ? 'flex' :  'none',
-
-                flexDirection: 'column',
-                width: '350px',
-                maxWidth: '95%',
-                alignItems: 'center'
-              }}>
-                <Typography sx={{
-                  fontSize: '14px'
-                }}>
-                A ‘ <span onClick={()=> {
-                  setShowSeed(true)
-                }} style={{
-                  fontSize: '14px',
-                  color: 'steelblue',
-                  cursor: 'pointer'
-                }}>SEEDPHRASE</span> ’ has been randomly generated in the background. 
-
-
-                </Typography>
-                <Typography sx={{
-                  fontSize: '14px',
-                  marginTop: '5px'
-                }}>
-                If you wish to VIEW THE SEEDPHRASE, click the word 'SEEDPHRASE' in this text. Seedphrases are used to generate the private key for your Qortal account. For security by default, seedphrases are NOT displayed unless specifically chosen.
-                </Typography>
-                <Typography sx={{
-                  fontSize: '16px',
-                  marginTop: '15px',
-                 
-                  textAlign: 'center'
-                }}>
-               Create your Qortal account by clicking <span style={{
-                fontWeight: 'bold'
-               }}>NEXT</span> below.
-
-                </Typography>
-                <Spacer height="17px" />
-                <CustomButton onClick={()=> {
-                  setCreationStep(2)
-                }}>
-                Next
-              </CustomButton>
-                </Box>
-                <div style={{
-                  display: 'none'
-                }}>
-
-              <random-sentence-generator
-              ref={generatorRef}
-											template="adverb verb noun adjective noun adverb verb noun adjective noun adjective verbed adjective noun"
-									
-										></random-sentence-generator>
-                       </div>
-                       <Dialog
-          open={showSeed}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogContent>
-          <Box sx={{
-                flexDirection: 'column',
-                maxWidth: '400px',
-                alignItems: 'center',
-                gap: '10px',
-                display: showSeed ? 'flex' : 'none'
-              }}>
-                <Typography sx={{
-                  fontSize: '14px'
-                }}>Your seedphrase</Typography>
-               
-                <Box sx={{
-                  textAlign: 'center',
-                  width: '100%',
-                  backgroundColor: '#1f2023',
-                  borderRadius: '5px',
-                  padding: '10px',
-                }}>
-                  {generatorRef.current?.parsedString}
-                </Box>
-             
-                    <CustomButton sx={{
-                padding: '7px',
-                fontSize: '12px'
-              }} onClick={exportSeedphrase}>
-                Export Seedphrase
-              </CustomButton>
-                </Box>
-          </DialogContent>
-          <DialogActions>
-           
-            <Button  variant="contained" onClick={()=> setShowSeed(false)}>
-              close
-            </Button>
-            
-          </DialogActions>
-        </Dialog>
-                </Box>
-                <Box sx={{
-                display: creationStep === 2 ? 'flex' :  'none',
-                flexDirection: 'column',
-                alignItems: 'center',
-
-              }}>
-              <Spacer height="14px" />
-              <CustomLabel htmlFor="standard-adornment-password">
-                Wallet Password
-              </CustomLabel>
-              <Spacer height="5px" />
-              <PasswordField
-                id="standard-adornment-password"
-                value={walletToBeDownloadedPassword}
-                onChange={(e) =>
-                  setWalletToBeDownloadedPassword(e.target.value)
-                }
-              />
-              <Spacer height="6px" />
-              <CustomLabel htmlFor="standard-adornment-password">
-                Confirm Wallet Password
-              </CustomLabel>
-              <Spacer height="5px" />
-              <PasswordField
-                id="standard-adornment-password"
-                value={walletToBeDownloadedPasswordConfirm}
-                onChange={(e) =>
-                  setWalletToBeDownloadedPasswordConfirm(e.target.value)
-                }
-              />
-                <Spacer height="5px" />
-                <Typography variant="body2">There is no minimum length requirement</Typography>
-              <Spacer height="17px" />
-
-              <CustomButton onClick={createAccountFunc}>
-                Create Account
-              </CustomButton>
-              </Box>
-              <ErrorText>{walletToBeDownloadedError}</ErrorText>
-            </>
-          )}
-
-          {walletToBeDownloaded && (
-            <>
-              <Spacer height="48px" />
-              <img src={Success} />
-              <Spacer height="45px" />
-              <TextP
-                sx={{
-                  textAlign: "center",
-                  lineHeight: "15px",
-                }}
-              >
-                Congrats, you’re all set up!
-              </TextP>
-              <Spacer height="50px"/>
-              <Box sx={{
-                display: 'flex',
-                gap: '15px',
-                alignItems: 'center',
-                padding: '10px'
-              }}>
-                <WarningIcon color="warning" />
-                <Typography>Save your account in a place where you will remember it!</Typography>
-              </Box>
-              <Spacer height="50px" />
-              <CustomButton
-                onClick={async () => {
-                  await saveFileToDiskFunc();
-                  returnToMain();
-                  await showInfo({
-                    message: isNative ? `Your account file was saved to internal storage, in the document folder. Keep that file secure.` : `Your account file was downloaded by your browser. Keep that file secure.`
-                   })
-                }}
-              >
-                Backup Account
-              </CustomButton>
-            </>
-          )}
-        </>
-      )}
-      {isOpenSendQortSuccess && (
-        <Box
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "fixed",
-            background: "#27282c",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            zIndex: 10000,
-          }}
-        >
-          <Spacer height="48px" />
-          <img src={Success} />
-          <Spacer height="45px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-            }}
-          >
-            The transfer was succesful!
-          </TextP>
-          <Spacer height="100px" />
-          <CustomButton
-            onClick={() => {
-              returnToMain();
-            }}
-          >
-            Continue
-          </CustomButton>
-        </Box>
-      )}
-      {extState === "transfer-success-request" && (
-        <>
-          <Spacer height="48px" />
-          <img src={Success} />
-          <Spacer height="45px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-            }}
-          >
-            The transfer was succesful!
-          </TextP>
-          <Spacer height="100px" />
-          <CustomButton
-            onClick={() => {
-              window.close();
-            }}
-          >
-            Continue
-          </CustomButton>
-        </>
-      )}
-      {extState === "buy-order-submitted" && (
-        <>
-          <Spacer height="48px" />
-          <img src={Success} />
-          <Spacer height="45px" />
-          <TextP
-            sx={{
-              textAlign: "center",
-              lineHeight: "15px",
-            }}
-          >
-            Your buy order was submitted
-          </TextP>
-          <Spacer height="100px" />
-          <CustomButton
-            onClick={() => {
-              window.close();
-            }}
-          >
-            Close
-          </CustomButton>
-        </>
-      )}
-      {countdown && (
-        <Box
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "20px",
-          }}
-        >
-          {/* <Spacer  height="25px"/> */}
-          <CountdownCircleTimer
-            isPlaying
-            duration={countdown}
-            colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
-            colorsTime={[7, 5, 2, 0]}
-            onComplete={() => {
-              window.close();
-            }}
-            size={75}
-            strokeWidth={8}
-          >
-            {({ remainingTime }) => <TextP>{remainingTime}</TextP>}
-          </CountdownCircleTimer>
-        </Box>
-      )}
-      {isLoading && <Loader />}
-      {isShow && (
-        <Dialog
-          open={isShow}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-          sx={{
-            zIndex: 10001
-          }}
-        >
-          <DialogTitle id="alert-dialog-title">{message.paymentFee ? "Payment"  : "Publish"}</DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              {message.message}
-            </DialogContentText>
-            {message?.paymentFee && (
-               <DialogContentText id="alert-dialog-description2">
-               payment fee: {message.paymentFee}
-             </DialogContentText>
-            )}
-           {message?.publishFee && (
-             <DialogContentText id="alert-dialog-description2">
-             publish fee: {message.publishFee}
-           </DialogContentText>
-           )}
-          </DialogContent>
-          <DialogActions>
-          <Button sx={{
-                  backgroundColor: 'var(--green)',
-                  color: 'black',
-                  opacity: 0.7,
-                  fontWeight: 'bold',
-                  '&:hover': {
-                    backgroundColor: 'var(--green)',
-                  color: 'black',
-                  opacity: 1
-                  },
-                }} variant="contained" onClick={onOk} autoFocus>
-              accept
-            </Button>
-            <Button sx={{
-                  backgroundColor: 'var(--danger)',
-                  color: 'black',
-                  opacity: 0.7,
-                  fontWeight: 'bold',
-                  '&:hover': {
-                    backgroundColor: 'var(--danger)',
-                  color: 'black',
-                  opacity: 1
-                  },
-                }}  variant="contained" onClick={onCancel}>
-              decline
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
-      {isShowInfo && (
-        <Dialog
-          open={isShowInfo}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">{"Important Info"}</DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              {messageInfo.message}
-            </DialogContentText>
-           
-          </DialogContent>
-          <DialogActions>
-            
-            <Button variant="contained" onClick={onOkInfo} autoFocus>
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
-      {isShowUnsavedChanges && (
-        <Dialog
-          open={isShowUnsavedChanges}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">{"LOGOUT"}</DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              {messageUnsavedChanges.message}
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button size="small" variant="contained" onClick={onCancelUnsavedChanges}>
-              Cancel
-            </Button>
-            <Button size="small" variant="contained" onClick={onOkUnsavedChanges} autoFocus>
-              Continue to Logout
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
-      {isShowQortalRequestExtension && isMainWindow && (
-        <Dialog
-          open={isShowQortalRequestExtension}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <CountdownCircleTimer
-            isPlaying
-            duration={60}
-            colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
-            colorsTime={[7, 5, 2, 0]}
-            onComplete={() => {
-              onCancelQortalRequestExtension();
-            }}
-            size={50}
-            strokeWidth={5}
-          >
-            {({ remainingTime }) => <TextP>{remainingTime}</TextP>}
-          </CountdownCircleTimer>
-          <Box
-            sx={{
-              display: "flex",
-              padding: "20px",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              minHeight: "400px",
-              maxHeight: "90vh",
-              overflow: "auto",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                width: "100%",
-              }}
-            >
-              <TextP
-                sx={{
-                  lineHeight: 1.2,
-                  maxWidth: "90%",
-                  textAlign: "center",
-                }}
-              >
-                {messageQortalRequestExtension?.text1}
-              </TextP>
-            </Box>
-            {messageQortalRequestExtension?.text2 && (
-              <>
-                <Spacer height="10px" />
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    width: "90%",
-                  }}
-                >
-                  <TextP
-                    sx={{
-                      lineHeight: 1.2,
-                      fontSize: "16px",
-                      fontWeight: "normal",
-                    }}
-                  >
-                    {messageQortalRequestExtension?.text2}
-                  </TextP>
-                </Box>
-                <Spacer height="15px" />
-              </>
-            )}
-            {messageQortalRequestExtension?.text3 && (
-              <>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    width: "90%",
-                  }}
-                >
-                  <TextP
-                    sx={{
-                      lineHeight: 1.2,
-                      fontSize: "16px",
-                      fontWeight: "normal",
-                    }}
-                  >
-                    {messageQortalRequestExtension?.text3}
-                  </TextP>
-                  
-                </Box>
-                <Spacer height="15px" />
-              </>
-            )}
-
-            {messageQortalRequestExtension?.text4 && (
-              <>
-              <Box
-                sx={{
+                  height: "100%",
+                  position: "fixed",
+                  background: "#27282c",
                   display: "flex",
-                  justifyContent: "flex-start",
-                  width: "90%",
-                }}
-              >
-                <TextP
-                  sx={{
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                  }}
-                >
-                  {messageQortalRequestExtension?.text4}
-                </TextP>
-              </Box>
-              <Spacer height="15px" />
-              </>
-            )}
-
-            {messageQortalRequestExtension?.html && (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: messageQortalRequestExtension?.html,
-                }}
-              />
-            )}
-            <Spacer height="15px" />
-
-            <TextP
-              sx={{
-                textAlign: "center",
-                lineHeight: 1.2,
-                fontSize: "16px",
-                fontWeight: 700,
-                maxWidth: "90%",
-              }}
-            >
-              {messageQortalRequestExtension?.highlightedText}
-            </TextP>
-            {messageQortalRequestExtension?.json && (
-              <>
-                          <Spacer height="15px" />
-
-                          <JsonView data={messageQortalRequestExtension?.json} shouldExpandNode={allExpanded} style={darkStyles} />
-                          <Spacer height="15px" />
-
-              </>
-            )}
-            {messageQortalRequestExtension?.fee && (
-              <>
-                <Spacer height="15px" />
-
-                <TextP
-                  sx={{
-                    textAlign: "center",
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                    maxWidth: "90%",
-                  }}
-                >
-                  {"Fee: "}
-                  {messageQortalRequestExtension?.fee}
-                  {" QORT"}
-                </TextP>
-                <Spacer height="15px" />
-              </>
-            )}
-              {messageQortalRequestExtension?.appFee && (
-              <>
-                <TextP
-                  sx={{
-                    textAlign: "center",
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                    maxWidth: "90%",
-                  }}
-                >
-                  {"App Fee: "}
-                  {messageQortalRequestExtension?.appFee}
-                  {" QORT"}
-                </TextP>
-                <Spacer height="15px" />
-              </>
-            )}
-            {messageQortalRequestExtension?.foreignFee && (
-              <>
-                <Spacer height="15px" />
-
-                <TextP
-                  sx={{
-                    textAlign: "center",
-                    lineHeight: 1.2,
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                    maxWidth: "90%",
-                  }}
-                >
-                  {"Foreign Fee: "}
-                  {messageQortalRequestExtension?.foreignFee}
-                </TextP>
-                <Spacer height="15px" />
-              </>
-            )}
-            {messageQortalRequestExtension?.checkbox1 && (
-              <Box
-                sx={{
-                  display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "center",
-                  width: "90%",
-                  marginTop: "20px",
+                  zIndex: 10000,
                 }}
               >
-                <Checkbox
-                  onChange={(e) => {
-                    qortalRequestCheckbox1Ref.current = e.target.checked;
-                  }}
-                  edge="start"
-                  tabIndex={-1}
-                  disableRipple
-                  defaultChecked={
-                    messageQortalRequestExtension?.checkbox1?.value
-                  }
+                <Spacer height="22px" />
+                <Box
                   sx={{
-                    "&.Mui-checked": {
-                      color: "white", // Customize the color when checked
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "white",
-                    },
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "flex-start",
+                    paddingLeft: "22px",
+                    boxSizing: "border-box",
                   }}
+                >
+                  <img
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={returnToMain}
+                    src={Return}
+                  />
+                </Box>
+                <QortPayment
+                  balance={balance}
+                  show={show}
+                  onSuccess={() => {
+                    setIsOpenSendQort(false);
+                    setIsOpenSendQortSuccess(true);
+                  }}
+                  defaultPaymentTo={paymentTo}
                 />
+              </Box>
+            )}
 
-                <Typography
+            {isShowQortalRequest && !isMainWindow && (
+              <>
+                <Spacer height="120px" />
+                <Box
                   sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
+                  }}
+                >
+                  <TextP
+                    sx={{
+                      lineHeight: 1.2,
+                      maxWidth: "90%",
+                      textAlign: "center",
+                    }}
+                  >
+                    {messageQortalRequest?.text1}
+                  </TextP>
+                </Box>
+                {messageQortalRequest?.text2 && (
+                  <>
+                    <Spacer height="10px" />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-start",
+                        width: "90%",
+                      }}
+                    >
+                      <TextP
+                        sx={{
+                          lineHeight: 1.2,
+                          fontSize: "16px",
+                          fontWeight: "normal",
+                        }}
+                      >
+                        {messageQortalRequest?.text2}
+                      </TextP>
+                    </Box>
+                    <Spacer height="15px" />
+                  </>
+                )}
+                {messageQortalRequest?.text3 && (
+                  <>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-start",
+                        width: "90%",
+                      }}
+                    >
+                      <TextP
+                        sx={{
+                          lineHeight: 1.2,
+                          fontSize: "16px",
+                          fontWeight: "normal",
+                        }}
+                      >
+                        {messageQortalRequest?.text3}
+                      </TextP>
+                      <Spacer height="15px" />
+                    </Box>
+                  </>
+                )}
+
+                {messageQortalRequest?.text4 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "flex-start",
+                      width: "90%",
+                    }}
+                  >
+                    <TextP
+                      sx={{
+                        lineHeight: 1.2,
+                        fontSize: "16px",
+                        fontWeight: "normal",
+                      }}
+                    >
+                      {messageQortalRequest?.text4}
+                    </TextP>
+                  </Box>
+                )}
+
+                {messageQortalRequest?.details && (
+                  <Box sx={{ width: "90%" }}>
+                    <QortalRequestDetails
+                      details={messageQortalRequest?.details}
+                    />
+                  </Box>
+                )}
+                <Spacer height="15px" />
+
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: 1.2,
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    maxWidth: "90%",
+                  }}
+                >
+                  {messageQortalRequest?.highlightedText}
+                </TextP>
+
+                {messageQortalRequest?.fee && (
+                  <>
+                    <Spacer height="15px" />
+
+                    <TextP
+                      sx={{
+                        textAlign: "center",
+                        lineHeight: 1.2,
+                        fontSize: "16px",
+                        fontWeight: "normal",
+                        maxWidth: "90%",
+                      }}
+                    >
+                      {"Fee: "}
+                      {messageQortalRequest?.fee}
+                      {" QORT"}
+                    </TextP>
+                    <Spacer height="15px" />
+                  </>
+                )}
+                {messageQortalRequest?.checkbox1 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: "10px",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "90%",
+                      marginTop: "20px",
+                    }}
+                  >
+                    <Checkbox
+                      onChange={(e) => {
+                        qortalRequestCheckbox1Ref.current = e.target.checked;
+                      }}
+                      edge="start"
+                      tabIndex={-1}
+                      disableRipple
+                      defaultChecked={messageQortalRequest?.checkbox1?.value}
+                      sx={{
+                        "&.Mui-checked": {
+                          color: "white", // Customize the color when checked
+                        },
+                        "& .MuiSvgIcon-root": {
+                          color: "white",
+                        },
+                      }}
+                    />
+
+                    <Typography
+                      sx={{
+                        fontSize: "14px",
+                      }}
+                    >
+                      {messageQortalRequest?.checkbox1?.label}
+                    </Typography>
+                  </Box>
+                )}
+
+                <Spacer height="29px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                  }}
+                >
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() => onOkQortalRequest("accepted")}
+                  >
+                    accept
+                  </CustomButton>
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() => onCancelQortalRequest()}
+                  >
+                    decline
+                  </CustomButton>
+                </Box>
+                <ErrorText>{sendPaymentError}</ErrorText>
+              </>
+            )}
+            {extState === "web-app-request-buy-order" && !isMainWindow && (
+              <>
+                <Spacer height="100px" />
+
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                  }}
+                >
+                  The Application <br></br>{" "}
+                  <TextItalic>{requestBuyOrder?.hostname}</TextItalic> <br></br>
+                  <TextSpan>
+                    is requesting {requestBuyOrder?.crosschainAtInfo?.length}{" "}
+                    {`buy order${
+                      requestBuyOrder?.crosschainAtInfo.length === 1 ? "" : "s"
+                    }`}
+                  </TextSpan>
+                </TextP>
+                <Spacer height="10px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "24px",
+                    fontSize: "20px",
+                    fontWeight: 700,
+                  }}
+                >
+                  {requestBuyOrder?.crosschainAtInfo?.reduce((latest, cur) => {
+                    return latest + +cur?.qortAmount;
+                  }, 0)}{" "}
+                  QORT
+                </TextP>
+                <Spacer height="15px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
                     fontSize: "14px",
                   }}
                 >
-                  {messageQortalRequestExtension?.checkbox1?.label}
-                </Typography>
-              </Box>
-            )}
-            {messageQortalRequestExtension?.confirmCheckbox && (
-              <FormControlLabel
-              control={
-                <Checkbox
-                  onChange={(e) => setConfirmRequestRead(e.target.checked)}
-                  checked={confirmRequestRead}
-                  edge="start"
-                  tabIndex={-1}
-                  disableRipple
+                  FOR
+                </TextP>
+                <Spacer height="15px" />
+                <TextP
                   sx={{
-                    "&.Mui-checked": {
-                      color: "white",
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "white",
-                    },
+                    textAlign: "center",
+                    lineHeight: "24px",
+                    fontSize: "20px",
+                    fontWeight: 700,
                   }}
-                />
-              }
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Typography sx={{ fontSize: "14px" }}>
-                      {messageQortalRequestExtension?.confirmCheckboxLabel || 'I have read this request'}
-                  </Typography>
-                  <PriorityHighIcon color="warning" />
+                >
+                  {roundUpToDecimals(
+                    requestBuyOrder?.crosschainAtInfo?.reduce((latest, cur) => {
+                      return latest + +cur?.expectedForeignAmount;
+                    }, 0),
+                  )}
+                  {` ${requestBuyOrder?.crosschainAtInfo?.[0]?.foreignBlockchain}`}
+                </TextP>
+                {/* <Spacer height="29px" />
+
+          <CustomLabel htmlFor="standard-adornment-password">
+            Confirm Wallet Password
+          </CustomLabel>
+          <Spacer height="5px" />
+          <PasswordField
+            id="standard-adornment-password"
+            value={paymentPassword}
+            onChange={(e) => setPaymentPassword(e.target.value)}
+          /> */}
+                <Spacer height="29px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                  }}
+                >
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() => confirmBuyOrder(false)}
+                  >
+                    accept
+                  </CustomButton>
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() => confirmBuyOrder(true)}
+                  >
+                    decline
+                  </CustomButton>
                 </Box>
-              }
-            />
+                <ErrorText>{sendPaymentError}</ErrorText>
+              </>
             )}
 
-            <Spacer height="29px" />
-            <Box
+            {extState === "web-app-request-payment" && !isMainWindow && (
+              <>
+                <Spacer height="100px" />
+
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                  }}
+                >
+                  The Application <br></br>{" "}
+                  <TextItalic>{sendqortState?.hostname}</TextItalic> <br></br>
+                  <TextSpan>is requesting a payment</TextSpan>
+                </TextP>
+                <Spacer height="10px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                    fontSize: "10px",
+                  }}
+                >
+                  {sendqortState?.description}
+                </TextP>
+                <Spacer height="15px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "24px",
+                    fontSize: "20px",
+                    fontWeight: 700,
+                  }}
+                >
+                  {sendqortState?.amount} QORT
+                </TextP>
+                {/* <Spacer height="29px" />
+
+          <CustomLabel htmlFor="standard-adornment-password">
+            Confirm Wallet Password
+          </CustomLabel>
+          <Spacer height="5px" />
+          <PasswordField
+            id="standard-adornment-password"
+            value={paymentPassword}
+            onChange={(e) => setPaymentPassword(e.target.value)}
+          /> */}
+                <Spacer height="29px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                  }}
+                >
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() => confirmPayment(false)}
+                  >
+                    accept
+                  </CustomButton>
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() => confirmPayment(true)}
+                  >
+                    decline
+                  </CustomButton>
+                </Box>
+                <ErrorText>{sendPaymentError}</ErrorText>
+              </>
+            )}
+            {extState === "web-app-request-connection" && !isMainWindow && (
+              <>
+                <Spacer height="48px" />
+                <div
+                  className="image-container"
+                  style={{
+                    width: "136px",
+                    height: "154px",
+                  }}
+                >
+                  <img src={Logo1Dark} className="base-image" />
+                </div>
+                <Spacer height="38px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                  }}
+                >
+                  The Application <br></br>{" "}
+                  <TextItalic>{requestConnection?.hostname}</TextItalic>{" "}
+                  <br></br>
+                  <TextSpan>is requestion a connection</TextSpan>
+                </TextP>
+                <Spacer height="38px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                  }}
+                >
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() =>
+                      responseToConnectionRequest(
+                        true,
+                        requestConnection?.hostname,
+                        requestConnection.interactionId,
+                      )
+                    }
+                  >
+                    accept
+                  </CustomButton>
+                  <CustomButton
+                    sx={{
+                      minWidth: "102px",
+                    }}
+                    onClick={() =>
+                      responseToConnectionRequest(
+                        false,
+                        requestConnection?.hostname,
+                        requestConnection.interactionId,
+                      )
+                    }
+                  >
+                    decline
+                  </CustomButton>
+                </Box>
+              </>
+            )}
+            {extState === "web-app-request-authentication" && !isMainWindow && (
+              <>
+                <Spacer height="48px" />
+                <div
+                  className="image-container"
+                  style={{
+                    width: "136px",
+                    height: "154px",
+                  }}
+                >
+                  <img src={Logo1Dark} className="base-image" />
+                </div>
+                <Spacer height="38px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                  }}
+                >
+                  The Application <br></br>{" "}
+                  <TextItalic>{requestConnection?.hostname}</TextItalic>{" "}
+                  <br></br>
+                  <TextSpan>requests authentication</TextSpan>
+                </TextP>
+                <Spacer height="38px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                  }}
+                ></Box>
+                <Spacer height="38px" />
+                <CustomButton {...getRootProps()}>
+                  <input {...getInputProps()} />
+                  Authenticate
+                </CustomButton>
+                <Spacer height="6px" />
+                <CustomButton
+                  onClick={() => {
+                    setExtstate("create-wallet");
+                  }}
+                >
+                  Create account
+                </CustomButton>
+              </>
+            )}
+            {extState === "wallets" && (
+              <>
+                <Spacer height="22px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "flex-start",
+                    paddingLeft: "22px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <img
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setRawWallet(null);
+                      setExtstate("not-authenticated");
+                      logoutFunc();
+                    }}
+                    src={Return}
+                  />
+                </Box>
+                <Wallets
+                  setRawWallet={setRawWallet}
+                  setExtState={setExtstate}
+                  rawWallet={rawWallet}
+                />
+              </>
+            )}
+            {rawWallet && extState === "wallet-dropped" && (
+              <>
+                <Spacer height="22px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "flex-start",
+                    paddingLeft: "22px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <img
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setRawWallet(null);
+                      setExtstate("wallets");
+                      logoutFunc();
+                    }}
+                    src={Return}
+                  />
+                </Box>
+                <Spacer height="10px" />
+                <div
+                  className="image-container"
+                  style={{
+                    width: "136px",
+                    height: "154px",
+                  }}
+                >
+                  <img src={Logo1Dark} className="base-image" />
+                </div>
+                <Spacer height="35px" />
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography>
+                    {rawWallet?.name ||
+                      rawWallet?.filename ||
+                      rawWallet?.address0}
+                  </Typography>
+                  <Spacer height="10px" />
+                  <TextP
+                    sx={{
+                      textAlign: "start",
+                      lineHeight: "24px",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Authenticate
+                  </TextP>
+                </Box>
+                <Spacer height="35px" />
+
+                <>
+                  <CustomLabel htmlFor="standard-adornment-password">
+                    Wallet Password
+                  </CustomLabel>
+                  <Spacer height="5px" />
+                  <PasswordField
+                    id="standard-adornment-password"
+                    value={authenticatePassword}
+                    onChange={(e) => setAuthenticatePassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        authenticateWallet();
+                      }
+                    }}
+                    ref={passwordRef}
+                  />
+                  {useLocalNode ? (
+                    <>
+                      <Spacer height="20px" />
+                      <Typography
+                        sx={{
+                          fontSize: "12px",
+                        }}
+                      >
+                        {"Using node: "} {currentNode?.url}
+                      </Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Spacer height="20px" />
+                      <Typography
+                        sx={{
+                          fontSize: "12px",
+                        }}
+                      >
+                        {"Using public node"}
+                      </Typography>
+                    </>
+                  )}
+                  <Spacer height="20px" />
+                  <CustomButton onClick={authenticateWallet}>
+                    Authenticate
+                  </CustomButton>
+                  <ErrorText>{walletToBeDecryptedError}</ErrorText>
+                </>
+              </>
+            )}
+            {extState === "download-wallet" && (
+              <>
+                <DownloadWallet
+                  returnToMain={returnToMain}
+                  setIsLoading={setIsLoading}
+                  showInfo={showInfo}
+                  rawWallet={rawWallet}
+                  setWalletToBeDownloaded={setWalletToBeDownloaded}
+                  walletToBeDownloaded={walletToBeDownloaded}
+                />
+              </>
+            )}
+            {extState === "create-wallet" && (
+              <>
+                {!walletToBeDownloaded && (
+                  <>
+                    <Spacer height="22px" />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        width: "100%",
+                        justifyContent: "flex-start",
+                        paddingLeft: "22px",
+                        boxSizing: "border-box",
+                      }}
+                    >
+                      <img
+                        style={{
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          if (creationStep === 2) {
+                            setCreationStep(1);
+                            return;
+                          }
+                          setExtstate("not-authenticated");
+                          setShowSeed(false);
+                          setCreationStep(1);
+                          setWalletToBeDownloadedPasswordConfirm("");
+                          setWalletToBeDownloadedPassword("");
+                        }}
+                        src={Return}
+                      />
+                    </Box>
+                    <Spacer height="15px" />
+                    <div
+                      className="image-container"
+                      style={{
+                        width: "136px",
+                        height: "154px",
+                      }}
+                    >
+                      <img src={Logo1Dark} className="base-image" />
+                    </div>
+                    <Spacer height="38px" />
+                    <TextP
+                      sx={{
+                        textAlign: "center",
+                        lineHeight: "15px",
+                      }}
+                    >
+                      Set up your Qortal account
+                    </TextP>
+                    <Spacer height="14px" />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        maxWidth: "100%",
+                        justifyContent: "center",
+                        padding: "10px",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: creationStep === 1 ? "flex" : "none",
+
+                          flexDirection: "column",
+                          width: "350px",
+                          maxWidth: "95%",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                          }}
+                        >
+                          A ‘{" "}
+                          <span
+                            onClick={() => {
+                              setShowSeed(true);
+                            }}
+                            style={{
+                              fontSize: "14px",
+                              color: "steelblue",
+                              cursor: "pointer",
+                            }}
+                          >
+                            SEEDPHRASE
+                          </span>{" "}
+                          ’ has been randomly generated in the background.
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            marginTop: "5px",
+                          }}
+                        >
+                          If you wish to VIEW THE SEEDPHRASE, click the word
+                          'SEEDPHRASE' in this text. Seedphrases are used to
+                          generate the private key for your Qortal account. For
+                          security by default, seedphrases are NOT displayed
+                          unless specifically chosen.
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: "16px",
+                            marginTop: "15px",
+
+                            textAlign: "center",
+                          }}
+                        >
+                          Create your Qortal account by clicking{" "}
+                          <span
+                            style={{
+                              fontWeight: "bold",
+                            }}
+                          >
+                            NEXT
+                          </span>{" "}
+                          below.
+                        </Typography>
+                        <Spacer height="17px" />
+                        <CustomButton
+                          onClick={() => {
+                            setCreationStep(2);
+                          }}
+                        >
+                          Next
+                        </CustomButton>
+                      </Box>
+                      <div
+                        style={{
+                          display: "none",
+                        }}
+                      >
+                        <random-sentence-generator
+                          ref={generatorRef}
+                          template="adverb verb noun adjective noun adverb verb noun adjective noun adjective verbed adjective noun"
+                        ></random-sentence-generator>
+                      </div>
+                      <Dialog
+                        open={showSeed}
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description"
+                      >
+                        <DialogContent>
+                          <Box
+                            sx={{
+                              flexDirection: "column",
+                              maxWidth: "400px",
+                              alignItems: "center",
+                              gap: "10px",
+                              display: showSeed ? "flex" : "none",
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: "14px",
+                              }}
+                            >
+                              Your seedphrase
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                textAlign: "center",
+                                width: "100%",
+                                backgroundColor: "#1f2023",
+                                borderRadius: "5px",
+                                padding: "10px",
+                              }}
+                            >
+                              {generatorRef.current?.parsedString}
+                            </Box>
+
+                            <CustomButton
+                              sx={{
+                                padding: "7px",
+                                fontSize: "12px",
+                              }}
+                              onClick={exportSeedphrase}
+                            >
+                              Export Seedphrase
+                            </CustomButton>
+                          </Box>
+                        </DialogContent>
+                        <DialogActions>
+                          <Button
+                            variant="contained"
+                            onClick={() => setShowSeed(false)}
+                          >
+                            close
+                          </Button>
+                        </DialogActions>
+                      </Dialog>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: creationStep === 2 ? "flex" : "none",
+                        flexDirection: "column",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Spacer height="14px" />
+                      <CustomLabel htmlFor="standard-adornment-password">
+                        Wallet Password
+                      </CustomLabel>
+                      <Spacer height="5px" />
+                      <PasswordField
+                        id="standard-adornment-password"
+                        value={walletToBeDownloadedPassword}
+                        onChange={(e) =>
+                          setWalletToBeDownloadedPassword(e.target.value)
+                        }
+                      />
+                      <Spacer height="6px" />
+                      <CustomLabel htmlFor="standard-adornment-password">
+                        Confirm Wallet Password
+                      </CustomLabel>
+                      <Spacer height="5px" />
+                      <PasswordField
+                        id="standard-adornment-password"
+                        value={walletToBeDownloadedPasswordConfirm}
+                        onChange={(e) =>
+                          setWalletToBeDownloadedPasswordConfirm(e.target.value)
+                        }
+                      />
+                      <Spacer height="5px" />
+                      <Typography variant="body2">
+                        There is no minimum length requirement
+                      </Typography>
+                      <Spacer height="17px" />
+
+                      <CustomButton onClick={createAccountFunc}>
+                        Create Account
+                      </CustomButton>
+                    </Box>
+                    <ErrorText>{walletToBeDownloadedError}</ErrorText>
+                  </>
+                )}
+
+                {walletToBeDownloaded && (
+                  <>
+                    <Spacer height="48px" />
+                    <img src={Success} />
+                    <Spacer height="45px" />
+                    <TextP
+                      sx={{
+                        textAlign: "center",
+                        lineHeight: "15px",
+                      }}
+                    >
+                      Congrats, you’re all set up!
+                    </TextP>
+                    <Spacer height="50px" />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: "15px",
+                        alignItems: "center",
+                        padding: "10px",
+                      }}
+                    >
+                      <WarningIcon color="warning" />
+                      <Typography>
+                        Save your account in a place where you will remember it!
+                      </Typography>
+                    </Box>
+                    <Spacer height="50px" />
+                    <CustomButton
+                      onClick={async () => {
+                        await saveFileToDiskFunc();
+                        returnToMain();
+                        await showInfo({
+                          message: isNative
+                            ? `Your account file was saved to internal storage, in the document folder. Keep that file secure.`
+                            : `Your account file was downloaded by your browser. Keep that file secure.`,
+                        });
+                      }}
+                    >
+                      Backup Account
+                    </CustomButton>
+                  </>
+                )}
+              </>
+            )}
+            {isOpenSendQortSuccess && (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  position: "fixed",
+                  background: "#27282c",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  zIndex: 10000,
+                }}
+              >
+                <Spacer height="48px" />
+                <img src={Success} />
+                <Spacer height="45px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                  }}
+                >
+                  The transfer was succesful!
+                </TextP>
+                <Spacer height="100px" />
+                <CustomButton
+                  onClick={() => {
+                    returnToMain();
+                  }}
+                >
+                  Continue
+                </CustomButton>
+              </Box>
+            )}
+            {extState === "transfer-success-request" && (
+              <>
+                <Spacer height="48px" />
+                <img src={Success} />
+                <Spacer height="45px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                  }}
+                >
+                  The transfer was succesful!
+                </TextP>
+                <Spacer height="100px" />
+                <CustomButton
+                  onClick={() => {
+                    window.close();
+                  }}
+                >
+                  Continue
+                </CustomButton>
+              </>
+            )}
+            {extState === "buy-order-submitted" && (
+              <>
+                <Spacer height="48px" />
+                <img src={Success} />
+                <Spacer height="45px" />
+                <TextP
+                  sx={{
+                    textAlign: "center",
+                    lineHeight: "15px",
+                  }}
+                >
+                  Your buy order was submitted
+                </TextP>
+                <Spacer height="100px" />
+                <CustomButton
+                  onClick={() => {
+                    window.close();
+                  }}
+                >
+                  Close
+                </CustomButton>
+              </>
+            )}
+            {countdown && (
+              <Box
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  left: "20px",
+                }}
+              >
+                {/* <Spacer  height="25px"/> */}
+                <CountdownCircleTimer
+                  isPlaying
+                  duration={countdown}
+                  colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
+                  colorsTime={[7, 5, 2, 0]}
+                  onComplete={() => {
+                    window.close();
+                  }}
+                  size={75}
+                  strokeWidth={8}
+                >
+                  {({ remainingTime }) => <TextP>{remainingTime}</TextP>}
+                </CountdownCircleTimer>
+              </Box>
+            )}
+            {isLoading && <Loader />}
+            {isShow && (
+              <Dialog
+                open={isShow}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+                sx={{
+                  zIndex: 10001,
+                }}
+              >
+                <DialogTitle id="alert-dialog-title">
+                  {message.paymentFee ? "Payment" : "Publish"}
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                    {message.message}
+                  </DialogContentText>
+                  {message?.paymentFee && (
+                    <DialogContentText id="alert-dialog-description2">
+                      payment fee: {message.paymentFee}
+                    </DialogContentText>
+                  )}
+                  {message?.publishFee && (
+                    <DialogContentText id="alert-dialog-description2">
+                      publish fee: {message.publishFee}
+                    </DialogContentText>
+                  )}
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    sx={{
+                      backgroundColor: "var(--green)",
+                      color: "black",
+                      opacity: 0.7,
+                      fontWeight: "bold",
+                      "&:hover": {
+                        backgroundColor: "var(--green)",
+                        color: "black",
+                        opacity: 1,
+                      },
+                    }}
+                    variant="contained"
+                    onClick={onOk}
+                    autoFocus
+                  >
+                    accept
+                  </Button>
+                  <Button
+                    sx={{
+                      backgroundColor: "var(--danger)",
+                      color: "black",
+                      opacity: 0.7,
+                      fontWeight: "bold",
+                      "&:hover": {
+                        backgroundColor: "var(--danger)",
+                        color: "black",
+                        opacity: 1,
+                      },
+                    }}
+                    variant="contained"
+                    onClick={onCancel}
+                  >
+                    decline
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            )}
+            {isShowInfo && (
+              <Dialog
+                open={isShowInfo}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogTitle id="alert-dialog-title">
+                  {"Important Info"}
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                    {messageInfo.message}
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button variant="contained" onClick={onOkInfo} autoFocus>
+                    Close
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            )}
+            {isShowUnsavedChanges && (
+              <Dialog
+                open={isShowUnsavedChanges}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogTitle id="alert-dialog-title">{"LOGOUT"}</DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                    {messageUnsavedChanges.message}
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={onCancelUnsavedChanges}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={onOkUnsavedChanges}
+                    autoFocus
+                  >
+                    Continue to Logout
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            )}
+            {isShowQortalRequestExtension && isMainWindow && (
+              <Dialog
+                open={isShowQortalRequestExtension}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+              >
+                <CountdownCircleTimer
+                  isPlaying
+                  duration={60}
+                  colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
+                  colorsTime={[7, 5, 2, 0]}
+                  onComplete={() => {
+                    onCancelQortalRequestExtension();
+                  }}
+                  size={50}
+                  strokeWidth={5}
+                >
+                  {({ remainingTime }) => <TextP>{remainingTime}</TextP>}
+                </CountdownCircleTimer>
+                <Box
+                  sx={{
+                    display: "flex",
+                    padding: "20px",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    minHeight: "400px",
+                    maxHeight: "90vh",
+                    overflow: "auto",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <TextP
+                      sx={{
+                        lineHeight: 1.2,
+                        maxWidth: "90%",
+                        textAlign: "center",
+                      }}
+                    >
+                      {messageQortalRequestExtension?.text1}
+                    </TextP>
+                  </Box>
+                  {messageQortalRequestExtension?.text2 && (
+                    <>
+                      <Spacer height="10px" />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-start",
+                          width: "90%",
+                        }}
+                      >
+                        <TextP
+                          sx={{
+                            lineHeight: 1.2,
+                            fontSize: "16px",
+                            fontWeight: "normal",
+                          }}
+                        >
+                          {messageQortalRequestExtension?.text2}
+                        </TextP>
+                      </Box>
+                      <Spacer height="15px" />
+                    </>
+                  )}
+                  {messageQortalRequestExtension?.text3 && (
+                    <>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-start",
+                          width: "90%",
+                        }}
+                      >
+                        <TextP
+                          sx={{
+                            lineHeight: 1.2,
+                            fontSize: "16px",
+                            fontWeight: "normal",
+                          }}
+                        >
+                          {messageQortalRequestExtension?.text3}
+                        </TextP>
+                      </Box>
+                      <Spacer height="15px" />
+                    </>
+                  )}
+
+                  {messageQortalRequestExtension?.text4 && (
+                    <>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-start",
+                          width: "90%",
+                        }}
+                      >
+                        <TextP
+                          sx={{
+                            lineHeight: 1.2,
+                            fontSize: "16px",
+                            fontWeight: "normal",
+                          }}
+                        >
+                          {messageQortalRequestExtension?.text4}
+                        </TextP>
+                      </Box>
+                      <Spacer height="15px" />
+                    </>
+                  )}
+
+                  {messageQortalRequestExtension?.details && (
+                    <Box sx={{ width: "90%" }}>
+                      <QortalRequestDetails
+                        details={messageQortalRequestExtension?.details}
+                      />
+                    </Box>
+                  )}
+                  <Spacer height="15px" />
+
+                  <TextP
+                    sx={{
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                      fontSize: "16px",
+                      fontWeight: 700,
+                      maxWidth: "90%",
+                    }}
+                  >
+                    {messageQortalRequestExtension?.highlightedText}
+                  </TextP>
+                  {messageQortalRequestExtension?.json && (
+                    <>
+                      <Spacer height="15px" />
+
+                      <JsonView
+                        data={messageQortalRequestExtension?.json}
+                        shouldExpandNode={allExpanded}
+                        style={darkStyles}
+                      />
+                      <Spacer height="15px" />
+                    </>
+                  )}
+                  {messageQortalRequestExtension?.fee && (
+                    <>
+                      <Spacer height="15px" />
+
+                      <TextP
+                        sx={{
+                          textAlign: "center",
+                          lineHeight: 1.2,
+                          fontSize: "16px",
+                          fontWeight: "normal",
+                          maxWidth: "90%",
+                        }}
+                      >
+                        {"Fee: "}
+                        {messageQortalRequestExtension?.fee}
+                        {" QORT"}
+                      </TextP>
+                      <Spacer height="15px" />
+                    </>
+                  )}
+                  {messageQortalRequestExtension?.appFee && (
+                    <>
+                      <TextP
+                        sx={{
+                          textAlign: "center",
+                          lineHeight: 1.2,
+                          fontSize: "16px",
+                          fontWeight: "normal",
+                          maxWidth: "90%",
+                        }}
+                      >
+                        {"App Fee: "}
+                        {messageQortalRequestExtension?.appFee}
+                        {" QORT"}
+                      </TextP>
+                      <Spacer height="15px" />
+                    </>
+                  )}
+                  {messageQortalRequestExtension?.foreignFee && (
+                    <>
+                      <Spacer height="15px" />
+
+                      <TextP
+                        sx={{
+                          textAlign: "center",
+                          lineHeight: 1.2,
+                          fontSize: "16px",
+                          fontWeight: "normal",
+                          maxWidth: "90%",
+                        }}
+                      >
+                        {"Foreign Fee: "}
+                        {messageQortalRequestExtension?.foreignFee}
+                      </TextP>
+                      <Spacer height="15px" />
+                    </>
+                  )}
+                  {messageQortalRequestExtension?.checkbox1 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "90%",
+                        marginTop: "20px",
+                      }}
+                    >
+                      <Checkbox
+                        onChange={(e) => {
+                          qortalRequestCheckbox1Ref.current = e.target.checked;
+                        }}
+                        edge="start"
+                        tabIndex={-1}
+                        disableRipple
+                        defaultChecked={
+                          messageQortalRequestExtension?.checkbox1?.value
+                        }
+                        sx={{
+                          "&.Mui-checked": {
+                            color: "white", // Customize the color when checked
+                          },
+                          "& .MuiSvgIcon-root": {
+                            color: "white",
+                          },
+                        }}
+                      />
+
+                      <Typography
+                        sx={{
+                          fontSize: "14px",
+                        }}
+                      >
+                        {messageQortalRequestExtension?.checkbox1?.label}
+                      </Typography>
+                    </Box>
+                  )}
+                  {messageQortalRequestExtension?.confirmCheckbox && (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          onChange={(e) =>
+                            setConfirmRequestRead(e.target.checked)
+                          }
+                          checked={confirmRequestRead}
+                          edge="start"
+                          tabIndex={-1}
+                          disableRipple
+                          sx={{
+                            "&.Mui-checked": {
+                              color: "white",
+                            },
+                            "& .MuiSvgIcon-root": {
+                              color: "white",
+                            },
+                          }}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Typography sx={{ fontSize: "14px" }}>
+                            {messageQortalRequestExtension?.confirmCheckboxLabel ||
+                              "I have read this request"}
+                          </Typography>
+                          <PriorityHighIcon color="warning" />
+                        </Box>
+                      }
+                    />
+                  )}
+
+                  <Spacer height="29px" />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "14px",
+                    }}
+                  >
+                    <CustomButtonAccept
+                      color="black"
+                      bgColor="var(--green)"
+                      sx={{
+                        minWidth: "102px",
+                        opacity:
+                          messageQortalRequestExtension?.confirmCheckbox &&
+                          !confirmRequestRead
+                            ? 0.1
+                            : 0.7,
+                        cursor:
+                          messageQortalRequestExtension?.confirmCheckbox &&
+                          !confirmRequestRead
+                            ? "default"
+                            : "pointer",
+                        "&:hover": {
+                          opacity:
+                            messageQortalRequestExtension?.confirmCheckbox &&
+                            !confirmRequestRead
+                              ? 0.1
+                              : 1,
+                        },
+                      }}
+                      onClick={() => {
+                        if (
+                          messageQortalRequestExtension?.confirmCheckbox &&
+                          !confirmRequestRead
+                        )
+                          return;
+                        onOkQortalRequestExtension("accepted");
+                      }}
+                    >
+                      accept
+                    </CustomButtonAccept>
+                    <CustomButtonAccept
+                      color="black"
+                      bgColor="var(--danger)"
+                      sx={{
+                        minWidth: "102px",
+                      }}
+                      onClick={() => onCancelQortalRequestExtension()}
+                    >
+                      decline
+                    </CustomButtonAccept>
+                  </Box>
+                  <ErrorText>{sendPaymentError}</ErrorText>
+                </Box>
+              </Dialog>
+            )}
+            <Popover
+              open={openRegisterName}
+              anchorEl={registerNamePopoverRef.current}
+              onClose={() => {
+                setOpenRegisterName(false);
+                setRegisterNameValue("");
+              }}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "center",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "center",
+              }}
+              style={{ marginTop: "8px" }}
+            >
+              <Box
+                sx={{
+                  width: "325px",
+                  height: "250px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px",
+                }}
+              >
+                <Label>Choose a name</Label>
+                <Input
+                  onChange={(e) => setRegisterNameValue(e.target.value)}
+                  value={registerNameValue}
+                  placeholder="Choose a name"
+                />
+                <Spacer height="25px" />
+                <LoadingButton
+                  loading={isLoadingRegisterName}
+                  loadingPosition="start"
+                  variant="contained"
+                  disabled={!registerNameValue}
+                  onClick={registerName}
+                >
+                  Register Name
+                </LoadingButton>
+              </Box>
+            </Popover>
+            {isSettingsOpen && (
+              <Settings open={isSettingsOpen} setOpen={setIsSettingsOpen} />
+            )}
+            <CustomizedSnackbars
+              open={openSnack}
+              setOpen={setOpenSnack}
+              info={infoSnack}
+              setInfo={setInfoSnack}
+            />
+            <DrawerComponent
+              open={isOpenDrawerProfile}
+              setOpen={setIsOpenDrawerProfile}
+            >
+              {renderProfile()}
+            </DrawerComponent>
+            <UserLookup
+              isOpenDrawerLookup={isOpenDrawerLookup}
+              setIsOpenDrawerLookup={setIsOpenDrawerLookup}
+            />
+            <RegisterName
+              balance={balance}
+              show={show}
+              setTxList={setTxList}
+              userInfo={userInfo}
+              setOpenSnack={setOpenSnack}
+              setInfoSnack={setInfoSnack}
+            />
+            <BuyQortInformation balance={balance} />
+          </GlobalContext.Provider>
+          {extState === "create-wallet" && walletToBeDownloaded && (
+            <ButtonBase
+              onClick={() => {
+                showTutorial("important-information", true);
+              }}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
+                position: "fixed",
+                bottom: "25px",
+                right: "25px",
               }}
             >
-              <CustomButtonAccept
-              color="black"
-              bgColor="var(--green)"
+              <HelpIcon
                 sx={{
-                  minWidth: "102px",
-                  opacity: messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead ? 0.1 : 0.7,
-                  cursor: messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead ? 'default' : 'pointer',
-                  "&:hover": {
-      opacity: messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead ? 0.1 : 1,
-    }
+                  color: "var(--unread)",
                 }}
-                onClick={() => {
-                  if(messageQortalRequestExtension?.confirmCheckbox && !confirmRequestRead) return
-                  onOkQortalRequestExtension("accepted")
-                }}
-              >
-                accept
-              </CustomButtonAccept>
-              <CustomButtonAccept
-               color="black"
-               bgColor="var(--danger)"
-                sx={{
-                  minWidth: "102px",
-                }}
-                onClick={() => onCancelQortalRequestExtension()}
-              >
-                decline
-              </CustomButtonAccept>
-            </Box>
-            <ErrorText>{sendPaymentError}</ErrorText>
-          </Box>
-        </Dialog>
-      )}
-      <Popover
-        open={openRegisterName}
-        anchorEl={registerNamePopoverRef.current}
-        onClose={() => {
-          setOpenRegisterName(false);
-          setRegisterNameValue("");
-        }}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "center",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "center",
-        }}
-        style={{ marginTop: "8px" }}
-      >
-        <Box
-          sx={{
-            width: "325px",
-            height: "250px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "10px",
-            padding: "10px",
-          }}
-        >
-          <Label>Choose a name</Label>
-          <Input
-            onChange={(e) => setRegisterNameValue(e.target.value)}
-            value={registerNameValue}
-            placeholder="Choose a name"
-          />
-          <Spacer height="25px" />
-          <LoadingButton
-            loading={isLoadingRegisterName}
-            loadingPosition="start"
-            variant="contained"
-            disabled={!registerNameValue}
-            onClick={registerName}
-          >
-            Register Name
-          </LoadingButton>
-        </Box>
-      </Popover>
-      {isSettingsOpen && (
-        <Settings open={isSettingsOpen} setOpen={setIsSettingsOpen} />
-      )}
-      <CustomizedSnackbars
-        open={openSnack}
-        setOpen={setOpenSnack}
-        info={infoSnack}
-        setInfo={setInfoSnack}
-      />
-      <DrawerComponent
-        open={isOpenDrawerProfile}
-        setOpen={setIsOpenDrawerProfile}
-      >
-        {renderProfile()}
-      </DrawerComponent>
-      <UserLookup isOpenDrawerLookup={isOpenDrawerLookup} setIsOpenDrawerLookup={setIsOpenDrawerLookup} />
-      <RegisterName balance={balance}  show={show} setTxList={setTxList} userInfo={userInfo} setOpenSnack={setOpenSnack}  setInfoSnack={setInfoSnack}/>
-      <BuyQortInformation balance={balance} />
-     </GlobalContext.Provider>
-     {extState === "create-wallet" && walletToBeDownloaded && (
-         <ButtonBase onClick={()=> {
-          showTutorial('important-information', true)
-       }} sx={{
-         position: 'fixed',
-         bottom: '25px',
-         right: '25px'
-       }}>
-         <HelpIcon sx={{
-           color: 'var(--unread)'
-         }} />
-         </ButtonBase>
-      )}
+              />
+            </ButtonBase>
+          )}
           {isOpenMinting && (
-      <Minting setIsOpenMinting={setIsOpenMinting} groups={memberGroups} myAddress={address} show={show} setTxList={setTxList} txList={txList}/>
-     )}
-    </AppContainer>
-    {/* ChromecastMiniPlayer outside AppContainer to avoid overflow:hidden clipping */}
-    {extState === "authenticated" && isMainWindow && <ChromecastMiniPlayer />}
-    </ChromecastProvider>
+            <Minting
+              setIsOpenMinting={setIsOpenMinting}
+              groups={memberGroups}
+              myAddress={address}
+              show={show}
+              setTxList={setTxList}
+              txList={txList}
+            />
+          )}
+        </AppContainer>
+        {/* ChromecastMiniPlayer outside AppContainer to avoid overflow:hidden clipping */}
+        {extState === "authenticated" && isMainWindow && (
+          <ChromecastMiniPlayer />
+        )}
+      </ChromecastProvider>
     </>
   );
 }

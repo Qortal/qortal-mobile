@@ -203,7 +203,7 @@ export function setSessionPermissions(tabId, qapName, permissions) {
 
     // Validate new permissions
     const validPermissions = permissions.filter((permission) =>
-      VALID_SESSION_PERMISSIONS.includes(permission)
+      VALID_SESSION_PERMISSIONS.includes(permission),
     );
 
     // Merge with existing permissions (deduplicate using Set)
@@ -288,6 +288,10 @@ export { cleanupMediaForTab, cleanupChromecastForTab };
 
 function setupMessageListenerQortalRequest() {
   window.addEventListener("message", async (event) => {
+    if (event.origin !== window.location.origin || event.source !== window) {
+      return;
+    }
+
     const request = event.data;
 
     // Ensure the message is from a trusted source
@@ -312,7 +316,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -322,7 +326,7 @@ function setupMessageListenerQortalRequest() {
               error: "Unable to get user account",
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -338,7 +342,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -348,7 +352,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -364,7 +368,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -374,7 +378,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -385,7 +389,7 @@ function setupMessageListenerQortalRequest() {
           const res = await getListItems(
             request.payload,
             appInfo,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -394,7 +398,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -404,7 +408,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -420,7 +424,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -430,7 +434,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -446,7 +450,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -456,7 +460,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -468,7 +472,7 @@ function setupMessageListenerQortalRequest() {
             request.payload,
             event.source,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -477,7 +481,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -487,7 +491,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -499,7 +503,7 @@ function setupMessageListenerQortalRequest() {
             request.payload,
             event.source,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -508,7 +512,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -518,7 +522,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -534,7 +538,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -544,7 +548,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -560,7 +564,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -570,7 +574,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -581,7 +585,7 @@ function setupMessageListenerQortalRequest() {
           const res = await sendChatMessage(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -590,7 +594,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -600,7 +604,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -611,7 +615,7 @@ function setupMessageListenerQortalRequest() {
           const res = await joinGroup(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -620,7 +624,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -630,7 +634,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -646,7 +650,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -656,7 +660,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -667,7 +671,7 @@ function setupMessageListenerQortalRequest() {
           const res = await getUserWallet(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -676,7 +680,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -686,7 +690,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -698,7 +702,7 @@ function setupMessageListenerQortalRequest() {
             request.payload,
             false,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -707,7 +711,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -717,7 +721,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -728,7 +732,7 @@ function setupMessageListenerQortalRequest() {
           const res = await getUserWalletInfo(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -737,7 +741,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -747,7 +751,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -763,7 +767,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -773,7 +777,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -784,7 +788,7 @@ function setupMessageListenerQortalRequest() {
           const res = await startCrossChainServer(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -793,7 +797,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -803,7 +807,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -819,7 +823,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -829,7 +833,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -845,7 +849,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -855,7 +859,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -866,7 +870,7 @@ function setupMessageListenerQortalRequest() {
           const res = await updateForeignFee(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -875,7 +879,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -885,7 +889,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -901,7 +905,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -911,7 +915,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -922,7 +926,7 @@ function setupMessageListenerQortalRequest() {
           const res = await setCurrentForeignServer(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -931,7 +935,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -941,7 +945,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -952,7 +956,7 @@ function setupMessageListenerQortalRequest() {
           const res = await addForeignServer(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -961,7 +965,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -971,7 +975,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -982,7 +986,7 @@ function setupMessageListenerQortalRequest() {
           const res = await removeForeignServer(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -991,7 +995,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1001,7 +1005,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1017,7 +1021,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1027,7 +1031,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1043,7 +1047,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1053,7 +1057,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1069,7 +1073,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1079,7 +1083,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1095,7 +1099,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1105,7 +1109,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1121,7 +1125,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1131,7 +1135,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1146,7 +1150,7 @@ function setupMessageListenerQortalRequest() {
               payload: isGateway,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1156,7 +1160,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1171,7 +1175,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1181,7 +1185,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1196,7 +1200,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1206,7 +1210,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1222,7 +1226,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1232,7 +1236,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1241,7 +1245,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await createAndCopyEmbedLink(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1250,7 +1254,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1260,7 +1264,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1270,7 +1274,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await encryptQortalGroupData(
             request.payload,
-            event.source
+            event.source,
           );
           event.source.postMessage(
             {
@@ -1279,7 +1283,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1289,7 +1293,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1298,7 +1302,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await decryptQortalGroupData(
             request.payload,
-            event.source
+            event.source,
           );
           event.source.postMessage(
             {
@@ -1307,7 +1311,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1317,7 +1321,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1326,7 +1330,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await encryptDataWithSharingKey(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1335,7 +1339,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1345,7 +1349,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1355,7 +1359,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await decryptDataWithSharingKey(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1364,7 +1368,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1374,7 +1378,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1390,7 +1394,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1400,7 +1404,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1415,7 +1419,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1425,7 +1429,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1440,7 +1444,7 @@ function setupMessageListenerQortalRequest() {
               payload: listOfAllQortalRequests,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1450,7 +1454,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1459,7 +1463,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await registerNameRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1468,7 +1472,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1478,7 +1482,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1493,7 +1497,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1503,7 +1507,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1518,7 +1522,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1528,7 +1532,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1538,7 +1542,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await inviteToGroupRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1547,7 +1551,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1557,7 +1561,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1566,7 +1570,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await kickFromGroupRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1575,7 +1579,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1585,7 +1589,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1594,7 +1598,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await banFromGroupRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1603,7 +1607,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1613,7 +1617,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1623,7 +1627,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await cancelGroupBanRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1632,7 +1636,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1642,7 +1646,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1651,7 +1655,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await addGroupAdminRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1660,7 +1664,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1670,7 +1674,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1680,7 +1684,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await removeGroupAdminRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1689,7 +1693,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1699,7 +1703,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1709,7 +1713,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await cancelGroupInviteRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1718,7 +1722,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1728,7 +1732,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1737,7 +1741,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await decryptAESGCMRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1746,7 +1750,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1756,7 +1760,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1766,7 +1770,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await createGroupRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1775,7 +1779,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1785,7 +1789,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1795,7 +1799,7 @@ function setupMessageListenerQortalRequest() {
           const res = await getUserWalletTransactions(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -1804,7 +1808,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1814,7 +1818,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1829,7 +1833,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1839,7 +1843,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1855,7 +1859,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1865,7 +1869,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1881,7 +1885,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1891,7 +1895,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1911,7 +1915,7 @@ function setupMessageListenerQortalRequest() {
               payload: true,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1921,7 +1925,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1930,7 +1934,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await updateGroupRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -1939,7 +1943,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1949,7 +1953,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1964,7 +1968,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1974,7 +1978,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -1989,7 +1993,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -1999,7 +2003,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2008,7 +2012,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await cancelSellNameRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -2017,7 +2021,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2027,7 +2031,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2036,7 +2040,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await multiPaymentWithPrivateData(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -2045,7 +2049,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2055,7 +2059,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2064,7 +2068,7 @@ function setupMessageListenerQortalRequest() {
         try {
           const res = await transferAssetRequest(
             request.payload,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -2073,7 +2077,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2083,7 +2087,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2094,7 +2098,7 @@ function setupMessageListenerQortalRequest() {
           const res = await signForeignFees(
             request.payload,
             appInfo,
-            isFromExtension
+            isFromExtension,
           );
           event.source.postMessage(
             {
@@ -2103,7 +2107,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2113,7 +2117,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2129,7 +2133,7 @@ function setupMessageListenerQortalRequest() {
               payload: resData,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2139,7 +2143,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2160,7 +2164,7 @@ function setupMessageListenerQortalRequest() {
               payload: true,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2170,7 +2174,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2185,7 +2189,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source!.postMessage(
@@ -2195,7 +2199,7 @@ function setupMessageListenerQortalRequest() {
               error: "Unable to determine UI type",
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2206,7 +2210,7 @@ function setupMessageListenerQortalRequest() {
           const res = await sessionPermissions(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -2215,7 +2219,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2225,7 +2229,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2241,7 +2245,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2251,7 +2255,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2262,7 +2266,7 @@ function setupMessageListenerQortalRequest() {
           const res = await unlockTab(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -2271,7 +2275,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2281,7 +2285,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2292,7 +2296,7 @@ function setupMessageListenerQortalRequest() {
           const res = await reEncryptQortalKeys(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -2301,7 +2305,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2311,7 +2315,7 @@ function setupMessageListenerQortalRequest() {
               error: error.message,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;
@@ -2322,7 +2326,7 @@ function setupMessageListenerQortalRequest() {
           const res = await playEncryptedMedia(
             request.payload,
             isFromExtension,
-            appInfo
+            appInfo,
           );
           event.source.postMessage(
             {
@@ -2331,7 +2335,7 @@ function setupMessageListenerQortalRequest() {
               payload: res,
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         } catch (error) {
           event.source.postMessage(
@@ -2341,7 +2345,7 @@ function setupMessageListenerQortalRequest() {
               error: error?.message || "Failed to play encrypted media",
               type: "backgroundMessageResponse",
             },
-            event.origin
+            event.origin,
           );
         }
         break;

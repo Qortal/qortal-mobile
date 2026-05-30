@@ -155,7 +155,7 @@ export async function retryTransaction(
   fn,
   args,
   throwError,
-  retries = MAX_RETRIES
+  retries = MAX_RETRIES,
 ) {
   let attempt = 0;
   while (attempt < retries) {
@@ -185,7 +185,7 @@ function roundUpToDecimals(number, decimals = 8) {
 export const _createPoll = async (
   { pollName, pollDescription, options },
   isFromExtension,
-  skipPermission
+  skipPermission,
 ) => {
   const fee = await getFee("CREATE_POLL");
   let resPermission = {};
@@ -198,7 +198,7 @@ export const _createPoll = async (
         text4: `Options: ${options?.join(", ")}`,
         fee: fee.fee,
       },
-      isFromExtension
+      isFromExtension,
     );
   }
 
@@ -229,7 +229,7 @@ export const _createPoll = async (
     const res = await processTransactionVersion2(signedBytes);
     if (!res?.signature)
       throw new Error(
-        res?.message || "Transaction was not able to be processed"
+        res?.message || "Transaction was not able to be processed",
       );
     return res;
   } else {
@@ -239,7 +239,7 @@ export const _createPoll = async (
 
 const _deployAt = async (
   { name, description, tags, creationBytes, amount, assetId, atType },
-  isFromExtension
+  isFromExtension,
 ) => {
   const fee = await getFee("DEPLOY_AT");
 
@@ -250,7 +250,7 @@ const _deployAt = async (
       text3: `Description: ${description}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
 
   const { accepted } = resPermission;
@@ -285,7 +285,7 @@ const _deployAt = async (
     const res = await processTransactionVersion2(signedBytes);
     if (!res?.signature)
       throw new Error(
-        res?.message || "Transaction was not able to be processed"
+        res?.message || "Transaction was not able to be processed",
       );
     return res;
   } else {
@@ -296,7 +296,7 @@ const _deployAt = async (
 export const _voteOnPoll = async (
   { pollName, optionIndex, optionName },
   isFromExtension,
-  skipPermission
+  skipPermission,
 ) => {
   const fee = await getFee("VOTE_ON_POLL");
   let resPermission = {};
@@ -308,7 +308,7 @@ export const _voteOnPoll = async (
         text3: `Option: ${optionName}`,
         fee: fee.fee,
       },
-      isFromExtension
+      isFromExtension,
     );
   }
 
@@ -338,7 +338,7 @@ export const _voteOnPoll = async (
     const res = await processTransactionVersion2(signedBytes);
     if (!res?.signature)
       throw new Error(
-        res?.message || "Transaction was not able to be processed"
+        res?.message || "Transaction was not able to be processed",
       );
     return res;
   } else {
@@ -380,7 +380,7 @@ function getFileFromContentScript(fileId) {
 
     window.postMessage(
       { action: "getFileFromIndexedDB", fileId, requestId },
-      targetOrigin
+      targetOrigin,
     );
 
     // Timeout to handle no response scenario
@@ -395,7 +395,20 @@ function getFileFromContentScript(fileId) {
 
 const responseResolvers = new Map();
 
+function generatePermissionRequestId(): string {
+  if (globalThis.crypto?.randomUUID) {
+    return `qortalRequest_${globalThis.crypto.randomUUID()}`;
+  }
+
+  const randomPart = Math.random().toString(36).slice(2);
+  return `qortalRequest_${Date.now()}_${randomPart}`;
+}
+
 const handleMessage = (event) => {
+  if (event.origin !== window.location.origin || event.source !== window) {
+    return;
+  }
+
   const { action, requestId, result } = event.data;
 
   // Check if this is the expected response action and if we have a stored resolver
@@ -413,7 +426,7 @@ window.addEventListener("message", handleMessage);
 
 async function getUserPermission(payload, isFromExtension) {
   return new Promise((resolve) => {
-    const requestId = `qortalRequest_${Date.now()}`;
+    const requestId = generatePermissionRequestId();
     responseResolvers.set(requestId, resolve); // Store resolver by requestId
     const targetOrigin = window.location.origin;
 
@@ -425,7 +438,7 @@ async function getUserPermission(payload, isFromExtension) {
         requestId,
         isFromExtension,
       },
-      targetOrigin
+      targetOrigin,
     );
 
     // Optional timeout to handle no response scenario
@@ -474,7 +487,7 @@ export const getUserAccount = async ({
             label: "Always authenticate automatically",
           },
         },
-        isFromExtension
+        isFromExtension,
       );
     }
 
@@ -487,7 +500,7 @@ export const getUserAccount = async ({
         setSessionPermissions(
           appInfo.tabId,
           appInfo.name,
-          AUTO_GRANTED_PERMISSIONS_ON_AUTH
+          AUTO_GRANTED_PERMISSIONS_ON_AUTH,
         );
       }
       const wallet = await getSaveWallet();
@@ -567,7 +580,7 @@ export const encryptQortalGroupData = async (data, sender) => {
       const publish = await getPublishesFromAdmins(names, groupId);
       if (publish === false) throw new Error("No group key found.");
       const url = await createEndpoint(
-        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`
+        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`,
       );
 
       const res = await fetch(url);
@@ -602,7 +615,7 @@ export const encryptQortalGroupData = async (data, sender) => {
       const publish = await getPublishesFromAdminsAdminSpace(names, groupId);
       if (publish === false) throw new Error("No group key found.");
       const url = await createEndpoint(
-        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`
+        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`,
       );
 
       const res = await fetch(url);
@@ -678,7 +691,7 @@ export const decryptQortalGroupData = async (data, sender) => {
       const publish = await getPublishesFromAdmins(names, groupId);
       if (publish === false) throw new Error("No group key found.");
       const url = await createEndpoint(
-        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`
+        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`,
       );
 
       const res = await fetch(url);
@@ -711,7 +724,7 @@ export const decryptQortalGroupData = async (data, sender) => {
       const publish = await getPublishesFromAdminsAdminSpace(names, groupId);
       if (publish === false) throw new Error("No group key found.");
       const url = await createEndpoint(
-        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`
+        `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`,
       );
 
       const res = await fetch(url);
@@ -804,7 +817,7 @@ export const decryptData = async (data) => {
   const uint8Array = base64ToUint8Array(encryptedData);
   const startsWithQortalEncryptedData = uint8ArrayStartsWith(
     uint8Array,
-    "qortalEncryptedData"
+    "qortalEncryptedData",
   );
   if (startsWithQortalEncryptedData) {
     if (!publicKey) {
@@ -814,18 +827,18 @@ export const decryptData = async (data) => {
     const decryptedDataToBase64 = decryptDeprecatedSingle(
       uint8Array,
       publicKey,
-      uint8PrivateKey
+      uint8PrivateKey,
     );
     return decryptedDataToBase64;
   }
   const startsWithQortalGroupEncryptedData = uint8ArrayStartsWith(
     uint8Array,
-    "qortalGroupEncryptedData"
+    "qortalGroupEncryptedData",
   );
   if (startsWithQortalGroupEncryptedData) {
     const decryptedData = decryptGroupDataQortalRequest(
       encryptedData,
-      parsedData.privateKey
+      parsedData.privateKey,
     );
     const decryptedDataToBase64 = uint8ArrayToBase64(decryptedData);
     return decryptedDataToBase64;
@@ -878,7 +891,7 @@ export const getListItems = async (data, appInfo, isFromExtension) => {
           label: "Always allow lists to be retrieved automatically",
         },
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted, checkbox1 } = resPermission;
     acceptedVar = accepted;
@@ -925,7 +938,7 @@ export const addListItems = async (data, isFromExtension) => {
       text2: `Add the following to the list ${list_name}:`,
       highlightedText: items.join(", "),
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
 
@@ -987,7 +1000,7 @@ export const deleteListItems = async (data, isFromExtension) => {
       text2: `Remove the following from the list ${list_name}:`,
       highlightedText: items ? JSON.stringify(items) : item,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
 
@@ -1022,7 +1035,7 @@ export const publishQDNResource = async (
   data: any,
   sender,
   isFromExtension,
-  appInfo
+  appInfo,
 ) => {
   const requiredFields = ["service"];
   const missingFields: string[] = [];
@@ -1095,7 +1108,7 @@ export const publishQDNResource = async (
     const isPublicNode = await isRunningGateway();
     if (isPublicNode) {
       throw new Error(
-        "Maximum file size allowed on the public node is 500 MB. Please use your local node for larger files."
+        "Maximum file size allowed on the public node is 500 MB. Please use your local node for larger files.",
       );
     }
   }
@@ -1140,7 +1153,7 @@ export const publishQDNResource = async (
       }
     } catch (error) {
       throw new Error(
-        error.message || "Upload failed due to failed encryption"
+        error.message || "Upload failed due to failed encryption",
       );
     }
   }
@@ -1151,11 +1164,11 @@ export const publishQDNResource = async (
   if (hasAppFee) {
     const feePayment = await getFee("PAYMENT");
 
-    (handleDynamicValues["appFee"] = +appFee + +feePayment.fee),
+    ((handleDynamicValues["appFee"] = +appFee + +feePayment.fee),
       (handleDynamicValues["checkbox1"] = {
         value: true,
         label: "accept app fee",
-      });
+      }));
   }
   if (!!data?.encrypt) {
     handleDynamicValues["highlightedText"] = `isEncrypted: ${!!data.encrypt}`;
@@ -1177,7 +1190,7 @@ export const publishQDNResource = async (
         fee: fee.fee,
         ...handleDynamicValues,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted, checkbox1 = false } = resPermission || {
       accepted: false,
@@ -1201,10 +1214,10 @@ export const publishQDNResource = async (
         uploadType: isStreamedEncryption
           ? "file"
           : isMultiFileZip
-          ? "zip"
-          : data64
-          ? "base64"
-          : "file",
+            ? "zip"
+            : data64
+              ? "base64"
+              : "file",
         filename: filename,
         title,
         description,
@@ -1225,7 +1238,7 @@ export const publishQDNResource = async (
             amount: appFee,
             receiver: appFeeRecipient,
           },
-          true
+          true,
         );
       }
       return resPublish;
@@ -1275,7 +1288,7 @@ export const publishMultipleQDNResources = async (
   data: any,
   sender,
   isFromExtension,
-  appInfo
+  appInfo,
 ) => {
   const requiredFields = ["resources"];
   const missingFields: string[] = [];
@@ -1307,7 +1320,7 @@ export const publishMultipleQDNResources = async (
 
     if (hasOversizedFilePublicNode) {
       throw new Error(
-        "Maximum file size allowed on the public node is 500 MB. Please use your local node for larger files."
+        "Maximum file size allowed on the public node is 500 MB. Please use your local node for larger files.",
       );
     }
   }
@@ -1378,7 +1391,7 @@ export const publishMultipleQDNResources = async (
       if (isStreamedEncryption && encryption?.iv && encryption?.key) {
         const { isValid } = validateAesCtrIvAndKey(
           encryption.iv,
-          encryption.key
+          encryption.key,
         );
         if (!isValid) {
           throw new Error("Invalid IV or Key");
@@ -1398,7 +1411,7 @@ export const publishMultipleQDNResources = async (
   data.resources?.forEach((item) => {
     if (item?.name && !userNames?.includes(item.name))
       throw new Error(
-        `The name ${item.name}, does not belong to the publisher.`
+        `The name ${item.name}, does not belong to the publisher.`,
       );
   });
 
@@ -1413,11 +1426,11 @@ export const publishMultipleQDNResources = async (
   if (hasAppFee) {
     const feePayment = await getFee("PAYMENT");
 
-    (handleDynamicValues["appFee"] = +appFee + +feePayment.fee),
+    ((handleDynamicValues["appFee"] = +appFee + +feePayment.fee),
       (handleDynamicValues["checkbox1"] = {
         value: true,
         label: "accept app fee",
-      });
+      }));
   }
   if (data?.encrypt) {
     handleDynamicValues["highlightedText"] = `isEncrypted: ${!!data.encrypt}`;
@@ -1428,7 +1441,7 @@ export const publishMultipleQDNResources = async (
     hasSessionPermission(
       appInfo.tabId,
       appInfo.name,
-      "PUBLISH_MULTIPLE_QDN_RESOURCES"
+      "PUBLISH_MULTIPLE_QDN_RESOURCES",
     );
 
   let acceptVar = hasPermission || false;
@@ -1437,71 +1450,19 @@ export const publishMultipleQDNResources = async (
     const resPermission = await getUserPermission(
       {
         text1: "Do you give this application permission to publish to QDN?",
-        html: `
-    <div style="max-height: 30vh; overflow-y: auto;">
-    <style>
-
-  
-      .resource-container {
-        display: flex;
-        flex-direction: column;
-        border: 1px solid #444;
-        padding: 16px;
-        margin: 8px 0;
-        border-radius: 8px;
-        background-color: var(--background-default);
-      }
-      
-      .resource-detail {
-        margin-bottom: 8px;
-      }
-      
-      .resource-detail span {
-        font-weight: bold;
-        color: var(--text-primary);
-      }
-  
-      @media (min-width: 600px) {
-        .resource-container {
-          flex-direction: row;
-          flex-wrap: wrap;
-        }
-        .resource-detail {
-          flex: 1 1 45%;
-          margin-bottom: 0;
-          padding: 4px 0;
-        }
-      }
-    </style>
-  
-    ${data.resources
-      .map(
-        (resource) => `
-        <div class="resource-container">
-          <div class="resource-detail"><span>Service:</span> ${
-            resource.service
-          }</div>
-          <div class="resource-detail"><span>Name:</span> ${
-            resource?.name || name
-          }</div>
-          <div class="resource-detail"><span>Identifier:</span> ${
-            resource.identifier
-          }</div>
-          ${
-            resource.filename
-              ? `<div class="resource-detail"><span>Filename:</span> ${resource.filename}</div>`
-              : ""
-          }
-        </div>`
-      )
-      .join("")}
-  </div>
-  
-      `,
+        details: {
+          type: "resources",
+          resources: data.resources.map((resource) => ({
+            service: resource.service,
+            name: resource?.name || name,
+            identifier: resource.identifier,
+            filename: resource.filename,
+          })),
+        },
         fee: +fee.fee * resources.length,
         ...handleDynamicValues,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted, checkbox1 = false } = resPermission || {
       accepted: false,
@@ -1638,10 +1599,10 @@ export const publishMultipleQDNResources = async (
         const dataType = encryption
           ? "file"
           : isMultiFileZip
-          ? "zip"
-          : resource?.base64 || resource?.data64 || resourceEncrypt
-          ? "base64"
-          : "file";
+            ? "zip"
+            : resource?.base64 || resource?.data64 || resourceEncrypt
+              ? "base64"
+              : "file";
         const response = await publishData({
           apiVersion: 2,
           category,
@@ -1703,7 +1664,7 @@ export const publishMultipleQDNResources = async (
         amount: appFee,
         receiver: appFeeRecipient,
       },
-      true
+      true,
     );
   }
   return publishedResponses;
@@ -1743,7 +1704,7 @@ export const voteOnPoll = async (data, isFromExtension) => {
     const optionName = pollInfo.pollOptions[optionIndex].optionName;
     const resVoteOnPoll = await _voteOnPoll(
       { pollName, optionIndex, optionName },
-      isFromExtension
+      isFromExtension,
     );
     return resVoteOnPoll;
   } catch (error) {
@@ -1780,7 +1741,7 @@ export const createPoll = async (data, isFromExtension) => {
         pollDescription,
         options: pollOptions,
       },
-      isFromExtension
+      isFromExtension,
     );
     return resCreatePoll;
   } catch (error) {
@@ -1805,7 +1766,7 @@ function checkValue(value) {
     return "object";
   } else {
     throw new Error(
-      "Field fullContent is in an invalid format. Either use a string, base64 or an object."
+      "Field fullContent is in an invalid format. Either use a string, base64 or an object.",
     );
   }
 }
@@ -1851,7 +1812,7 @@ export const sendChatMessage = async (data, isFromExtension, appInfo) => {
           label: "Always allow chat messages from this app",
         },
       },
-      isFromExtension
+      isFromExtension,
     );
   }
   const { accepted = false, checkbox1 = false } = resPermission || {};
@@ -1923,7 +1884,7 @@ export const sendChatMessage = async (data, isFromExtension, appInfo) => {
 
       if (!hasPublicKey && isRecipient) {
         throw new Error(
-          "Cannot send an encrypted message to this user since they do not have their publickey on chain."
+          "Cannot send an encrypted message to this user since they do not have their publickey on chain.",
         );
       }
       let _reference = new Uint8Array(64);
@@ -1963,7 +1924,7 @@ export const sendChatMessage = async (data, isFromExtension, appInfo) => {
       const difficulty = 8;
       const { nonce, chatBytesArray } = await performPowTask(
         chatBytes,
-        difficulty
+        difficulty,
       );
 
       let _response = await signChatFunc(chatBytesArray, nonce, null, keyPair);
@@ -2013,7 +1974,7 @@ export const sendChatMessage = async (data, isFromExtension, appInfo) => {
       const difficulty = 8;
       const { nonce, chatBytesArray } = await performPowTask(
         chatBytes,
-        difficulty
+        difficulty,
       );
 
       let _response = await signChatFunc(chatBytesArray, nonce, null, keyPair);
@@ -2069,7 +2030,7 @@ export const joinGroup = async (data, isFromExtension, appInfo) => {
         highlightedText: `${groupInfo.groupName}`,
         fee: fee.fee,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission || {
       accepted: false,
@@ -2104,7 +2065,7 @@ export async function decryptAesCtrChunk(
   keyBytes,
   ivBytes,
   blockOffset,
-  ciphertext
+  ciphertext,
 ) {
   // Try WebCrypto first
   if (crypto?.subtle) {
@@ -2114,7 +2075,7 @@ export async function decryptAesCtrChunk(
         keyBytes,
         { name: "AES-CTR" },
         false,
-        ["decrypt"]
+        ["decrypt"],
       );
 
       const counter = deriveCtrCounter(ivBytes, blockOffset);
@@ -2126,7 +2087,7 @@ export async function decryptAesCtrChunk(
           length: 128,
         },
         cryptoKey,
-        ciphertext
+        ciphertext,
       );
 
       return new Uint8Array(decrypted);
@@ -2155,7 +2116,7 @@ function fallbackDecryptCtr(keyBytes, ivBytes, blockOffset, ciphertext) {
   const counter = deriveCtrCounter(ivBytes, blockOffset);
   const aesCtr = new aesjs.ModeOfOperation.ctr(
     keyBytes,
-    new aesjs.Counter(counter)
+    new aesjs.Counter(counter),
   );
   const decrypted = aesCtr.decrypt(ciphertext);
   return new Uint8Array(decrypted);
@@ -2184,12 +2145,12 @@ async function saveFileFromLocation(data, isFromExtension, snackMethods) {
 
     if (ivBytes.length !== 16) {
       throw new Error(
-        `Invalid IV length: ${ivBytes.length} bytes, expected 16 bytes`
+        `Invalid IV length: ${ivBytes.length} bytes, expected 16 bytes`,
       );
     }
     if (keyBytes.length !== 32) {
       throw new Error(
-        `Invalid key length: ${keyBytes.length} bytes, expected 32 bytes`
+        `Invalid key length: ${keyBytes.length} bytes, expected 32 bytes`,
       );
     }
   }
@@ -2261,7 +2222,7 @@ async function saveFileFromLocation(data, isFromExtension, snackMethods) {
             keyBytes,
             ivBytes,
             blockOffset,
-            value
+            value,
           );
 
           await writable.write(decryptedChunk);
@@ -2310,7 +2271,7 @@ async function saveFileFromLocation(data, isFromExtension, snackMethods) {
           keyBytes,
           ivBytes,
           blockOffset,
-          value
+          value,
         );
 
         chunks.push(decryptedChunk);
@@ -2357,8 +2318,8 @@ async function saveFileFromLocation(data, isFromExtension, snackMethods) {
       try {
         const response = await fetch(
           await createEndpoint(
-            locationUrl + `?attachment=true&attachmentFilename=${filename}`
-          )
+            locationUrl + `?attachment=true&attachmentFilename=${filename}`,
+          ),
         );
 
         if (!response.ok) {
@@ -2389,7 +2350,7 @@ async function saveFileFromLocation(data, isFromExtension, snackMethods) {
     } else {
       // Direct download using anchor tag
       const endpoint = await createEndpoint(
-        locationUrl + `?attachment=true&attachmentFilename=${filename}`
+        locationUrl + `?attachment=true&attachmentFilename=${filename}`,
       );
       const a = document.createElement("a");
       a.href = endpoint;
@@ -2477,7 +2438,7 @@ export const saveFileFromQDNLocation = async ({
         mimeType,
       },
       false, // isFromExtension
-      snackMethods
+      snackMethods,
     );
 
     // Show success notification
@@ -2527,7 +2488,7 @@ export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
           text1: "Would you like to download:",
           highlightedText: `${data?.filename}`,
         },
-        isFromExtension
+        isFromExtension,
       );
       const { accepted } = resPermission;
       if (!accepted) throw new Error("User declined to save file");
@@ -2536,7 +2497,7 @@ export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
           saveFileInChunksFromUrl(
             data.location,
             data?.encryption,
-            data?.filename
+            data?.filename,
           );
         } catch (error) {
           console.log("save chunks url error", error);
@@ -2566,7 +2527,7 @@ export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
           text1: "Would you like to download:",
           highlightedText: `${filename}`,
         },
-        isFromExtension
+        isFromExtension,
       );
       const { accepted } = resPermission;
 
@@ -2599,7 +2560,7 @@ export const saveFile = async (data, sender, isFromExtension, snackMethods) => {
             mimeType,
             blob,
           },
-          snackMethods
+          snackMethods,
         );
 
         return true;
@@ -2644,7 +2605,7 @@ export const deployAt = async (data, isFromExtension) => {
         assetId: data.assetId,
         atType: data.type,
       },
-      isFromExtension
+      isFromExtension,
     );
     return resDeployAt;
   } catch (error) {
@@ -2669,11 +2630,11 @@ export const getUserWallet = async (data, isFromExtension, appInfo) => {
 
   if (data?.coin === "ARRR" && isGateway)
     throw new Error(
-      "Cannot view ARRR wallet info through the gateway. Please use your local node."
+      "Cannot view ARRR wallet info through the gateway. Please use your local node.",
     );
   const value =
     (await getPermission(
-      `qAPPAutoGetUserWallet-${appInfo?.name}-${data.coin}`
+      `qAPPAutoGetUserWallet-${appInfo?.name}-${data.coin}`,
     )) || false;
   let skip = false;
   if (value) {
@@ -2702,7 +2663,7 @@ export const getUserWallet = async (data, isFromExtension, appInfo) => {
           label: "Always allow wallet to be retrieved automatically",
         },
       },
-      isFromExtension
+      isFromExtension,
     );
   }
 
@@ -2711,7 +2672,7 @@ export const getUserWallet = async (data, isFromExtension, appInfo) => {
   if (resPermission) {
     setPermission(
       `qAPPAutoGetUserWallet-${appInfo?.name}-${data.coin}`,
-      checkbox1
+      checkbox1,
     );
   }
 
@@ -2787,7 +2748,7 @@ export const getWalletBalance = async (
   data,
   bypassPermission?: boolean,
   isFromExtension,
-  appInfo
+  appInfo,
 ) => {
   const requiredFields = ["coin"];
   const missingFields: string[] = [];
@@ -2806,12 +2767,12 @@ export const getWalletBalance = async (
 
   if (data?.coin === "ARRR" && isGateway)
     throw new Error(
-      "Cannot view ARRR balance through the gateway. Please use your local node."
+      "Cannot view ARRR balance through the gateway. Please use your local node.",
     );
 
   const value =
     (await getPermission(
-      `qAPPAutoWalletBalance-${appInfo?.name}-${data.coin}`
+      `qAPPAutoWalletBalance-${appInfo?.name}-${data.coin}`,
     )) || false;
   let skip = false;
   if (value) {
@@ -2839,14 +2800,14 @@ export const getWalletBalance = async (
           label: "Always allow balance to be retrieved automatically",
         },
       },
-      isFromExtension
+      isFromExtension,
     );
   }
   const { accepted = false, checkbox1 = false } = resPermission || {};
   if (resPermission) {
     setPermission(
       `qAPPAutoWalletBalance-${appInfo?.name}-${data.coin}`,
-      checkbox1
+      checkbox1,
     );
   }
   if (accepted || bypassPermission || skip) {
@@ -2870,7 +2831,7 @@ export const getWalletBalance = async (
         return res;
       } catch (error) {
         throw new Error(
-          error?.message || "Fetch Wallet Failed. Please try again"
+          error?.message || "Fetch Wallet Failed. Please try again",
         );
       }
     } else {
@@ -2941,7 +2902,7 @@ const getPirateWallet = async (arrrSeed58) => {
   const isGateway = await isRunningGateway();
   if (isGateway) {
     throw new Error(
-      "Retrieving PIRATECHAIN balance is not allowed through a public node."
+      "Retrieving PIRATECHAIN balance is not allowed through a public node.",
     );
   }
   await checkArrrSyncStatus(arrrSeed58);
@@ -3058,7 +3019,7 @@ export const getUserWalletInfo = async (data, isFromExtension, appInfo) => {
           label: "Always allow wallet info to be retrieved automatically",
         },
       },
-      isFromExtension
+      isFromExtension,
     );
   }
   const { accepted = false, checkbox1 = false } = resPermission || {};
@@ -3071,7 +3032,7 @@ export const getUserWalletInfo = async (data, isFromExtension, appInfo) => {
     let coin = data.coin;
     let walletKeys = await getUserWalletFunc(coin);
     const _url = await createEndpoint(
-      `/crosschain/` + data.coin.toLowerCase() + `/addressinfos`
+      `/crosschain/` + data.coin.toLowerCase() + `/addressinfos`,
     );
     let _body = { xpub58: walletKeys["publickey"] };
     try {
@@ -3139,7 +3100,7 @@ export const getCrossChainServerInfo = async (data) => {
 export const startCrossChainServer = async (
   data,
   isFromExtension?,
-  appInfo?: { tabId?: number; name?: string }
+  appInfo?: { tabId?: number; name?: string },
 ) => {
   const isGateway = await isRunningGateway();
   if (isGateway) {
@@ -3151,7 +3112,7 @@ export const startCrossChainServer = async (
     !hasSessionPermission(
       appInfo.tabId,
       appInfo.name,
-      "START_CROSSCHAIN_SERVER"
+      "START_CROSSCHAIN_SERVER",
     )
   ) {
     throw new Error("User not authenticated");
@@ -3315,7 +3276,7 @@ export const updateForeignFee = async (data, isFromExtension, appInfo) => {
     type === "feerequired"
       ? `*The ${value} sats fee is derived from ${calculateRateFromFee(
           value,
-          300
+          300,
         )} sats per kb, for a transaction that is approximately 300 bytes in size.`
       : "";
 
@@ -3334,7 +3295,7 @@ export const updateForeignFee = async (data, isFromExtension, appInfo) => {
         text4,
         highlightedText: `Coin: ${coin}`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission || {
       accepted: false,
@@ -3426,7 +3387,7 @@ export const getServerConnectionHistory = async (data) => {
 export const setCurrentForeignServer = async (
   data,
   isFromExtension,
-  appInfo
+  appInfo,
 ) => {
   const isGateway = await isRunningGateway();
   if (isGateway) {
@@ -3456,7 +3417,7 @@ export const setCurrentForeignServer = async (
     hasSessionPermission(
       appInfo.tabId,
       appInfo.name,
-      "SET_CURRENT_FOREIGN_SERVER"
+      "SET_CURRENT_FOREIGN_SERVER",
     );
 
   let acceptVar = hasPermission || false;
@@ -3468,7 +3429,7 @@ export const setCurrentForeignServer = async (
         text3: `host: ${host}`,
         highlightedText: `Coin: ${coin}`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission || {
       accepted: false,
@@ -3553,7 +3514,7 @@ export const addForeignServer = async (data, isFromExtension, appInfo) => {
         text3: `host: ${host}`,
         highlightedText: `Coin: ${coin}`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission || {
       accepted: false,
@@ -3637,7 +3598,7 @@ export const removeForeignServer = async (data, isFromExtension, appInfo) => {
         text3: `host: ${host}`,
         highlightedText: `Coin: ${coin}`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission || {
       accepted: false,
@@ -3741,7 +3702,7 @@ export const sendCoin = async (data, isFromExtension) => {
 
   if (checkCoin !== "QORT" && isGateway)
     throw new Error(
-      "Cannot send a non-QORT coin through the gateway. Please use your local node."
+      "Cannot send a non-QORT coin through the gateway. Please use your local node.",
     );
   if (checkCoin === "QORT") {
     // Params: data.coin, data.destinationAddress, data.amount, data.fee
@@ -3766,7 +3727,7 @@ export const sendCoin = async (data, isFromExtension) => {
     }
 
     const transformDecimals = (Number(walletBalance) * QORT_DECIMALS).toFixed(
-      0
+      0,
     );
     const walletBalanceDecimals = Number(transformDecimals);
     const amountDecimals = Number(amount) * QORT_DECIMALS;
@@ -3792,14 +3753,14 @@ export const sendCoin = async (data, isFromExtension) => {
         fee: fee,
         confirmCheckbox: true,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
     if (accepted) {
       const makePayment = await sendCoinFunc(
         { amount, password: null, receiver: recipient },
-        true
+        true,
       );
       return makePayment.res?.data;
     } else {
@@ -3831,7 +3792,7 @@ export const sendCoin = async (data, isFromExtension) => {
         highlightedText: `${amount} ${checkCoin}`,
         foreignFee: `${fee} BTC`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
@@ -3888,7 +3849,7 @@ export const sendCoin = async (data, isFromExtension) => {
         highlightedText: `${amount} ${checkCoin}`,
         foreignFee: `${fee} LTC`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
@@ -3946,7 +3907,7 @@ export const sendCoin = async (data, isFromExtension) => {
         highlightedText: `${amount} ${checkCoin}`,
         foreignFee: `${fee} DOGE`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
@@ -4004,7 +3965,7 @@ export const sendCoin = async (data, isFromExtension) => {
         highlightedText: `${amount} ${checkCoin}`,
         foreignFee: `${fee} DGB`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
@@ -4063,7 +4024,7 @@ export const sendCoin = async (data, isFromExtension) => {
         highlightedText: `${amount} ${checkCoin}`,
         foreignFee: `${fee} RVN`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
@@ -4121,7 +4082,7 @@ export const sendCoin = async (data, isFromExtension) => {
         highlightedText: `${amount} ${checkCoin}`,
         foreignFee: `${fee} ARRR`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
@@ -4202,7 +4163,7 @@ export const createBuyOrder = async (data, isFromExtension) => {
   const foreignBlockchain = data.foreignBlockchain;
 
   const atAddresses = data.crosschainAtInfo?.map(
-    (order) => order.qortalAtAddress
+    (order) => order.qortalAtAddress,
   );
 
   const atPromises = atAddresses.map((atAddress) =>
@@ -4212,11 +4173,11 @@ export const createBuyOrder = async (data, isFromExtension) => {
       const resData = await resAddress.json();
       if (foreignBlockchain !== resData?.foreignBlockchain) {
         throw new Error(
-          "All requested ATs need to be of the same foreign Blockchain."
+          "All requested ATs need to be of the same foreign Blockchain.",
         );
       }
       return resData;
-    })
+    }),
   );
 
   const crosschainAtInfo = await Promise.all(atPromises);
@@ -4235,58 +4196,32 @@ export const createBuyOrder = async (data, isFromExtension) => {
         }, 0)} QORT FOR   ${roundUpToDecimals(
           crosschainAtInfo?.reduce((latest, cur) => {
             return latest + +cur?.expectedForeignAmount;
-          }, 0)
+          }, 0),
         )}
       ${` ${buyingFees.ticker}`}`,
         highlightedText: `Is using public node: ${isGateway}`,
         fee: "",
-        html: `
-      <div style="max-height: 30vh; overflow-y: auto; font-family: sans-serif;">
-        <style>
-          .fee-container {
-            background-color: #1e1e1e;
-            color: #e0e0e0;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-          }
-          .fee-label {
-            font-weight: bold;
-            color: #bb86fc;
-            margin-bottom: 4px;
-          }
-          .fee-description {
-            font-size: 14px;
-            color: #cccccc;
-            margin-bottom: 16px;
-          }
-          
-        </style>
-    
-        <div class="fee-container">
-          <div class="fee-label">Total Unlocking Fee:</div>
-             <div>${(+buyingFees?.unlock?.fee * atAddresses?.length)?.toFixed(
-               8
-             )} ${buyingFees.ticker}</div>
-     <div class="fee-description">
-  This fee is an estimate based on ${atAddresses?.length} ${
-          atAddresses?.length > 1 ? "orders" : "order"
-        }, assuming a 300-byte size at a rate of ${buyingFees?.unlock?.feePerKb?.toFixed(
-          8
-        )} ${buyingFees.ticker} per KB.
-</div>
-    
-          <div class="fee-label">Total Locking Fee:</div>
-          <div>${+buyingFees?.unlock.fee.toFixed(8)} ${
-          buyingFees.ticker
-        } per kb</div>
-    
-        </div>
-      </div>
-    `,
+        details: {
+          type: "buyOrderFees",
+          unlockLabel: "Total Unlocking Fee:",
+          unlockAmount: (
+            +buyingFees?.unlock?.fee * atAddresses?.length
+          )?.toFixed(8),
+          ticker: buyingFees.ticker,
+          unlockDescription: `This fee is an estimate based on ${
+            atAddresses?.length
+          } ${
+            atAddresses?.length > 1 ? "orders" : "order"
+          }, assuming a 300-byte size at a rate of ${buyingFees?.unlock?.feePerKb?.toFixed(
+            8,
+          )} ${buyingFees.ticker} per KB.`,
+          lockLabel: "Total Locking Fee:",
+          lockDescription: `${+buyingFees?.unlock.fee.toFixed(8)} ${
+            buyingFees.ticker
+          } per kb`,
+        },
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
     if (accepted) {
@@ -4359,7 +4294,7 @@ const findFailedTradebot = async (createBotCreationTimestamp, body) => {
     }, 5000);
   });
   const url = await createEndpoint(
-    `/crosschain/tradebot?foreignBlockchain=LITECOIN`
+    `/crosschain/tradebot?foreignBlockchain=LITECOIN`,
   );
 
   const tradeBotsReponse = await fetch(url, {
@@ -4376,7 +4311,7 @@ const findFailedTradebot = async (createBotCreationTimestamp, body) => {
     .filter(
       (item) =>
         item.creatorAddress === address &&
-        +item.foreignAmount === +body.foreignAmount
+        +item.foreignAmount === +body.foreignAmount,
     )
     .sort((a, b) => b.timestamp - a.timestamp)[0];
   if (
@@ -4413,7 +4348,7 @@ const tradeBotCreateRequest = async (body, keyPair) => {
   } catch (error) {
     const findFailedTradeBot = await findFailedTradebot(
       createBotCreationTimestamp,
-      body
+      body,
     );
     return {
       error: "Failed to Create Sell Order. Try again!",
@@ -4455,7 +4390,7 @@ export const createSellOrder = async (data, isFromExtension) => {
         text3: `FOR  ${parsedForeignAmount} ${data.foreignBlockchain}`,
         fee: "0.02",
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
     if (accepted) {
@@ -4478,7 +4413,7 @@ export const createSellOrder = async (data, isFromExtension) => {
           tradeTimeout: 120,
           receivingAddress: receivingAddress.address,
         },
-        keyPair
+        keyPair,
       );
 
       return response;
@@ -4520,7 +4455,7 @@ export const cancelSellOrder = async (data, isFromExtension) => {
         text3: `FOR  ${resData.expectedForeignAmount} ${resData.foreignBlockchain}`,
         fee: fee.fee,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
     if (accepted) {
@@ -4538,7 +4473,7 @@ export const cancelSellOrder = async (data, isFromExtension) => {
           creatorPublicKey: userPublicKey,
           atAddress: data.atAddress,
         },
-        keyPair
+        keyPair,
       );
 
       return response;
@@ -4648,7 +4583,7 @@ export const adminAction = async (data, isFromExtension) => {
     {
       text1: permissionText,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -4692,7 +4627,7 @@ export const signTransaction = async (data, isFromExtension) => {
 
   const shouldProcess = data?.process || false;
   const _url = await createEndpoint(
-    "/transactions/decode?ignoreValidityChecks=false"
+    "/transactions/decode?ignoreValidityChecks=false",
   );
 
   const _body = data.unsignedBytes;
@@ -4714,7 +4649,7 @@ export const signTransaction = async (data, isFromExtension) => {
       text2: `Tx type: ${decodedData.type}`,
       json: decodedData,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -4742,15 +4677,15 @@ export const signTransaction = async (data, isFromExtension) => {
     });
     const arbitraryBytesBuffer = new Uint8Array(_arbitraryBytesBuffer);
     const txByteSigned = Base58.decode(convertedBytes);
-    const _bytesForSigningBuffer = Object.keys(txByteSigned).map(function (
-      key
-    ) {
-      return txByteSigned[key];
-    });
+    const _bytesForSigningBuffer = Object.keys(txByteSigned).map(
+      function (key) {
+        return txByteSigned[key];
+      },
+    );
     const bytesForSigningBuffer = new Uint8Array(_bytesForSigningBuffer);
     const signature = nacl.sign.detached(
       bytesForSigningBuffer,
-      keyPair.privateKey
+      keyPair.privateKey,
     );
     const signedBytes = utils.appendBuffer(arbitraryBytesBuffer, signature);
     const signedBytesToBase58 = Base58.encode(signedBytes);
@@ -4760,7 +4695,7 @@ export const signTransaction = async (data, isFromExtension) => {
     const res = await processTransactionVersion2(signedBytesToBase58);
     if (!res?.signature)
       throw new Error(
-        res?.message || "Transaction was not able to be processed"
+        res?.message || "Transaction was not able to be processed",
       );
     return res;
   } else {
@@ -4871,7 +4806,7 @@ export const createAndCopyEmbedLink = async (data, isFromExtension) => {
       missingFieldsFunc(data, ["type", "name", "service", "identifier"]);
       if (data?.encryptionType === "private" && !data?.key) {
         throw new Error(
-          "For an encrypted resource, you must provide the key to create the shared link"
+          "For an encrypted resource, you must provide the key to create the shared link",
         );
       }
       const queryParams = buildQueryParams(data);
@@ -4902,7 +4837,7 @@ export const getHostedData = async (data, isFromExtension) => {
       text1: "Do you give this application permission to",
       text2: `Get a list of your hosted data?`,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
 
@@ -4942,7 +4877,7 @@ export const deleteHostedData = async (data, isFromExtension) => {
       text1: "Do you give this application permission to",
       text2: `Delete ${data?.hostedData?.length} hosted resources?`,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
 
@@ -4952,7 +4887,7 @@ export const deleteHostedData = async (data, isFromExtension) => {
     for (const hostedDataItem of hostedData) {
       try {
         const url = await createEndpoint(
-          `/arbitrary/resource/${hostedDataItem.service}/${hostedDataItem.name}/${hostedDataItem.identifier}`
+          `/arbitrary/resource/${hostedDataItem.service}/${hostedDataItem.name}/${hostedDataItem.identifier}`,
         );
         await fetch(url, {
           method: "DELETE",
@@ -4992,7 +4927,7 @@ export const registerNameRequest = async (data, isFromExtension) => {
       text2: data?.description,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5030,7 +4965,7 @@ export const updateNameRequest = async (data, isFromExtension) => {
       text4: data?.description,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5074,7 +5009,7 @@ export const leaveGroupRequest = async (data, isFromExtension) => {
       highlightedText: `${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5125,7 +5060,7 @@ export const inviteToGroupRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5181,7 +5116,7 @@ export const kickFromGroupRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5238,7 +5173,7 @@ export const banFromGroupRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5294,7 +5229,7 @@ export const cancelGroupBanRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5348,7 +5283,7 @@ export const addGroupAdminRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5402,7 +5337,7 @@ export const removeGroupAdminRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5456,7 +5391,7 @@ export const cancelGroupInviteRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5496,7 +5431,7 @@ export const decryptAESGCMRequest = async (data, isFromExtension) => {
   nacl.lowlevel.crypto_scalarmult(
     sharedSecret,
     convertedPrivateKey,
-    convertedPublicKey
+    convertedPublicKey,
   );
 
   // Derive encryption key
@@ -5525,12 +5460,12 @@ export const decryptAESGCMRequest = async (data, isFromExtension) => {
       encryptionKey,
       algorithm,
       false,
-      ["decrypt"]
+      ["decrypt"],
     );
     const decryptedArrayBuffer = await crypto.subtle.decrypt(
       algorithm,
       cryptoKey,
-      ciphertext
+      ciphertext,
     );
 
     // Return decrypted data as Base64
@@ -5538,7 +5473,7 @@ export const decryptAESGCMRequest = async (data, isFromExtension) => {
   } catch (error) {
     console.error("Decryption failed:", error);
     throw new Error(
-      "Failed to decrypt the message. Ensure the data and keys are correct."
+      "Failed to decrypt the message. Ensure the data and keys are correct.",
     );
   }
 };
@@ -5576,7 +5511,7 @@ export const createGroupRequest = async (data, isFromExtension) => {
       highlightedText: `Group name: ${groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5644,7 +5579,7 @@ export const updateGroupRequest = async (data, isFromExtension) => {
       highlightedText: `Group: ${groupInfo.groupName}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5667,7 +5602,7 @@ export const updateGroupRequest = async (data, isFromExtension) => {
 export const getUserWalletTransactions = async (
   data,
   isFromExtension,
-  appInfo
+  appInfo,
 ) => {
   const requiredFields = ["coin"];
   const missingFields: string[] = [];
@@ -5685,7 +5620,7 @@ export const getUserWalletTransactions = async (
 
   const value =
     (await getPermission(
-      `getUserWalletTransactions-${appInfo?.name}-${data.coin}`
+      `getUserWalletTransactions-${appInfo?.name}-${data.coin}`,
     )) || false;
   let skip = false;
   if (value) {
@@ -5698,7 +5633,7 @@ export const getUserWalletTransactions = async (
     hasSessionPermission(
       appInfo.tabId,
       appInfo.name,
-      "GET_USER_WALLET_TRANSACTIONS"
+      "GET_USER_WALLET_TRANSACTIONS",
     )
   ) {
     skip = true;
@@ -5717,7 +5652,7 @@ export const getUserWalletTransactions = async (
           label: "Always allow wallet txs to be retrieved automatically",
         },
       },
-      isFromExtension
+      isFromExtension,
     );
   }
   const { accepted = false, checkbox1 = false } = resPermission || {};
@@ -5725,7 +5660,7 @@ export const getUserWalletTransactions = async (
   if (resPermission) {
     setPermission(
       `getUserWalletTransactions-${appInfo?.name}-${data.coin}`,
-      checkbox1
+      checkbox1,
     );
   }
 
@@ -5742,7 +5677,7 @@ export const getUserWalletTransactions = async (
     }
 
     const _url = await createEndpoint(
-      `/crosschain/` + data.coin.toLowerCase() + `/wallettransactions`
+      `/crosschain/` + data.coin.toLowerCase() + `/wallettransactions`,
     );
     const _body = publicKey;
     try {
@@ -5896,7 +5831,7 @@ export const sellNameRequest = async (data, isFromExtension) => {
       highlightedText: `Sell ${name} for ${sellPrice} QORT`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5937,7 +5872,7 @@ export const cancelSellNameRequest = async (data, isFromExtension) => {
       highlightedText: `Name: ${name}`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -5980,7 +5915,7 @@ export const buyNameRequest = async (data, isFromExtension) => {
       highlightedText: `Buying ${name} for ${sellPrice} QORT`,
       fee: fee.fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted } = resPermission;
   if (accepted) {
@@ -6133,74 +6068,26 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
       text1:
         "Do you give this application permission to make the following payments and publishes?",
       text2: `Asset used in payments: ${assetInfo.name}`,
-      html: `
-      <div style="max-height: 30vh; overflow-y: auto;">
-      <style>
-        body {
-          background-color: #121212;
-          color: #e0e0e0;
-        }
-    
-        .resource-container {
-          display: flex;
-          flex-direction: column;
-          border: 1px solid #444;
-          padding: 16px;
-          margin: 8px 0;
-          border-radius: 8px;
-          background-color: #1e1e1e;
-        }
-        
-        .resource-detail {
-          margin-bottom: 8px;
-        }
-        
-        .resource-detail span {
-          font-weight: bold;
-          color: #bb86fc;
-        }
-    
-        @media (min-width: 600px) {
-          .resource-container {
-            flex-direction: row;
-            flex-wrap: wrap;
-          }
-          .resource-detail {
-            flex: 1 1 45%;
-            margin-bottom: 0;
-            padding: 4px 0;
-          }
-        }
-      </style>
-    
-      ${pendingTransactions
-        .filter((item) => item.type === "PAYMENT")
-        .map(
-          (payment) => `
-          <div class="resource-container">
-            <div class="resource-detail"><span>Recipient:</span> ${payment.recipientAddress}</div>
-            <div class="resource-detail"><span>Amount:</span> ${payment.amount}</div>
-          </div>`
-        )
-        .join("")}
-         ${[...pendingTransactions, ...pendingAdditionalArbitraryTxs]
-           .filter((item) => item.type === "ARBITRARY")
-           .map(
-             (arbitraryTx) => `
-          <div class="resource-container">
-            <div class="resource-detail"><span>Service:</span> ${arbitraryTx.service}</div>
-            <div class="resource-detail"><span>Name:</span> ${name}</div>
-            <div class="resource-detail"><span>Identifier:</span> ${arbitraryTx.identifier}</div>
-          </div>`
-           )
-           .join("")}
-    </div>
-    
-        `,
+      details: {
+        type: "paymentsAndResources",
+        payments: pendingTransactions
+          .filter((item) => item.type === "PAYMENT")
+          .map((payment) => ({
+            recipientAddress: payment.recipientAddress,
+            amount: payment.amount,
+          })),
+        resources: [...pendingTransactions, ...pendingAdditionalArbitraryTxs]
+          .filter((item) => item.type === "ARBITRARY")
+          .map((arbitraryTx) => ({
+            service: arbitraryTx.service,
+            name,
+            identifier: arbitraryTx.identifier,
+          })),
+      },
       highlightedText: `Total Amount: ${totalAmount}`,
       fee: fee,
     },
-    isFromExtension
+    isFromExtension,
   );
   const { accepted, checkbox1 = false } = resPermission;
   if (!accepted) {
@@ -6225,7 +6112,7 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
             recipient: transaction.recipientAddress,
           },
         ],
-        true
+        true,
       );
       if (makePayment) {
         transactionsDone.push(makePayment?.signature);
@@ -6242,7 +6129,7 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
       const toBase64 = await retryTransaction(
         objectToBase64,
         [objectToEncrypt],
-        true
+        true,
       );
 
       if (!toBase64) continue; // Skip if encryption fails
@@ -6257,7 +6144,7 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
             userPublicKey,
           },
         ],
-        true
+        true,
       );
 
       if (!encryptDataResponse) continue; // Skip if encryption fails
@@ -6276,7 +6163,7 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
             withFee: true,
           },
         ],
-        true
+        true,
       );
 
       if (resPublish?.signature) {
@@ -6293,7 +6180,7 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
     const toBase64 = await retryTransaction(
       objectToBase64,
       [objectToEncrypt],
-      true
+      true,
     );
 
     if (!toBase64) continue; // Skip if encryption fails
@@ -6308,7 +6195,7 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
           userPublicKey,
         },
       ],
-      true
+      true,
     );
 
     if (!encryptDataResponse) continue; // Skip if encryption fails
@@ -6327,7 +6214,7 @@ export const multiPaymentWithPrivateData = async (data, isFromExtension) => {
           withFee: true,
         },
       ],
-      true
+      true,
     );
 
     if (resPublish?.signature) {
@@ -6368,7 +6255,7 @@ export const transferAssetRequest = async (data, isFromExtension) => {
       highlightedText: `Amount: ${amount}`,
       fee: fee,
     },
-    isFromExtension
+    isFromExtension,
   );
 
   const { accepted } = resPermission;
@@ -6400,7 +6287,7 @@ export const signForeignFees = async (data, appInfo, isFromExtension) => {
       {
         text1: `Do you give this application permission to sign the required fees for all your trade offers?`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
     acceptedVar = accepted;
@@ -6419,7 +6306,7 @@ export const signForeignFees = async (data, appInfo, isFromExtension) => {
     };
 
     const unsignedFeesUrl = await createEndpoint(
-      `/crosschain/unsignedfees/${address}`
+      `/crosschain/unsignedfees/${address}`,
     );
 
     const unsignedFeesResponse = await fetch(unsignedFeesUrl);
@@ -6433,7 +6320,7 @@ export const signForeignFees = async (data, appInfo, isFromExtension) => {
 
       const signature = nacl.sign.detached(
         unsignedDataDecoded,
-        keyPair.privateKey
+        keyPair.privateKey,
       );
 
       const signedFee = {
@@ -6496,7 +6383,7 @@ export const lockTab = async (data, isFromExtension, appInfo) => {
         text1: "Lock tab",
         text2: `Do you give permission for this app's tab to be locked?`,
       },
-      isFromExtension
+      isFromExtension,
     );
 
     const { accepted } = resPermission || { accepted: false };
@@ -6544,60 +6431,32 @@ export const sessionPermissions = async (data, isFromExtension, appInfo) => {
 
     // Validate all permissions are valid
     const invalidPermissions = permissions.filter(
-      (permission) => !VALID_SESSION_PERMISSIONS.includes(permission)
+      (permission) => !VALID_SESSION_PERMISSIONS.includes(permission),
     );
 
     if (invalidPermissions.length > 0) {
       throw new Error(
         `Invalid permissions: ${invalidPermissions.join(
-          ", "
-        )}. Valid permissions are: ${VALID_SESSION_PERMISSIONS.join(", ")}`
+          ", ",
+        )}. Valid permissions are: ${VALID_SESSION_PERMISSIONS.join(", ")}`,
       );
     }
-
-    // Show permission modal with the list of permissions
-    const permissionsListHtml = permissions
-      .map(
-        (permission) => `
-      <div style="
-        background-color: var(--background-paper);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 8px 12px;
-        margin: 4px 0;
-        font-family: monospace;
-        font-size: 14px;
-        color: var(--text-primary);
-      ">
-        ${permission}
-      </div>
-    `
-      )
-      .join("");
 
     const resPermission = await getUserPermission(
       {
         text1: `${appInfo.name} is requesting session permissions`,
         text2:
           "The following permissions will be automatically granted for this session:",
-        html: `
-  <div style="
-    max-height: 40vh;
-    overflow-y: auto;
-    font-family: sans-serif;
-    padding: 10px;
-    background-color: var(--background-default);
-    border-radius: 8px;
-  ">
-    ${permissionsListHtml}
-  </div>
-`,
+        details: {
+          type: "sessionPermissions",
+          permissions,
+        },
         confirmCheckbox: true,
         confirmCheckboxLabel:
           "I trust this app and understand these permissions will auto-execute",
         isSessionPermission: true,
       },
-      isFromExtension
+      isFromExtension,
     );
 
     const { accepted = false } = resPermission || {};
@@ -6609,7 +6468,7 @@ export const sessionPermissions = async (data, isFromExtension, appInfo) => {
       const validPermissions = setSessionPermissions(
         tabId,
         appInfo.name,
-        permissions
+        permissions,
       );
       return true;
     } else {
@@ -6644,10 +6503,10 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
 
   if (lastTime && currentTime - lastTime < RE_ENCRYPTION_COOLDOWN_MS) {
     const remainingTime = Math.ceil(
-      (RE_ENCRYPTION_COOLDOWN_MS - (currentTime - lastTime)) / 1000
+      (RE_ENCRYPTION_COOLDOWN_MS - (currentTime - lastTime)) / 1000,
     );
     throw new Error(
-      `Re-encryption cooldown in effect. Please wait ${remainingTime} seconds before re-encrypting keys for this group again.`
+      `Re-encryption cooldown in effect. Please wait ${remainingTime} seconds before re-encrypting keys for this group again.`,
     );
   }
 
@@ -6680,7 +6539,7 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
           "Do you give this application permission to re-encrypt group keys?",
         highlightedText: `Group: ${groupName}`,
       },
-      isFromExtension
+      isFromExtension,
     );
     const { accepted } = resPermission;
 
@@ -6715,7 +6574,7 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
     }
 
     const url = await createEndpoint(
-      `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`
+      `/arbitrary/DOCUMENT_PRIVATE/${publish.name}/${publish.identifier}?encoding=base64&rebuild=true`,
     );
 
     const res = await fetch(url);
@@ -6738,7 +6597,7 @@ export const reEncryptQortalKeys = async (data, isFromExtension, appInfo) => {
       responseData,
       groupId,
       decryptedKeyToObject,
-      numberOfMembers
+      numberOfMembers,
     );
 
     // Update last re-encryption timestamp
@@ -6761,7 +6620,6 @@ const chromecastTabIds = new Set<string>();
 export const trackChromecastForTab = (tabId: string) => {
   if (tabId) {
     chromecastTabIds.add(tabId);
-   
   }
 };
 
@@ -6771,7 +6629,6 @@ export const trackChromecastForTab = (tabId: string) => {
 export const untrackChromecastForTab = (tabId: string) => {
   if (tabId) {
     chromecastTabIds.delete(tabId);
-   
   }
 };
 
@@ -6790,16 +6647,13 @@ export const cleanupChromecastForTab = async (tabId: string) => {
   if (chromecastTabIds.has(tabId)) {
     try {
       // Dynamic import to avoid circular dependencies
-      const { default: Chromecast } = await import(
-        "../plugins/ChromecastPlugin"
-      );
+      const { default: Chromecast } =
+        await import("../plugins/ChromecastPlugin");
 
       // Check if still connected before disconnecting
       const connectionStatus = await Chromecast.isConnected();
       if (connectionStatus?.connected) {
-      
         await Chromecast.disconnect();
-      
       }
     } catch (error) {
       console.error(`[Chromecast] Failed to cleanup for tab ${tabId}:`, error);
@@ -6823,7 +6677,7 @@ export const cleanupMediaForTab = async (tabId: string) => {
       } catch (error) {
         console.error(
           `[cleanupMediaForTab] Failed to cleanup media ${mediaId}:`,
-          error
+          error,
         );
       }
     }
@@ -6854,13 +6708,13 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
 
   // Construct resourceUrl from location object
   const resourceUrl = await createEndpoint(
-    `/arbitrary/${data.location.service}/${data.location.name}/${data.location.identifier}`
+    `/arbitrary/${data.location.service}/${data.location.name}/${data.location.identifier}`,
   );
 
   // Check if we're in Capacitor (native mobile)
   if (!Capacitor.isNativePlatform()) {
     throw new Error(
-      "This feature is only available in the mobile app. For desktop, use the Electron version."
+      "This feature is only available in the mobile app. For desktop, use the Electron version.",
     );
   }
 
@@ -6902,12 +6756,12 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
         totalSize = parseInt(contentLength, 10);
       } else {
         throw new Error(
-          "Could not determine file size from server. Please provide totalSize parameter."
+          "Could not determine file size from server. Please provide totalSize parameter.",
         );
       }
     } catch (error) {
       throw new Error(
-        `Failed to fetch file size: ${error?.message}. Please provide totalSize parameter manually.`
+        `Failed to fetch file size: ${error?.message}. Please provide totalSize parameter manually.`,
       );
     }
   }
@@ -6938,10 +6792,8 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
       data.iv,
       resourceUrl,
       totalSize,
-      data.mimeType || "video/mp4"
+      data.mimeType || "video/mp4",
     );
-
-   
 
     // Track this mediaId by tabId for automatic cleanup
     if (appInfo?.tabId) {
@@ -6949,7 +6801,6 @@ export const playEncryptedMedia = async (data, isFromExtension, appInfo) => {
         mediaIdsByTabId.set(appInfo.tabId, new Set());
       }
       mediaIdsByTabId.get(appInfo.tabId)!.add(data.mediaId);
-      
     }
 
     return {
